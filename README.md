@@ -17,7 +17,7 @@
 
 > "A toolkit for causal reasoning with Bayesian Networks."
 
-CausalNex aims to become one of the leading library for causal reasoning and "what-if" analysis using Bayesian Networks. It helps to simplify the steps:
+CausalNex aims to become one of the leading libraries for causal reasoning and "what-if" analysis using Bayesian Networks. It helps to simplify the steps:
  - To learn causal structures,
  - To allow domain experts to augment the relationships,
  - To estimate the effects of potential interventions using data.
