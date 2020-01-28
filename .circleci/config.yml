@@ -1,0 +1,134 @@
+version: 2
+
+images:
+  python: &python
+    - image: circleci/buildpack-deps:stretch-browsers
+
+###############################################################################
+utils:
+  prepare_container: &prepare_container
+    name: Prepare build container
+    command: |
+      sudo apt-get update
+      sudo apt-get install curl pandoc
+      sudo apt-get clean
+      curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  > miniconda.sh
+      bash miniconda.sh -b -p /home/circleci/miniconda
+      sudo rm -rf ~/.pyenv/ /opt/circleci/.pyenv/
+      source /home/circleci/miniconda/etc/profile.d/conda.sh
+      conda create --name=causalnex_env python=${PYTHON_VERSION} -y
+      conda activate causalnex_env
+      conda install -y virtualenv
+      pip install -U pip setuptools wheel
+  activate_conda: &activate_conda
+    name: Activate conda environment
+    command: |
+      echo ". /home/circleci/miniconda/etc/profile.d/conda.sh" >> $BASH_ENV
+      echo "conda deactivate; conda activate causalnex_env" >> $BASH_ENV
+
+  setup_requirements: &setup_requirements
+    name: Install PIP dependencies
+    command: |
+      echo "Python version: $(python --version 2>&1)"
+      pip install -r requirements.txt -U
+      pip install -r test_requirements.txt -U
+      conda install -y virtualenv
+  setup_pre_commit: &setup_pre_commit
+    name: Install pre-commit hooks
+    command: |
+      pre-commit install --install-hooks
+      pre-commit install --hook-type pre-push
+  linters: &linters
+    name: Run pylint and flake8
+    command: make lint
+
+  unit_tests: &unit_tests
+    name: Run tests
+    command: make test
+
+  build_docs: &build_docs
+    # NOTE: doesn't work on python 3.5
+    name: Build documentation
+    command: make build-docs
+
+  install_package: &install_package
+    name: Install the package
+    command: make install
+
+  unit_test_steps: &unit_test_steps
+    steps:
+      - checkout
+      - run: *prepare_container
+      - run: *activate_conda
+      - run: *setup_requirements
+      - run: *unit_tests
+
+###############################################################################
+jobs:
+  unit_tests_35:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.5'
+    <<: *unit_test_steps
+
+  unit_tests_36:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.6'
+    <<: *unit_test_steps
+
+  unit_tests_37:
+    environment:
+      PYTHON_VERSION: '3.7'
+    docker: *python
+    <<: *unit_test_steps
+
+  linters_37:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.7'
+    steps:
+      - checkout
+      - run: *prepare_container
+      - run: *activate_conda
+      - run: *setup_requirements
+      - run: *setup_pre_commit
+      - run: *linters
+      - run: *install_package
+
+  docs:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.7'
+    steps:
+      - checkout
+      - run: *prepare_container
+      - run: *activate_conda
+      - run: *setup_requirements
+      - run: *build_docs
+
+  all_circleci_checks_succeeded:
+    docker:
+      - image: circleci/python  # any light-weight image
+    steps:
+      - run:
+          name: Success!
+          command: echo "All checks passed"
+
+###############################################################################
+workflows:
+  version: 2
+  regular:
+    jobs:
+      - unit_tests_35
+      - unit_tests_36
+      - unit_tests_37
+      - linters_37
+      - docs
+      - all_circleci_checks_succeeded:
+          requires:
+            - unit_tests_35
+            - unit_tests_36
+            - unit_tests_37
+            - linters_37
+            - docs
