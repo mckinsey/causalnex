@@ -56,6 +56,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 setup(
     name=name,
     version=version,
+    license="Apache Software License (Apache 2.0)",
     description="Toolkit for causal reasoning (Bayesian Networks / Inference)",
     long_description=readme,
     long_description_content_type="text/markdown",
