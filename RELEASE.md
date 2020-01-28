@@ -1,3 +1,7 @@
+# Release 0.4.1:
+
+Bugfix to address readthedocs issue.
+
 # Release 0.4.0:
 
 The initial release of CausalNex.
