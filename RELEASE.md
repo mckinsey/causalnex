@@ -1,3 +1,7 @@
+# Release 0.4.2:
+
+Bugfix to add image to readthedocs
+
 # Release 0.4.1:
 
 Bugfix to address readthedocs issue.
