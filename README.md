@@ -58,8 +58,8 @@ See more detailed installation instructions, including how to setup Python virtu
 
 You can find the documentation for the latest stable release [here](https://causalnex.readthedocs.io/en/latest/). It explains:
 
-- An end-to-end [tutorial on how to use CausalNex](https://causalnex.readthedocs.io/en/latest/03_tutorial/03_tutorial.htm)
-- The [main concepts and methods](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.htm) in using Bayesian Networks for Causal Inference
+- An end-to-end [tutorial on how to use CausalNex](https://causalnex.readthedocs.io/en/latest/03_tutorial/03_tutorial.html)
+- The [main concepts and methods](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.html) in using Bayesian Networks for Causal Inference
 
 > Note: You can find the notebook and markdown files used to build the docs in [`docs/source`](docs/source).
 
