@@ -30,8 +30,6 @@
 ``causalnex.evaluation`` provides functionality to evaluate causal models using standard metrics.
 """
 
-__version__ = "0.4.0"
-
 __all__ = ["roc_auc", "classification_report"]
 
 from .evaluation import classification_report, roc_auc

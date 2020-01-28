@@ -1,4 +1,4 @@
-![CausalNex](docs/source/causalnex_banner.png)
+![CausalNex](https://raw.githubusercontent.com/quantumblacklabs/causalnex/master/docs/source/causalnex_banner.png)
 
 -----------------
 

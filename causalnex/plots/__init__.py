@@ -30,8 +30,6 @@
 ``causalnex.plots`` provides functionality to visualise structure models.
 """
 
-__version__ = "0.4.0"
-
 __all__ = ["plot_structure"]
 
 from .plots import plot_structure
