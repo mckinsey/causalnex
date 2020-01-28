@@ -30,8 +30,6 @@
 ``causalnex.network`` provides functionality to learn joint probability distribution of networks.
 """
 
-__version__ = "0.4.0"
-
 __all__ = ["BayesianNetwork"]
 
 from .network import BayesianNetwork

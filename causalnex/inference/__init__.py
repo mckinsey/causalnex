@@ -30,8 +30,6 @@
 ``causalnex.inference`` provides functionality to make inferences based on interventions and observations.
 """
 
-__version__ = "0.4.0"
-
 __all__ = ["InferenceEngine"]
 
 from .inference import InferenceEngine

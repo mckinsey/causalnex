@@ -30,8 +30,6 @@
 ``causalnex.discretiser`` provides functionality to discretise data.
 """
 
-__version__ = "0.4.0"
-
 __all__ = ["Discretiser"]
 
 from .discretiser import Discretiser
