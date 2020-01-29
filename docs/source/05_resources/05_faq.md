@@ -6,7 +6,7 @@
 
 [CausalNex](https://github.com/quantumblacklabs/causalnex) is a python library that allows data scientists and domain experts to co-develop models which go beyond correlation to consider causal relationships. It was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and [Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in inferencing causality in their project work.
 
-This work was later turned into a product thanks to the following contributors: [Ivan Danov](https://github.com/idanov), [Dmitrii Deriabin](https://github.com/DmitryDeryabin), [Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Fabian Peter](https://www.linkedin.com/in/fabian-peters-6291ab105/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/) and [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/).
+This work was later turned into a product thanks to the following contributors: [Ivan Danov](https://github.com/idanov), [Dmitrii Deriabin](https://github.com/DmitryDeryabin), [Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Fabian Peters](https://www.linkedin.com/in/fabian-peters-6291ab105/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/) and [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/).
 
 ## What are the benefits of using CausalNex?
 
@@ -16,8 +16,8 @@ As we see it, CausalNex:
 
 - **Generates transparency and trust in models** it creates by allowing users to collaborate with domain experts during the modelling process.
 - Uses an **optimised structure learning algorithm**, [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) where the runtime to learn structure is no longer exponential but scales cubically with number of nodes.
-- **Add known relationships or remove spurious correlations** so that your model can better consider causal relationships in data
-- **Visualise networks using common tools** built upon [NetworkX](https://networkx.github.io/), allowing users to understand relationships in their data more intuitively, and work with experts to encode their knowledge
+- **Adds known relationships or remove spurious correlations** so that your model can better consider causal relationships in data.
+- **Visualises networks using common tools** built upon [NetworkX](https://networkx.github.io/), allowing users to understand relationships in their data more intuitively, and work with experts to encode their knowledge.
 - **Streamlines the use of Bayesian Networks** for an end-to-end counterfactual analysis, which in the past was a complicated process involving the use of at least three separate open source libraries, each with its own interface.
 
 ## When should you consider using CausalNex?
@@ -42,7 +42,7 @@ According to the benchmarking done on **synthetic dataset** in-house, it is high
 
 StructureModel is used when discovering the causal structure of a dataset. Part of this process is adding, removing, and flipping edges, until the appropriate structure is completed. As edges are modified, cycles can be temporarily introduced into the structure, which would raise an Exception within a BayesianNetwork, which is a specialised **directed acyclic graph**.
 
-Once the structure is finalised, and is acyclic, then it can be used to create a [BayesianNetwork](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.html)
+Once the structure is finalised, and is acyclic, then it can be used to create a [BayesianNetwork](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.html).
 
 
 ## Why a separate data pre-processing process for probability fitting than structure learning? / Why discretise data in probability fitting?
@@ -71,7 +71,7 @@ At the moment, the algorithm calculates the probability of **every node** in a B
 
 The following points describe how we are unique comparing to the others:
 1) We are one of the very few causal packages that use **Bayesian Networks** to model the problems. Most of the causal packages use statistical matching technique like **propensity score matching** to approach these problems.
-2) One of the main hurdle to applying Bayesian Network is to find the optimal graph structure. In CausalNex, We **simplify** this process by providing the ability for the users to learn the graph structure through: i) **encoding domain expertise** by manually adding the edges, and ii) **leveraging the data** using the state-of-the-art [structure learning algorithm](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf).
+2) One of the main hurdles to applying Bayesian Networks is to find the optimal graph structure. In CausalNex, We **simplify** this process by providing the ability for the users to learn the graph structure through: i) **encoding domain expertise** by manually adding the edges, and ii) **leveraging the data** using the state-of-the-art [structure learning algorithm](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf).
 3) We provide the ability for the users to do **counterfactual analysis** using Bayesian Network by introducing **Do-Calculus**, which is not commonly found in Bayesian Network packages.
 
 ## What version of Python does CausalNex use?
