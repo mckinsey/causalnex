@@ -16,7 +16,7 @@ As we see it, CausalNex:
 
 - **Generates transparency and trust in models** it creates by allowing users to collaborate with domain experts during the modelling process.
 - Uses an **optimised structure learning algorithm**, [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) where the runtime to learn structure is no longer exponential but scales cubically with number of nodes.
-- **Adds known relationships or remove spurious correlations** so that your model can better consider causal relationships in data.
+- **Enables adding known relationships/removing spurious correlations** so that your model can better consider causal relationships in data.
 - **Visualises networks using common tools** built upon [NetworkX](https://networkx.github.io/), allowing users to understand relationships in their data more intuitively, and work with experts to encode their knowledge.
 - **Streamlines the use of Bayesian Networks** for an end-to-end counterfactual analysis, which in the past was a complicated process involving the use of at least three separate open source libraries, each with its own interface.
 
@@ -88,7 +88,7 @@ Once CausalNex is installed, you can check your version as follows:
 pip show causalnex
 ```
 
-To later upgrade CausalNex to a different version, simply run:
+To later upgrade CausalNex to a different version, suimply run:
 
 ```
 pip install causalnex -U
