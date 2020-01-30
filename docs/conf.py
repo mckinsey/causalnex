@@ -24,6 +24,7 @@ from typing import List
 
 import patchy
 from click import secho, style
+from recommonmark.transform import AutoStructify
 from sphinx.ext.autosummary.generate import generate_autosummary_docs
 
 from causalnex import __version__ as release
@@ -390,7 +391,9 @@ def _prepare_build_dir(app, config):
     shutil.rmtree(str(build_root / "api_docs"))
     shutil.rmtree(str(build_out), ignore_errors=True)
     copy_tree(str(build_root / "css"), str(build_out / "_static" / "css"))
-    copy_tree(str(build_root / "04_user_guide/images"), str(build_out / "04_user_guide"))
+    copy_tree(
+        str(build_root / "04_user_guide/images"), str(build_out / "04_user_guide")
+    )
     shutil.rmtree(str(build_root / "css"))
 
 
@@ -407,7 +410,10 @@ def setup(app):
     app.add_stylesheet("css/causalnex.css")
 
     # when using nbsphinx, to allow mathjax render properly
-    app.config._raw_config.pop('mathjax_config')
+    app.config._raw_config.pop("mathjax_config")
+    # enable rendering RST tables in Markdown
+    app.add_config_value("recommonmark_config", {"enable_eval_rst": True}, True)
+    app.add_transform(AutoStructify)
 
 
 def fix_module_paths():
