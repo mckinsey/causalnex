@@ -88,7 +88,7 @@ Once CausalNex is installed, you can check your version as follows:
 pip show causalnex
 ```
 
-To later upgrade CausalNex to a different version, suimply run:
+To later upgrade CausalNex to a different version, simply run:
 
 ```
 pip install causalnex -U
