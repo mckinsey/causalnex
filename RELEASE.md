@@ -1,3 +1,7 @@
+# Release 0.4.3:
+
+Bugfix to resolve broken links in README and minor text issues.
+
 # Release 0.4.2:
 
 Bugfix to add image to readthedocs
