@@ -27,7 +27,7 @@ CausalNex aims to become one of the leading libraries for causal reasoning and "
 CausalNex is built on our collective experience to leverage Bayesian Networks to identify causal relationships in data so that we can develop the right interventions from analytics. We developed CausalNex because:
 
 - We believe **leveraging Bayesian Networks** is more intuitive to describe causality compared to traditional machine learning methodology that are built on pattern recognition and correlation analysis.
-- Causal relationships are more accurate if we can easily **encode or augment domain expertise** in the graph model
+- Causal relationships are more accurate if we can easily **encode or augment domain expertise** in the graph model.
 - We can then use the graph model to **assess the impact** from changes to underlying features, i.e. counterfactual analysis, and **identify the right intervention**.
 
 In our experience, a data scientist generally has to use at least 3-4 different open-source libraries before arriving at the final step of finding the right intervention.  CausalNex aims to simplify this end-to-end process for causality and counterfactual analysis.
@@ -40,8 +40,8 @@ The main features of this library are:
 - Allow domain knowledge to augment model relationship
 - Build predictive models based on structural relationships
 - Fit probability distribution of the Bayesian Networks
-- Evaluate model quality with standard statistical checks.
-- Visualisation that simplifies how causality is understood in Bayesian Networks
+- Evaluate model quality with standard statistical checks
+- Simplify how causality is understood in Bayesian Networks through visualisation
 - Analyse the impact of interventions using Do-calculus
 
 ## How do I install CausalNex?
