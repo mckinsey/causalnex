@@ -172,14 +172,15 @@ For instance, users can define a causal model **fully manually**, e.g., using th
     sm_manual = StructureModel()
     sm_manual.add_edges_from(
         [
-            ("b", "a", origin="expert"),
-            ("b", "c", origin="expert"),
-            ("d", "a", origin="expert"),
-            ("d", "c", origin="expert"),
-            ("d", "b", origin="expert"),
-            ("e", "c", origin="expert"),
-            ("e", "b", origin="expert"),
-        ]
+            ("b", "a"),
+            ("b", "c"),
+            ("d", "a"),
+            ("d", "c"),
+            ("d", "b"),
+            ("e", "c"),
+            ("e", "b"),
+        ],
+        origin="expert",
     )
 ```
 Or, users can learn the network structure **automatically** from the data using the [`NOTEARS`](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) algorithm. Moreover, if there is domain knowledge available,
