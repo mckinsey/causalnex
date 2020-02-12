@@ -342,11 +342,17 @@ class BayesianNetwork:
 
         """
 
+        state_names = {k: list(v.values()) for k, v in self._node_states.items()}
+
         transformed_data = data.copy(deep=True)  # type: pd.DataFrame
         transformed_data = self._state_to_index(transformed_data[self.nodes])
 
         if method == "MaximumLikelihoodEstimator":
-            self._model.fit(data=transformed_data, estimator=MaximumLikelihoodEstimator)
+            self._model.fit(
+                data=transformed_data,
+                estimator=MaximumLikelihoodEstimator,
+                state_names=state_names,
+            )
 
         elif method == "BayesianEstimator":
             valid_bayes_priors = ["BDeu", "K2"]
@@ -361,6 +367,7 @@ class BayesianNetwork:
                 estimator=BayesianEstimator,
                 prior_type=bayes_prior,
                 equivalent_sample_size=equivalent_sample_size,
+                state_names=state_names,
             )
         else:
             valid_methods = ["MaximumLikelihoodEstimator", "BayesianEstimator"]
