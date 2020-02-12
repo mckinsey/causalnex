@@ -342,6 +342,8 @@ class BayesianNetwork:
 
         """
 
+        state_names = {k: list(v.values()) for k, v in self._node_states.items()}
+
         transformed_data = data.copy(deep=True)  # type: pd.DataFrame
         transformed_data = self._state_to_index(transformed_data[self.nodes])
 
@@ -349,7 +351,7 @@ class BayesianNetwork:
             self._model.fit(
                 data=transformed_data,
                 estimator=MaximumLikelihoodEstimator,
-                state_names={k: list(v.values()) for k, v in self._node_states.items()},
+                state_names=state_names,
             )
 
         elif method == "BayesianEstimator":
@@ -365,7 +367,7 @@ class BayesianNetwork:
                 estimator=BayesianEstimator,
                 prior_type=bayes_prior,
                 equivalent_sample_size=equivalent_sample_size,
-                state_names={k: list(v.values()) for k, v in self._node_states.items()},
+                state_names=state_names,
             )
         else:
             valid_methods = ["MaximumLikelihoodEstimator", "BayesianEstimator"]
