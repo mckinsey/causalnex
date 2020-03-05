@@ -1,3 +1,7 @@
+# Upcoming release
+
+* Minor documentation fixes and improvements
+
 # Release 0.4.3:
 
 Bugfix to resolve broken links in README and minor text issues.
