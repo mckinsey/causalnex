@@ -8,7 +8,7 @@
     :class: causalnex-logo
 
 Welcome to CausalNex's API docs and tutorials!
-=============================================
+==============================================
 
 .. image:: https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield
     :target: https://circleci.com/gh/quantumblacklabs/causalnex/tree/master
@@ -67,7 +67,6 @@ Welcome to CausalNex's API docs and tutorials!
    :caption: User guide
 
    04_user_guide/04_user_guide
-   04_user_guide/04_reference
 
 .. toctree::
    :maxdepth: 2
