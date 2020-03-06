@@ -31,10 +31,11 @@ This module contains the implementation of ``StructureModel``.
 ``StructureModel`` is a class that describes relationships between variables as a graph.
 """
 
-from typing import List, Set, Union
+from typing import Hashable, List, Set, Union
 
 import networkx as nx
 import numpy as np
+from networkx.exception import NodeNotFound
 
 
 def _validate_origin(origin: str) -> None:
@@ -267,3 +268,23 @@ class StructureModel(nx.DiGraph):
                 largest_subgraph = subgraph
 
         return largest_subgraph
+
+    def get_target_subgraph(self, node: Hashable) -> "StructureModel":
+        """
+        Get the subgraph with the specified node.
+
+        Args:
+            node: the name of the node.
+
+        Returns:
+            The subgraph with the target node.
+
+        Raises:
+            NodeNotFound: if the node is not found in the graph.
+        """
+        if node in self.nodes:
+            for subgraph in nx.weakly_connected_component_subgraphs(self):
+                if node in subgraph.nodes:
+                    return subgraph
+
+        raise NodeNotFound("Node {node} not found in the graph.".format(node=node))
