@@ -26,111 +26,164 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from string import ascii_lowercase
-
-import matplotlib as plt
-import pytest
-from matplotlib.colors import to_rgba
-
-from causalnex.plots import plot_structure
+from causalnex.plots import color_gradient_string, plot_structure
 from causalnex.structure import StructureModel
 
 
-class TestPlotStructure:
-    """Test behaviour of plot structure method"""
+class TestToPygraphviz:
+    # pylint: disable=no-member
 
-    @pytest.mark.parametrize(
-        "test_input,expected", [(None, ""), ("", ""), ("TEST", "TEST")]
-    )
-    def test_title(self, test_input, expected):
-        """Title should be set correctly"""
+    def test_all_nodes_exist(self):
+        """Both connected and unconnected nodes should exist"""
         sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, title=test_input)
-        assert ax.get_title() == expected
+        sm.add_node("c")
+        a_graph = plot_structure(sm)
 
-    def test_edges_exist(self):
-        """All edges should exist"""
+        assert all(node in a_graph.nodes() for node in ["a", "b", "c"])
 
-        for num_nodes in range(2, 10):
-            nodes = [c for i, c in enumerate(ascii_lowercase) if i < num_nodes]
-            sm = StructureModel(list(zip(nodes[:-1], nodes[1:])))
-            _, ax, _ = plot_structure(sm)
-            ax_edges = [
-                patch
-                for patch in ax.patches
-                if isinstance(patch, plt.patches.FancyArrowPatch)
-            ]
-            assert len(ax_edges) == num_nodes - 1
+    def test_all_edges_exist(self):
+        """All edges in original graph should exist in pygraphviz graph"""
+        edges = [(str(a), str(a + b + 1)) for a in range(2) for b in range(3)]
+        sm = StructureModel(edges)
+        a_graph = plot_structure(sm)
 
-    @pytest.mark.parametrize(
-        "test_input,expected",
-        [("#123456", to_rgba("#123456")), ("blue", to_rgba("blue"))],
-    )
-    def test_edge_color(self, test_input, expected):
-        """Edge color should be set if given"""
+        assert all(edge in a_graph.edges() for edge in edges)
+
+    def test_has_layout(self):
+        """Returned AGraph should have an existing layout"""
         sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, edge_color=test_input)
-        ax_edges = [
-            patch
-            for patch in ax.patches
-            if isinstance(patch, plt.patches.FancyArrowPatch)
-        ]
-        assert ax_edges[0].get_edgecolor() == expected
+        a_graph = plot_structure(sm)
+        assert a_graph.has_layout
 
-    def test_nodes_exist(self):
-        """All nodes should exist"""
-
-        for num_nodes in range(2, 10):
-            nodes = [c for i, c in enumerate(ascii_lowercase) if i < num_nodes]
-            sm = StructureModel(list(zip(nodes[:-1], nodes[1:])))
-            _, ax, _ = plot_structure(sm)
-            ax_nodes = ax.collections[0].get_offsets()
-            assert len(ax_nodes) == num_nodes
-
-    @pytest.mark.parametrize(
-        "input_positions,expected_positions",
-        [({"a": [1, 1], "b": [2, 2]}, [[1.0, 1.0], [2.0, 2.0]])],
-    )
-    def test_node_positions_respected(self, input_positions, expected_positions):
-        """Nodes should be at the positions provided"""
+    def test_all_node_attributes(self):
+        """all node attributes should be set correctly"""
         sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, node_positions=input_positions)
-        node_coords = [list(coord) for coord in ax.collections[0].get_offsets()]
+        a_graph = plot_structure(sm)
+
+        default_color = a_graph.get_node("a").attr["color"]
+        test_color = "black"
+
+        assert default_color != test_color
         assert all(
-            [
-                node_x == exp_x and node_y == exp_y
-                for ((exp_x, exp_y), (node_x, node_y)) in zip(
-                    expected_positions, sorted(node_coords)
-                )
-            ]
+            a_graph.get_node(node).attr["color"] != test_color
+            for node in a_graph.nodes()
         )
 
-    @pytest.mark.parametrize(
-        "test_input,expected",
-        [("#123456", to_rgba("#123456")), ("blue", to_rgba("blue"))],
-    )
-    def test_node_color(self, test_input, expected):
-        """Node color should be set if given"""
-        sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, node_color=test_input)
+        a_graph = plot_structure(sm, all_node_attributes={"color": test_color})
         assert all(
-            all(face_color == expected)
-            for face_color in ax.collections[0].get_facecolors()
+            a_graph.get_node(node).attr["color"] == test_color
+            for node in a_graph.nodes()
         )
 
-    @pytest.mark.parametrize("test_input,expected", [(False, False), (True, True)])
-    def test_show_labels(self, test_input, expected):
-        """Labels should be hidden when show_labels set to False"""
-        sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, show_labels=test_input)
+    def test_all_edge_attributes(self):
+        """all edge attributes should be set correctly"""
+        sm = StructureModel([("a", "b"), ("b", "c")])
+        a_graph = plot_structure(sm)
 
-        assert bool(ax.texts) == expected
+        default_color = a_graph.get_edge("a", "b").attr["color"]
+        test_color = "black"
 
-    @pytest.mark.parametrize(
-        "test_input,expected", [("r", "r"), ("#123456", "#123456")]
-    )
-    def test_label_colors(self, test_input, expected):
-        """Labels should have color provided to them"""
+        assert default_color != test_color
+        assert all(
+            a_graph.get_edge(u, v).attr["color"] != test_color
+            for u, v in a_graph.edges()
+        )
+
+        a_graph = plot_structure(sm, all_edge_attributes={"color": test_color})
+        assert all(
+            a_graph.get_edge(u, v).attr["color"] == test_color
+            for u, v in a_graph.edges()
+        )
+
+    def test_node_attriibutes(self):
+        """specific node attributes should be set correctly"""
+
+        sm = StructureModel([("a", "b"), ("b", "c")])
+        a_graph = plot_structure(sm)
+
+        default_color = a_graph.get_node("a").attr["color"]
+        test_color = "black"
+
+        assert default_color != test_color
+        assert all(
+            a_graph.get_node(node).attr["color"] == default_color
+            for node in a_graph.nodes()
+        )
+
+        a_graph = plot_structure(sm, node_attributes={"a": {"color": test_color}})
+        assert all(
+            a_graph.get_node(node).attr["color"] == default_color
+            for node in a_graph.nodes()
+            if node != "a"
+        )
+        assert a_graph.get_node("a").attr["color"] == test_color
+
+    def test_edge_attriibutes(self):
+        """specific edge attributes should be set correctly"""
+
+        sm = StructureModel([("a", "b"), ("b", "c")])
+        a_graph = plot_structure(sm)
+
+        default_color = a_graph.get_edge("a", "b").attr["color"]
+        test_color = "black"
+
+        assert default_color != test_color
+        assert all(
+            a_graph.get_edge(u, v).attr["color"] == default_color
+            for u, v in a_graph.edges()
+        )
+
+        a_graph = plot_structure(
+            sm, edge_attributes={("a", "b"): {"color": test_color}}
+        )
+        assert all(
+            a_graph.get_edge(u, v).attr["color"] == default_color
+            for u, v in a_graph.edges()
+            if (u, v) != ("a", "b")
+        )
+        assert a_graph.get_edge("a", "b").attr["color"] == test_color
+
+    def test_graph_attributes(self):
+        """graph attributes should be set correctly"""
+
         sm = StructureModel([("a", "b")])
-        _, ax, _ = plot_structure(sm, show_labels=True, label_color=test_input)
-        assert all(text.get_color() == expected for text in ax.texts)
+
+        a_graph = plot_structure(sm)
+        assert "label" not in a_graph.graph_attr.keys()
+
+        a_graph = plot_structure(sm, graph_attributes={"label": "test"})
+        assert a_graph.graph_attr["label"] == "test"
+
+    def test_prog(self):
+        """Layout should be based on given prog"""
+        sm = StructureModel([("a", "b")])
+        a = plot_structure(sm, prog="neato")
+        b = plot_structure(sm, prog="neato")
+        c = plot_structure(sm, prog="dot")
+
+        assert str(a) == str(b)
+        assert str(a) != str(c)
+
+
+class TestColorGradientString:
+    def test_starts_with_color(self):
+        """string should start with provided colour"""
+        s = color_gradient_string("#ffffff33", "#ffffffaa", 30)
+        assert s.startswith("#ffffff33")
+
+    def test_ends_with_color(self):
+        """string should end with provided colour"""
+        s = color_gradient_string("#ffffff33", "#ffffffaa", 1)
+        assert s.endswith("#ffffffaa;0.50")
+
+    def test_correct_num_steps(self):
+        """string should have the correct number of steps"""
+        for steps in range(1, 10):
+            s = color_gradient_string("#ffffff33", "#ffffffaa", steps)
+            assert s.count(":") == steps
+
+    def test_expected_string(self):
+        """should produce the expected reference example"""
+        s = color_gradient_string("#00000000", "#99999999", 9)
+        expected = ":".join(["#" + str(i) * 8 + ";0.10" for i in range(10)])
+        assert s == expected

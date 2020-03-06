@@ -20,6 +20,7 @@ utils:
       conda activate causalnex_env
       conda install -y virtualenv
       pip install -U pip setuptools wheel
+      sudo apt-get install graphviz
   activate_conda: &activate_conda
     name: Activate conda environment
     command: |

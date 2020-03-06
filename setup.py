@@ -27,6 +27,7 @@
 # limitations under the License.
 
 import re
+from itertools import chain
 from os import path
 
 from setuptools import find_packages, setup
@@ -53,6 +54,14 @@ with open("test_requirements.txt", "r", encoding="utf-8") as f:
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     readme = f.read()
 
+extras_require = {
+    "plot": [
+        "pygraphviz>=1.5, <2.0",
+    ],
+}
+
+extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
+
 setup(
     name=name,
     version=version,
@@ -75,4 +84,5 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
+    extras_require=extras_require,
 )
