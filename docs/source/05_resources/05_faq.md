@@ -1,6 +1,6 @@
 # Frequently asked questions
 
-> *Note:* This documentation is based on `CausalNex 0.4.0`, if you spot anything that is incorrect then please create an [issue](https://github.com/quantumblacklabs/causalnex/issues) or pull request.
+> *Note:* This documentation is based on `CausalNex 0.5.0`, if you spot anything that is incorrect then please create an [issue](https://github.com/quantumblacklabs/causalnex/issues) or pull request.
 
 ## What is CausalNex?
 

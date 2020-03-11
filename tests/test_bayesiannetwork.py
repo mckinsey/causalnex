@@ -171,6 +171,26 @@ class TestFitCPDsMaximumLikelihoodEstimator:
             < 1e-7
         )
 
+    def test_fit_missing_states(self):
+        """test issues/15: should be possible to fit with missing states"""
+
+        sm = StructureModel([("a", "b"), ("c", "b")])
+        bn = BayesianNetwork(sm)
+
+        train = pd.DataFrame(
+            data=[[0, 0, 1], [1, 0, 1], [1, 1, 1]], columns=["a", "b", "c"]
+        )
+        test = pd.DataFrame(
+            data=[[0, 0, 1], [1, 0, 1], [1, 1, 2]], columns=["a", "b", "c"]
+        )
+        data = pd.concat([train, test])
+
+        bn.fit_node_states(data)
+        bn.fit_cpds(train)
+
+        assert bn.cpds["c"].loc[1][0] == 1
+        assert bn.cpds["c"].loc[2][0] == 0
+
 
 class TestFitBayesianEstimator:
     """Test behaviour of fit_cpds using BE"""
@@ -310,6 +330,26 @@ class TestFitBayesianEstimator:
             )
             < 1e-7
         )
+
+    def test_fit_missing_states(self):
+        """test issues/15: should be possible to fit with missing states"""
+
+        sm = StructureModel([("a", "b"), ("c", "b")])
+        bn = BayesianNetwork(sm)
+
+        train = pd.DataFrame(
+            data=[[0, 0, 1], [1, 0, 1], [1, 1, 1]], columns=["a", "b", "c"]
+        )
+        test = pd.DataFrame(
+            data=[[0, 0, 1], [1, 0, 1], [1, 1, 2]], columns=["a", "b", "c"]
+        )
+        data = pd.concat([train, test])
+
+        bn.fit_node_states(data)
+        bn.fit_cpds(train, method="BayesianEstimator", bayes_prior="K2")
+
+        assert bn.cpds["c"].loc[1][0] == 0.8
+        assert bn.cpds["c"].loc[2][0] == 0.2
 
 
 class TestPredictMaximumLikelihoodEstimator:

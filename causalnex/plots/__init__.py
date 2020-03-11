@@ -30,6 +30,18 @@
 ``causalnex.plots`` provides functionality to visualise structure models.
 """
 
-__all__ = ["plot_structure"]
+__all__ = [
+    "plot_structure",
+    "NODE_STYLE",
+    "EDGE_STYLE",
+    "GRAPH_STYLE",
+    "color_gradient_string",
+]
 
-from .plots import plot_structure
+from .plots import (
+    EDGE_STYLE,
+    GRAPH_STYLE,
+    NODE_STYLE,
+    color_gradient_string,
+    plot_structure,
+)

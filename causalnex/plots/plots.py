@@ -26,91 +26,257 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Plot Methods."""
-from typing import Dict, List, Tuple
+import re
+from collections import namedtuple
+from copy import deepcopy
+from typing import Dict, Tuple
 
-import matplotlib.pyplot as plt
 import networkx as nx
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 
 from causalnex.structure.structuremodel import StructureModel
 
 
-def _setup_plot(ax: plt.Axes = None, title: str = None) -> (plt.Figure, plt.Axes):
-    """Initial setup of fig and ax to plot to."""
-
-    if not ax:
-        fig = plt.figure()  # type: plt.Figure
-        ax = fig.add_subplot(1, 1, 1)  # type: plt.Axes
-
-    if title:
-        ax.set_title(title)
-
-    return ax.get_figure(), ax
-
-
 def plot_structure(
-    g: StructureModel,
-    ax: plt.Axes = None,
-    title: str = None,
-    show_labels: bool = True,
-    node_color: str = "r",
-    edge_color: str = "k",
-    label_color: str = "k",
-    node_positions: Dict[str, List[float]] = None,
-) -> Tuple[Figure, Axes, Dict[str, List[float]]]:
-    """Plot the structure model to visualise the relationships between nodes.
+    sm: StructureModel,
+    prog: str = "neato",
+    all_node_attributes: Dict[str, str] = None,
+    all_edge_attributes: Dict[str, str] = None,
+    node_attributes: Dict[str, Dict[str, str]] = None,
+    edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
+    graph_attributes: Dict[str, str] = None,
+):  # pylint: disable=missing-return-type-doc
+    """
+    Plot a `StructureModel` using pygraphviz.
 
-    Args:
-        g: the structure model to plot.
-        ax: if provided then figure will be drawn to this Axes, otherwise a new Axes will be created.
-        title: if provided then the title will be drawn on the plot.
-        show_labels: if True then node labels will be drawn.
-        node_color: a single color format string, for example 'r' or '#ff0000'. default "r".
-        edge_color: a single color format string, for example 'r' or '#ff0000'. default "k".
-        label_color: a single color format string, for example 'r' or '#ff0000'. default "k".
-        node_positions: coordinates for node positions, ie {"node_a": [0, 0]}.
+    Return a pygraphviz graph from a StructureModel. The pygraphgiz graph
+    is decorated and laid out so that it can be plotted easily.
 
-    Returns:
-        fig, ax, node_positions.
+    Default node, edge, and graph attributes are provided to style and layout
+    the plot. These defaults can be overridden for all nodes and edges through
+    `all_node_attributes` and `all_edge_attributes` respectively. Graph
+    attributes can be overridden through `graph_attributes`.
+
+    Styling and layout attributes can be set for individual nodes and edges
+    through `node_attributes` and `edge_attributes` respectively.
+
+    Attributes are set in the following order, overriding any previously set attributes
+    1. default attributes
+    2. all_node_attributes and all_edge_attributes
+    3. node_attributes and edge_attributes
+    4. graph_attributes
+
+    Detailed documentation on available attributes and how they behave is available at:
+    https://www.graphviz.org/doc/info/attrs.html
+
+    Default style attributes provided in CausalNex are:
+
+    - causalnex.plots.NODE_STYLE.NORMAL - default node stying
+    - causalnex.plots.NODE_STYLE.WEAK - intended for less important nodes in structure
+    - causalnex.plots.NODE_STYLE.STRONG - intended for more important nodes in structure
+
+    - causalnex.plots.EDGE_STYLE.NORMAL - default edge stying
+    - causalnex.plots.EDGE_STYLE.wEAK - intended for less important edges in structure
+    - causalnex.plots.EDGE_STYLE.STRONG - intended for more important edges in structure
+
+    - causalnex.plots.GRAPH_STYLE - default graph styling
 
     Example:
     ::
-        >>> # Create a Bayesian Network with a manually defined DAG.
-        >>> from causalnex.structure import StructureModel
-        >>> from causalnex.network import BayesianNetwork
-        >>>
-        >>> sm = StructureModel()
-        >>> sm.add_edges_from([
-        >>>                    ('rush_hour', 'traffic'),
-        >>>                    ('weather', 'traffic')
-        >>>                    ])
         >>> from causalnex.plots import plot_structure
-        >>> plot_structure(sm)
+        >>> plot = plot_structure(structure_model)
+        >>> plot.draw("plot.png")
+
+    Args:
+        sm: structure to plot
+        prog: Name of Graphviz layout program
+        all_node_attributes: attributes to apply to all nodes
+        all_edge_attributes: attrinbutes to apply to all edges
+        node_attributes: attributes to apply to specific nodes
+        edge_attributes: attributes to apply to specific edges
+        graph_attributes: attributes to apply to the graph
+
+    Returns:
+        a styled pygraphgiz graph that can be rendered as an image
     """
 
-    fig, ax = _setup_plot(ax, title)
-
-    if not node_positions:
-        node_positions = nx.circular_layout(g)
-
-    node_color = node_color if node_color else "r"
-    edge_color = edge_color if edge_color else "k"
-    label_color = label_color if label_color else "k"
-
-    nx.draw_networkx_nodes(
-        g, node_positions, ax=ax, nodelist=g.nodes, node_color=node_color
+    # apply node and edge attributes
+    _sm = _add_attributes(
+        sm, all_node_attributes, all_edge_attributes, node_attributes, edge_attributes
     )
 
-    for u, v in g.edges:
-        nx.draw_networkx_edges(
-            g, node_positions, ax=ax, edgelist=[(u, v)], edge_color=edge_color
+    # create plot
+    a_graph = nx.nx_agraph.to_agraph(_sm)
+
+    # apply graph attributes
+    a_graph.graph_attr.update(GRAPH_STYLE)
+    if graph_attributes:
+        a_graph.graph_attr.update(graph_attributes)
+
+    # layout and return
+    a_graph.layout(prog=prog)
+    return a_graph
+
+
+def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
+    """
+    Create a pygraphgiz compatible color gradient string.
+
+    This string can be used when setting colors for nodes,
+    edges, and graph attributes.
+
+    Example:
+    ::
+        >>> node_attributes = {
+        >>>    "color": color_gradient_string(
+        >>>        from_color="#000000", to_color="#FFFFFF", steps=30
+        >>>    )
+        >>> }
+
+    Args:
+        from_color: rgb(a) string of color to start gradient from
+        to_color: rgb(a) string of color to end gradient at
+        steps: number of steps in the gradient string. steps=1 produces from_color:to_color
+        without any intermediary steps
+
+    Returns:
+        a pygraphviz color gradient string
+    """
+
+    color_regex = re.compile(
+        r"(#)([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})*"
+    )
+
+    from_colors = [
+        int(v, 16) if v else 0 for v in color_regex.match(from_color).groups()[1:]
+    ]
+    to_colors = [
+        int(v, 16) if v else 0 for v in color_regex.match(to_color).groups()[1:]
+    ]
+
+    delta_colors = [(t - f) / steps for f, t in zip(from_colors, to_colors)]
+
+    gradient_colors = [
+        "#"
+        + "".join(
+            [format(int(f + d * i), "02x") for f, d in zip(from_colors, delta_colors)]
         )
+        for i in range(steps + 1)
+    ]
 
-    if show_labels:
-        nx.draw_networkx_labels(g, node_positions, ax=ax, font_color=label_color)
+    return ":".join(
+        ["%s;%.2f" % (gradient_colors[i], (1 / (steps + 1))) for i in range(steps + 1)]
+    )
 
-    ax.set_axis_off()
-    plt.tight_layout()
 
-    return fig, ax, node_positions
+def _add_attributes(
+    sm: StructureModel,
+    all_node_attributes: Dict[str, str] = None,
+    all_edge_attributes: Dict[str, str] = None,
+    node_attributes: Dict[str, Dict[str, str]] = None,
+    edge_attributes: Dict[str, Dict[str, str]] = None,
+) -> StructureModel:
+
+    _sm = deepcopy(sm)
+
+    # shift labels to be above nodes
+    for node in _sm.nodes:
+        _sm.nodes[node]["label"] = "%s\n\n " % node
+
+    # apply node attributes (start with default, then apply any custom)
+    _all_node_attr = {**NODE_STYLE.NORMAL}
+    if all_node_attributes:
+        _all_node_attr.update(all_node_attributes)
+
+    for k, v in _all_node_attr.items():
+        nx.set_node_attributes(_sm, v, k)
+
+    # apply edge attributes (start with default, then apply any custom)
+    _all_edge_attr = {**EDGE_STYLE.NORMAL}
+    if all_edge_attributes:
+        _all_edge_attr.update(all_edge_attributes)
+
+    for k, v in _all_edge_attr.items():
+        nx.set_edge_attributes(_sm, v, k)
+
+    # apply specific node and edge attributes
+    if node_attributes:
+        nx.set_node_attributes(_sm, node_attributes)
+    if edge_attributes:
+        nx.set_edge_attributes(_sm, edge_attributes)
+
+    return _sm
+
+
+GRAPH_STYLE = {
+    "bgcolor": "#001521",
+    "fontcolor": "#FFFFFFD9",
+    "fontname": "Helvetica",
+    "splines": True,
+    "overlap": "scale",
+    "scale": 2.0,
+    "pad": "0.8,0.3",
+    "dpi": 300,
+}
+
+
+_style = namedtuple("Style", ["WEAK", "NORMAL", "STRONG"])
+
+NODE_STYLE = _style(
+    {
+        "fontcolor": "#FFFFFF8c",
+        "fontname": "Helvetica",
+        "shape": "circle",
+        "fixedsize": True,
+        "style": "filled",
+        "fillcolor": "#4a90e2d9",
+        "color": "#FFFFFFD9",
+        "width": 0.05,
+        "penwidth": "1",
+        "fontsize": 10,
+    },
+    {
+        "fontcolor": "#FFFFFFD9",
+        "fontname": "Helvetica",
+        "shape": "circle",
+        "fixedsize": True,
+        "style": "filled",
+        "fillcolor": "#4a90e2d9",
+        "color": "#4a90e220",
+        "width": 0.15,
+        "penwidth": "20",
+        "fontsize": 15,
+    },
+    {
+        "fontcolor": "#4a90e2",
+        "fontname": "Helvetica",
+        "shape": "circle",
+        "fixedsize": True,
+        "style": "filled",
+        "fillcolor": "#4a90e2d9",
+        "color": "#4a90e2",
+        "width": 0.15,
+        "penwidth": "4",
+        "fontsize": 20,
+    },
+)
+
+EDGE_STYLE = _style(
+    {
+        "color": color_gradient_string("#FFFFFF33", "#ffffffaa", 30),
+        "arrowhead": "normal",
+        "penwidth": 0.25,
+        "arrowsize": 0.4,
+    },
+    {
+        "color": color_gradient_string("#FFFFFF33", "#ffffffaa", 30),
+        "arrowhead": "normal",
+        "penwidth": 1,
+        "arrowsize": 0.8,
+    },
+    {
+        "color": color_gradient_string("#FFFFFF33", "#1F78B4aa", 30),
+        "arrowhead": "normal",
+        "penwidth": 3,
+        "arrowsize": 1,
+    },
+)
