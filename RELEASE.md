@@ -1,5 +1,11 @@
-# Upcoming release
+# Release 0.5.0
 
+* Plotting now backed by pygraphviz. This allows:
+   * More powerful layout manager
+   * Cleaner fully customisable theme
+   * Out-the-box styling for different node and edge types
+* Can now get subgraphs from StructureModel containing a specific node
+* Bugfix to resolve issue when fitting CPDs with some missing states in data
 * Minor documentation fixes and improvements
 
 # Release 0.4.3:
