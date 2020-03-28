@@ -162,7 +162,10 @@ class InferenceEngine:
 
         if sum(state.values()) != 1.0:
             raise ValueError("The cpd for the provided observation must sum to 1")
-
+          
+        if max(state.values()) > 1.0 or min(state.values())<0:
+            raise ValueError("The cpd for the provided observation must be between 0 and 1")
+            
         if not set(state.keys()) == set(self._cpds_original[observation]):
             raise ValueError(
                 "The cpd states do not match expected states: expected {expected}, found {found}".format(
