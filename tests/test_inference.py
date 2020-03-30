@@ -175,6 +175,22 @@ class TestInferenceEngineIdx:
         ):
             ie.do_intervention("d", {0: 0.7, 1: 0.4})
 
+    def test_do_expects_all_state_probabilities_within_0_and_1(
+        self, train_model, train_data_idx
+    ):
+        """Do should accept only state probabilities where the full distribution is provided"""
+
+        bn = BayesianNetwork(train_model)
+        bn.fit_node_states(train_data_idx).fit_cpds(train_data_idx)
+
+        ie = InferenceEngine(bn)
+
+        with pytest.raises(
+            ValueError,
+            match="The cpd for the provided observation must be between 0 and 1",
+        ):
+            ie.do_intervention("d", {0: -1.0, 1: 2.0})
+
     def test_do_expects_all_states_have_a_probability(
         self, train_model, train_data_idx
     ):
