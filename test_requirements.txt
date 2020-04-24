@@ -1,4 +1,5 @@
 -r requirements.txt
+black>=19.10b0
 flake8>=3.5,<4.0
 isort>=4.3.16, <5.0
 mock>=2.0.0,<3.0
