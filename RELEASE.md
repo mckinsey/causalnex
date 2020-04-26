@@ -1,3 +1,8 @@
+# Release future
+
+* unpinned scikit version
+* classification report now returns dict in line with scikit-learn
+
 # Release 0.5.0
 
 * Plotting now backed by pygraphviz. This allows:
