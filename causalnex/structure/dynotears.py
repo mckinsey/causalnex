@@ -86,10 +86,14 @@ def from_numpy_dynamic(
     p_orders = Xlags.shape[1] // d_vars
 
     bnds_w = 2 * [
-        (0, 0) if i == j
-        else (0, 0) if tabu_edges is not None and (0, i, j) in tabu_edges
-        else (0, 0) if tabu_parent_nodes is not None and i in tabu_parent_nodes
-        else (0, 0) if tabu_child_nodes is not None and j in tabu_child_nodes
+        (0, 0)
+        if i == j
+        else (0, 0)
+        if tabu_edges is not None and (0, i, j) in tabu_edges
+        else (0, 0)
+        if tabu_parent_nodes is not None and i in tabu_parent_nodes
+        else (0, 0)
+        if tabu_child_nodes is not None and j in tabu_child_nodes
         else (0, None)
         for i in range(d_vars)
         for j in range(d_vars)
@@ -98,19 +102,59 @@ def from_numpy_dynamic(
     bnds_a = []
     for k in range(1, p_orders + 1):
         bnds_a.extend(
-            2 * [
-                (0, 0) if tabu_edges is not None and (k, i, j) in tabu_edges
-                else (0, 0) if tabu_parent_nodes is not None and i in tabu_parent_nodes
-                else (0, 0) if tabu_child_nodes is not None and j in tabu_child_nodes
-                else (0, 1.0 - 0.0001) if i == j
+            2
+            * [
+                (0, 0)
+                if tabu_edges is not None and (k, i, j) in tabu_edges
+                else (0, 0)
+                if tabu_parent_nodes is not None and i in tabu_parent_nodes
+                else (0, 0)
+                if tabu_child_nodes is not None and j in tabu_child_nodes
+                else (0, 1.0 - 0.0001)
+                if i == j
                 else (0, None)
                 for i in range(d_vars)
                 for j in range(d_vars)
-            ])
+            ]
+        )
 
     bnds = bnds_w + bnds_a
-    res = _learn_dynamic_structure(X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol, w_threshold)
+    res = _learn_dynamic_structure(
+        X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol, w_threshold
+    )
     return res
+
+
+def _reshape_wa(
+    wa_vec: np.ndarray, d_vars: int, p_orders: int
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Helper function for `_learn_dynamic_structure`. Transform adjacency vector to matrix form
+
+    Args:
+        wa_vec (np.ndarray): current adjacency vector with intra- and inter-slice weights
+        d_vars (int): number of variables in the model
+        p_orders (int): number of past indexes we to use
+    Returns:
+        intra- and inter-slice adjacency matrices
+    """
+
+    w_tilde = wa_vec.reshape([2 * (p_orders + 1) * d_vars, d_vars])
+    w_plus = w_tilde[:d_vars, :]
+    w_minus = w_tilde[d_vars : 2 * d_vars, :]
+    w_mat = w_plus - w_minus
+    a_plus = (
+        w_tilde[2 * d_vars :]
+        .reshape(2 * p_orders, d_vars ** 2)[::2]
+        .reshape(d_vars * p_orders, d_vars)
+    )
+    a_minus = (
+        w_tilde[2 * d_vars :]
+        .reshape(2 * p_orders, d_vars ** 2)[1::2]
+        .reshape(d_vars * p_orders, d_vars)
+    )
+    a_mat = a_plus - a_minus
+    return w_mat, a_mat
 
 
 def _learn_dynamic_structure(
@@ -147,7 +191,7 @@ def _learn_dynamic_structure(
         series at time t.
         Xlags (np.ndarray): shifted data of X with lag orders stacking horizontally. Xlags=[shift(X,1)|...|shift(X,p)]
         bnds: Box constraints of L-BFGS-B to ban self-loops in W, enforce non-negativity of w_plus, w_minus, a_plus,
-    a_minus, and help with stationarity in A
+        a_minus, and help with stationarity in A
         lambda_w (float): l1 regularization parameter of intra-weights W
         lambda_a (float): l1 regularization parameter of inter-weights A
         max_iter (int): max number of dual ascent steps during optimisation
@@ -178,34 +222,6 @@ def _learn_dynamic_structure(
     n, d_vars = X.shape
     p_orders = Xlags.shape[1] // d_vars
 
-    def _reshape_wa(wa_vec: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Transform adjacency vector to matrix form
-
-        Args:
-            wa_vec (np.ndarray): current adjacency vector with intra- and inter-slice weights
-
-        Returns:
-            intra- and inter-slice adjacency matrices
-        """
-
-        w_tilde = wa_vec.reshape([2 * (p_orders + 1) * d_vars, d_vars])
-        w_plus = w_tilde[:d_vars, :]
-        w_minus = w_tilde[d_vars : 2 * d_vars, :]
-        w_mat = w_plus - w_minus
-        a_plus = (
-            w_tilde[2 * d_vars :]
-            .reshape(2 * p_orders, d_vars ** 2)[::2]
-            .reshape(d_vars * p_orders, d_vars)
-        )
-        a_minus = (
-            w_tilde[2 * d_vars :]
-            .reshape(2 * p_orders, d_vars ** 2)[1::2]
-            .reshape(d_vars * p_orders, d_vars)
-        )
-        a_mat = a_plus - a_minus
-        return w_mat, a_mat
-
     def _h(wa_vec: np.ndarray) -> float:
         """
         Constraint function of the dynotears
@@ -217,7 +233,7 @@ def _learn_dynamic_structure(
             float: DAGness of the intra-slice adjacency matrix W (0 == DAG, >0 == cyclic)
         """
 
-        _w_mat, _ = _reshape_wa(wa_vec)
+        _w_mat, _ = _reshape_wa(wa_vec, d_vars, p_orders)
         return np.trace(slin.expm(_w_mat * _w_mat)) - d_vars
 
     def _func(wa_vec: np.ndarray) -> float:
@@ -231,7 +247,7 @@ def _learn_dynamic_structure(
             float: objective
         """
 
-        _w_mat, _a_mat = _reshape_wa(wa_vec)
+        _w_mat, _a_mat = _reshape_wa(wa_vec, d_vars, p_orders)
         loss = (
             0.5
             / n
@@ -258,7 +274,7 @@ def _learn_dynamic_structure(
             gradient vector
         """
 
-        _w_mat, _a_mat = _reshape_wa(wa_vec)
+        _w_mat, _a_mat = _reshape_wa(wa_vec, d_vars, p_orders)
         e_mat = slin.expm(_w_mat * _w_mat)
         loss_grad_w = (
             -1.0
@@ -307,4 +323,4 @@ def _learn_dynamic_structure(
         if h_value > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
     wa_est[np.abs(wa_est) < w_threshold] = 0
-    return _reshape_wa(wa_est)
+    return _reshape_wa(wa_est, d_vars, p_orders)
