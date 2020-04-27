@@ -1,6 +1,6 @@
-# Release future
+# Release 0.6.0
 
-* unpinned scikit version
+* support for newer versions of scikit-learn
 * classification report now returns dict in line with scikit-learn
 
 # Release 0.5.0
