@@ -44,6 +44,7 @@ from causalnex.structure import StructureModel
 def from_numpy_dynamic(  # pylint: disable=R0913
     X: np.ndarray,
     Xlags: np.ndarray,
+    bnds: List[Tuple[float, float]],
     lambda_w: float = 0.1,
     lambda_a: float = 0.1,
     max_iter: int = 100,
