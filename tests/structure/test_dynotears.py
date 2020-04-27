@@ -31,7 +31,7 @@ import pytest
 from causalnex.structure.dynotears import from_numpy_dynamic
 
 
-class TestLearnDynotears:
+class TestFromNumpyDynotears:
     """Test behaviour of the learn_dynamic_structure of dynotear"""
 
     def test_empty_data_raises_error(self):
@@ -111,7 +111,7 @@ class TestLearnDynotears:
         self, train_data_num_temporal,
     ):
         """
-        Given a small data set, the learned weights should be deterministic and within the expected range
+        If tabu relationships are set, the corresponding edges must not exist
         """
 
         w, a = from_numpy_dynamic(
