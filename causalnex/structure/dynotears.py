@@ -38,14 +38,90 @@ import numpy as np
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
+from causalnex.structure import StructureModel
 
-def learn_dynamic_structure(
+
+def from_numpy_dynamic(
     X: np.ndarray,
     Xlags: np.ndarray,
     lambda_w: float = 0.1,
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
+    w_threshold: float = 0.0,
+    tabu_edges: List[Tuple[int, int, int]] = None,
+    tabu_parent_nodes: List[int] = None,
+    tabu_child_nodes: List[int] = None,
+) -> StructureModel:
+    """
+    Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between variables in
+    data present in time series data present in numpy arrays.
+
+    The optimisation is to minimise a score function F(W, A) over the graph's contemporaneous (intra-slice) weighted
+    adjacency matrix, W, and lagged (inter-slice) weighted adjacency matrix, A, subject to the a constraint function
+    h(W), where h_value(W) == 0 characterises an acyclic graph. h(W) > 0 is a continuous, differentiable function that
+    encapsulated how acyclic the graph is (less = more acyclic).
+
+    Args:
+        X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each row is x(m,t), the mth time
+        series at time t.
+        Xlags (np.ndarray): shifted data of X with lag orders stacking horizontally. Xlags=[shift(X,1)|...|shift(X,p)]
+        lambda_w (float): l1 regularization parameter of intra-weights W
+        lambda_a (float): l1 regularization parameter of inter-weights A
+        max_iter: max number of dual ascent steps during optimisation
+        h_tol (float): exit if h(W) < h_tol (as opposed to strict definition of 0)
+        w_threshold: fixed threshold for absolute edge weights.
+        tabu_edges: list of edges(lag, from, to) not to be included in the graph. `lag == 0` implies that the edge is
+        forbidden in the INTRA graph (W), while lag > 0 implies an INTER weight equal zero.
+        tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+        tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+    Returns:
+        W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
+        A (np.ndarray): d x pd estimated weighted adjacency matrix of inter slices
+
+    Raises:
+        ValueError: If X or Xlags does not contain data, or dimensions of X and Xlags do not conform
+    """
+    _, d_vars = X.shape
+    p_orders = Xlags.shape[1] // d_vars
+
+    bnds_w = 2 * [
+        (0, 0) if i == j
+        else (0, 0) if tabu_edges is not None and (0, i, j) in tabu_edges
+        else (0, 0) if tabu_parent_nodes is not None and i in tabu_parent_nodes
+        else (0, 0) if tabu_child_nodes is not None and j in tabu_child_nodes
+        else (0, None)
+        for i in range(d_vars)
+        for j in range(d_vars)
+    ]
+
+    bnds_a = []
+    for k in range(1, p_orders + 1):
+        bnds_a.extend(
+            2 * [
+                (0, 0) if tabu_edges is not None and (k, i, j) in tabu_edges
+                else (0, 0) if tabu_parent_nodes is not None and i in tabu_parent_nodes
+                else (0, 0) if tabu_child_nodes is not None and j in tabu_child_nodes
+                else (0, 1.0 - 0.0001) if i == j
+                else (0, None)
+                for i in range(d_vars)
+                for j in range(d_vars)
+            ])
+
+    bnds = bnds_w + bnds_a
+    res = _learn_dynamic_structure(X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol, w_threshold)
+    return res
+
+
+def _learn_dynamic_structure(
+    X: np.ndarray,
+    Xlags: np.ndarray,
+    bnds: List[Tuple[float, float]],
+    lambda_w: float = 0.1,
+    lambda_a: float = 0.1,
+    max_iter: int = 100,
+    h_tol: float = 1e-8,
+    w_threshold: float = 0.0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between data variables.
@@ -70,17 +146,20 @@ def learn_dynamic_structure(
         X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each row is x(m,t), the mth time
         series at time t.
         Xlags (np.ndarray): shifted data of X with lag orders stacking horizontally. Xlags=[shift(X,1)|...|shift(X,p)]
+        bnds: Box constraints of L-BFGS-B to ban self-loops in W, enforce non-negativity of w_plus, w_minus, a_plus,
+    a_minus, and help with stationarity in A
         lambda_w (float): l1 regularization parameter of intra-weights W
         lambda_a (float): l1 regularization parameter of inter-weights A
         max_iter (int): max number of dual ascent steps during optimisation
         h_tol (float): exit if h(W) < h_tol (as opposed to strict definition of 0)
+        w_threshold: fixed threshold for absolute edge weights.
 
     Returns:
         W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
         A (np.ndarray): d x pd estimated weighted adjacency matrix of inter slices
 
     Raises:
-        ValueError: If X or Xlags does not contain data, or dimentions of X and Xlags do not conform
+        ValueError: If X or Xlags does not contain data, or dimensions of X and Xlags do not conform
     """
     # pylint: disable=R0914
     if X.size == 0:
@@ -205,25 +284,6 @@ def learn_dynamic_structure(
         ).flatten() + lambda_a * np.ones(2 * p_orders * d_vars ** 2)
         return np.append(grad_vec_w, grad_vec_a, axis=0)
 
-    def _bnds() -> List[Tuple[Optional[float], Optional[float]]]:
-        """
-        Box constraints of L-BFGS-B to ban self-loops in W, enforce non-negativity of w_plus, w_minus, a_plus,
-        a_minus, and help with stationarity in A
-
-        Returns:
-            List[int]: lower and upper bounds of W and A
-        """
-
-        bnds_w = 2 * [
-            (0, 0) if i == j else (0, None)
-            for i in range(d_vars)
-            for j in range(d_vars)
-        ]
-        bnds_a = (
-            2 * p_orders * [(0, None) for i in range(d_vars) for j in range(d_vars)]
-        )
-        return bnds_w + bnds_a
-
     # initialise matrix, weights and constraints
     wa_est = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
     wa_new = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
@@ -232,7 +292,7 @@ def learn_dynamic_structure(
     for n_iter in range(max_iter):
         while rho < 1e20:
             wa_new = sopt.minimize(
-                _func, wa_est, method="L-BFGS-B", jac=_grad, bounds=_bnds()
+                _func, wa_est, method="L-BFGS-B", jac=_grad, bounds=bnds
             ).x
             h_new = _h(wa_new)
             if h_new > 0.25 * h_value:
@@ -246,5 +306,5 @@ def learn_dynamic_structure(
             break
         if h_value > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
-
+    wa_est[np.abs(wa_est) < w_threshold] = 0
     return _reshape_wa(wa_est)

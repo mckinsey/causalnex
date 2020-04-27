@@ -28,7 +28,7 @@
 import numpy as np
 import pytest
 
-from causalnex.structure.dynotears import learn_dynamic_structure
+from causalnex.structure.dynotears import from_numpy_dynamic
 
 
 class TestLearnDynotears:
@@ -44,11 +44,11 @@ class TestLearnDynotears:
         with pytest.raises(
             ValueError, match="Input data X is empty, cannot learn any structure"
         ):
-            learn_dynamic_structure(np.empty([0, 5]), np.zeros([5, 5]))
+            from_numpy_dynamic(np.empty([0, 5]), np.zeros([5, 5]))
         with pytest.raises(
             ValueError, match="Input data Xlags is empty, cannot learn any structure"
         ):
-            learn_dynamic_structure(np.zeros([5, 5]), np.empty([0, 5]))
+            from_numpy_dynamic(np.zeros([5, 5]), np.empty([0, 5]))
 
     def test_nrows_data_mismatch_raises_error(self):
         """
@@ -58,7 +58,7 @@ class TestLearnDynotears:
         with pytest.raises(
             ValueError, match="Input data X and Xlags must have the same number of rows"
         ):
-            learn_dynamic_structure(np.zeros([5, 5]), np.zeros([6, 5]))
+            from_numpy_dynamic(np.zeros([5, 5]), np.zeros([6, 5]))
 
     def test_ncols_lagged_data_not_multiple_raises_error(self):
         """
@@ -69,7 +69,7 @@ class TestLearnDynotears:
             ValueError,
             match="Number of columns of Xlags must be a multiple of number of columns of X",
         ):
-            learn_dynamic_structure(np.zeros([5, 5]), np.zeros([5, 6]))
+            from_numpy_dynamic(np.zeros([5, 5]), np.zeros([5, 6]))
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_num_temporal):
         """
@@ -79,7 +79,7 @@ class TestLearnDynotears:
         with pytest.warns(
             UserWarning, match="Failed to converge. Consider increasing max_iter."
         ):
-            learn_dynamic_structure(
+            from_numpy_dynamic(
                 train_data_num_temporal[1:], train_data_num_temporal[:-1], max_iter=1
             )
 
@@ -93,14 +93,55 @@ class TestLearnDynotears:
         Given a small data set, the learned weights should be deterministic and within the expected range
         """
 
-        w_est, a_est = learn_dynamic_structure(
+        w_est, a_est = from_numpy_dynamic(
             train_data_num_temporal[1:], train_data_num_temporal[:-1]
         )
         w_model = train_model_temporal_intra
         a_model = train_model_temporal_inter
-        assert np.sum((abs(w_est) > 0.5) & (abs(w_est) < 2)) == np.sum(
-            (abs(w_model) > 0.5) & (abs(w_model) < 2)
+        assert np.all(
+            ((abs(w_est) > 0.5) & (abs(w_est) < 2))
+            == ((abs(w_model) > 0.5) & (abs(w_model) < 2))
         )
-        assert np.sum((abs(a_est) > 0.3) & (abs(a_est) < 0.5)) == np.sum(
-            (abs(a_model) > 0.3) & (abs(a_model) < 0.5)
+        assert np.all(
+            ((abs(a_est) > 0.3) & (abs(a_est) < 0.5))
+            == ((abs(a_model) > 0.3) & (abs(a_model) < 0.5))
         )
+
+    def test_tabu_children_edge_parent(
+        self, train_data_num_temporal,
+    ):
+        """
+        Given a small data set, the learned weights should be deterministic and within the expected range
+        """
+
+        w, a = from_numpy_dynamic(
+            train_data_num_temporal[1:],
+            train_data_num_temporal[:-1],
+            tabu_parent_nodes=[1],
+        )
+        assert np.all(w[1, :] == 0)
+        assert np.all(a[1, :] == 0)
+        w, a = from_numpy_dynamic(
+            train_data_num_temporal[1:],
+            train_data_num_temporal[:-1],
+            tabu_child_nodes=[4],
+        )
+        assert np.all(w[:, 4] == 0)
+        assert np.all(a[:, 4] == 0)
+        w, a = from_numpy_dynamic(
+            train_data_num_temporal[1:],
+            train_data_num_temporal[:-1],
+            tabu_child_nodes=[1],
+        )
+        assert np.all(w[:, 1] == 0)
+        assert np.all(a[:, 1] == 0)
+        w, a = from_numpy_dynamic(
+            train_data_num_temporal[1:],
+            train_data_num_temporal[:-1],
+            tabu_edges=[(0, 2, 4), (0, 0, 3), (1, 1, 4), (1, 3, 4)],
+        )
+
+        assert w[0, 1] == 0
+        assert w[2, 4] == 0
+        assert a[1, 4] == 0
+        assert a[3, 4] == 0
