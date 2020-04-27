@@ -27,7 +27,7 @@
 # limitations under the License.
 """Evaluation metrics for causal models."""
 
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 from sklearn import metrics
@@ -112,9 +112,7 @@ def roc_auc(
     return roc, auc
 
 
-def classification_report(
-    bn: BayesianNetwork, data: pd.DataFrame, node: str
-) -> pd.DataFrame:
+def classification_report(bn: BayesianNetwork, data: pd.DataFrame, node: str) -> Dict:
     """
     Build a report showing the main classification metrics.
 
@@ -160,7 +158,7 @@ def classification_report(
         >>>                         'traffic': ['light', 'heavy', 'heavy', 'light']
         >>>                         })
         >>> from causalnex.evaluation import classification_report
-        >>> classification_report(bn, test_data, "traffic").to_dict()
+        >>> classification_report(bn, test_data, "traffic")
         {'precision': {
             'macro avg': 0.8333333333333333, 'micro avg': 0.75,
             'traffic_heavy': 0.6666666666666666,
@@ -204,4 +202,4 @@ def classification_report(
         output_dict=True,
     )
 
-    return pd.DataFrame.from_dict(report, orient="index")
+    return report
