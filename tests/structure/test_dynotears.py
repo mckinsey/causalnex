@@ -83,65 +83,67 @@ class TestFromNumpyDynotears:
                 train_data_num_temporal[1:], train_data_num_temporal[:-1], max_iter=1
             )
 
-    def test_expected_structure_learned(
-        self,
-        train_data_num_temporal,
-        train_model_temporal_intra,
-        train_model_temporal_inter,
-    ):
+    def test_expected_structure_learned(self, train_data_num_temporal):
         """
         Given a small data set, the learned weights should be deterministic and within the expected range
         """
 
-        w_est, a_est = from_numpy_dynamic(
-            train_data_num_temporal[1:], train_data_num_temporal[:-1]
+        sm = from_numpy_dynamic(
+            train_data_num_temporal[1:], train_data_num_temporal[:-1], w_threshold=0.3
         )
-        w_model = train_model_temporal_intra
-        a_model = train_model_temporal_inter
-        assert np.all(
-            ((abs(w_est) > 0.5) & (abs(w_est) < 2))
-            == ((abs(w_model) > 0.5) & (abs(w_model) < 2))
-        )
-        assert np.all(
-            ((abs(a_est) > 0.3) & (abs(a_est) < 0.5))
-            == ((abs(a_model) > 0.3) & (abs(a_model) < 0.5))
-        )
+        assert list(sm.edges) == [
+            ("0_lag0", "3_lag0"),
+            ("1_lag0", "4_lag0"),
+            ("3_lag0", "1_lag0"),
+            ("1_lag1", "4_lag0"),
+        ]
 
-    def test_tabu_children_edge_parent(
-        self, train_data_num_temporal,
-    ):
+    def test_tabu_parents(self, train_data_num_temporal):
         """
         If tabu relationships are set, the corresponding edges must not exist
         """
 
-        w, a = from_numpy_dynamic(
+        sm = from_numpy_dynamic(
             train_data_num_temporal[1:],
             train_data_num_temporal[:-1],
             tabu_parent_nodes=[1],
         )
-        assert np.all(w[1, :] == 0)
-        assert np.all(a[1, :] == 0)
-        w, a = from_numpy_dynamic(
+        assert not ([el for el in sm.edges if el[0] == "1_lag0"])
+        assert not (
+            [el for el in sm.edges if isinstance(el[0], str) and ("1_lag" in el[0])]
+        )
+
+    def test_tabu_children(self, train_data_num_temporal):
+        """
+        If tabu relationships are set, the corresponding edges must not exist
+        """
+        sm = from_numpy_dynamic(
             train_data_num_temporal[1:],
             train_data_num_temporal[:-1],
             tabu_child_nodes=[4],
         )
-        assert np.all(w[:, 4] == 0)
-        assert np.all(a[:, 4] == 0)
-        w, a = from_numpy_dynamic(
+        assert not ([el for el in sm.edges if el[1] == 4])
+        assert not (
+            [el for el in sm.edges if isinstance(el[1], str) and ("_lag4" in el[1])]
+        )
+
+        sm = from_numpy_dynamic(
             train_data_num_temporal[1:],
             train_data_num_temporal[:-1],
             tabu_child_nodes=[1],
         )
-        assert np.all(w[:, 1] == 0)
-        assert np.all(a[:, 1] == 0)
-        w, a = from_numpy_dynamic(
+        assert not ([el for el in sm.edges if el[1] == 1])
+        assert not (
+            [el for el in sm.edges if isinstance(el[1], str) and ("_lag1" in el[1])]
+        )
+
+    def test_tabu_edges(self, train_data_num_temporal):
+        sm = from_numpy_dynamic(
             train_data_num_temporal[1:],
             train_data_num_temporal[:-1],
             tabu_edges=[(0, 2, 4), (0, 0, 3), (1, 1, 4), (1, 3, 4)],
         )
-
-        assert w[0, 1] == 0
-        assert w[2, 4] == 0
-        assert a[1, 4] == 0
-        assert a[3, 4] == 0
+        assert ("2_lag0", "4_lag0") not in sm.edges
+        assert ("0_lag0", "3_lag0") not in sm.edges
+        assert ("1_lag1", "4_lag0") not in sm.edges
+        assert ("3_lag1", "4_lag0") not in sm.edges

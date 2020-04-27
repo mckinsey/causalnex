@@ -41,7 +41,7 @@ import scipy.optimize as sopt
 from causalnex.structure import StructureModel
 
 
-def from_numpy_dynamic(
+def from_numpy_dynamic(  # pylint: disable=R0913
     X: np.ndarray,
     Xlags: np.ndarray,
     lambda_w: float = 0.1,
@@ -76,8 +76,8 @@ def from_numpy_dynamic(
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
     Returns:
-        W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
-        A (np.ndarray): d x pd estimated weighted adjacency matrix of inter slices
+        StructureModel containing the intra-slice nodes (as a string `"{var}_lag0"`, where `var` is the index in the
+        input) and inter-slice nodes (`"{var}_lag{l}"`, where `l` denotes the number of timestamps behind).
 
     Raises:
         ValueError: If X or Xlags does not contain data, or dimensions of X and Xlags do not conform
@@ -119,10 +119,46 @@ def from_numpy_dynamic(
         )
 
     bnds = bnds_w + bnds_a
-    res = _learn_dynamic_structure(
+    w_est, a_est = _learn_dynamic_structure(
         X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol, w_threshold
     )
-    return res
+    sm = _matrices_to_structure_model(w_est, a_est)
+    return sm
+
+
+def _matrices_to_structure_model(
+    w_est: np.ndarray, a_est: np.ndarray
+) -> StructureModel:
+    """
+    Converts the matrices output by dynotears into a StructureModel
+    We use the following convention:
+    - {var}_lag{l} where l is the lag value (i.e. from how many previous timestamps the edge is coming
+    - if we deal with a intra_slice_node, `l == 0`
+    Args:
+        w_est: Intra-slice weight matrix
+        a_est: Inter-slice matrix
+
+    Returns:
+        StructureModel representing the structure learnt
+
+    """
+    sm = StructureModel()
+    lag_cols = [
+        "{var}_lag{l_val}".format(var=var, l_val=l)
+        for l in range(1 + (a_est.shape[0] // a_est.shape[1]))
+        for var in range(a_est.shape[1])
+    ]
+    sm.add_nodes_from(lag_cols)
+    for i in range(w_est.shape[0]):
+        for j in range(w_est.shape[1]):
+            if w_est[i, j] != 0:
+                sm.add_edge(lag_cols[i], lag_cols[j])
+
+    for i in range(a_est.shape[0]):
+        for j in range(a_est.shape[1]):
+            if a_est[i, j] != 0:
+                sm.add_edge(lag_cols[i + w_est.shape[0]], lag_cols[j])
+    return sm
 
 
 def _reshape_wa(
