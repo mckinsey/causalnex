@@ -32,7 +32,7 @@ dataset.
 
 import logging
 import warnings
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import scipy.linalg as slin
@@ -46,7 +46,7 @@ def learn_dynamic_structure(
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
-) -> (np.ndarray, np.ndarray):
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between data variables.
 
@@ -194,7 +194,7 @@ def learn_dynamic_structure(
         ).flatten() + lambda_a * np.ones(2 * p_orders * d_vars ** 2)
         return np.append(grad_vec_w, grad_vec_a, axis=0)
 
-    def _bnds() -> List[int]:
+    def _bnds() -> List[Tuple[Optional[float], Optional[float]]]:
         """
         Box constraints of L-BFGS-B to ban self-loops in W, enforce non-negativity of w_plus, w_minus, a_plus,
         a_minus, and help with stationarity in A
@@ -209,13 +209,7 @@ def learn_dynamic_structure(
             for j in range(d_vars)
         ]
         bnds_a = (
-            2
-            * p_orders
-            * [
-                (0, 1.0 - 0.0001) if i == j else (0, None)
-                for i in range(d_vars)
-                for j in range(d_vars)
-            ]
+            2 * p_orders * [(0, None) for i in range(d_vars) for j in range(d_vars)]
         )
         return bnds_w + bnds_a
 
