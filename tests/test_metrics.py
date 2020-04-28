@@ -362,13 +362,6 @@ class TestROCAUCStates:
 class TestClassificationReport:
     """Test behaviour of classification_report"""
 
-    def test_contains_expected_columns(self, test_data_c_discrete, bn):
-        """Check that the report contains all of the required data"""
-
-        report = classification_report(bn, test_data_c_discrete, "c")
-
-        assert set(report.columns) == {"recall", "precision", "support", "f1-score"}
-
     def test_contains_all_class_data(
         self, test_data_c_discrete, bn, test_data_c_likelihood
     ):
@@ -376,7 +369,7 @@ class TestClassificationReport:
 
         report = classification_report(bn, test_data_c_discrete, "c")
 
-        assert (label in report.index for label in test_data_c_likelihood.columns)
+        assert (label in report for label in test_data_c_likelihood.columns)
 
     def test_report_ignores_unrequired_columns_in_data(
         self, train_data_idx, train_data_discrete, test_data_c_discrete
@@ -396,5 +389,6 @@ class TestClassificationReport:
         """Classification Report on a node with no parents should reflect that predictions are on modal state"""
 
         report = classification_report(bn, train_data_discrete, "d")
-        assert report.loc["d_False", "recall"] == 1  # always predicts most likely class
-        assert report.loc["d_True", "recall"] == 0
+
+        assert report["d_False"]["recall"] == 1  # always predicts most likely class
+        assert report["d_True"]["recall"] == 0
