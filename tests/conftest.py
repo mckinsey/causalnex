@@ -799,7 +799,7 @@ def data_dynotears_p2() -> Dict[str, np.ndarray]:
 def data_dynotears_p3() -> Dict[str, np.ndarray]:
     """
     Training data for testing Dynamic Bayesian Networks. Return a time series with 50 time points, with 5 columns
-    This data was simulated with te following configurations
+    This data was simulated with te following configurations.
     Configurations:
         - data points 50,
         - num. variables: 5,
