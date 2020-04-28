@@ -32,7 +32,7 @@ dataset.
 
 import logging
 import warnings
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import scipy.linalg as slin
@@ -55,7 +55,7 @@ def from_numpy_dynamic(  # pylint: disable=R0913
 ) -> StructureModel:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between variables in
-    data present in time series data present in numpy arrays.
+    data. The input data is time series data present in numpy arrays X and Xlags.
 
     The optimisation is to minimise a score function F(W, A) over the graph's contemporaneous (intra-slice) weighted
     adjacency matrix, W, and lagged (inter-slice) weighted adjacency matrix, A, subject to the a constraint function
@@ -63,8 +63,8 @@ def from_numpy_dynamic(  # pylint: disable=R0913
     encapsulated how acyclic the graph is (less = more acyclic).
 
     Args:
-        X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each row is x(m,t), the mth time
-        series at time t.
+        X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each column represents one variable,
+        and each row represents x(m,t) i.e. the mth time series at time t.
         Xlags (np.ndarray): shifted data of X with lag orders stacking horizontally. Xlags=[shift(X,1)|...|shift(X,p)]
         lambda_w (float): l1 regularization parameter of intra-weights W
         lambda_a (float): l1 regularization parameter of inter-weights A
@@ -76,8 +76,8 @@ def from_numpy_dynamic(  # pylint: disable=R0913
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
     Returns:
-        StructureModel containing the intra-slice nodes (as a string `"{var}_lag0"`, where `var` is the index in the
-        input) and inter-slice nodes (`"{var}_lag{l}"`, where `l` denotes the number of timestamps behind).
+        W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
+        A (np.ndarray): d x pd estimated weighted adjacency matrix of inter slices
 
     Raises:
         ValueError: If X or Xlags does not contain data, or dimensions of X and Xlags do not conform
@@ -110,8 +110,6 @@ def from_numpy_dynamic(  # pylint: disable=R0913
                 if tabu_parent_nodes is not None and i in tabu_parent_nodes
                 else (0, 0)
                 if tabu_child_nodes is not None and j in tabu_child_nodes
-                else (0, 1.0 - 0.0001)
-                if i == j
                 else (0, None)
                 for i in range(d_vars)
                 for j in range(d_vars)
@@ -120,8 +118,11 @@ def from_numpy_dynamic(  # pylint: disable=R0913
 
     bnds = bnds_w + bnds_a
     w_est, a_est = _learn_dynamic_structure(
-        X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol, w_threshold
+        X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol
     )
+
+    w_est[np.abs(w_est) < w_threshold] = 0
+    a_est[np.abs(a_est) < w_threshold] = 0
     sm = _matrices_to_structure_model(w_est, a_est)
     return sm
 
@@ -130,7 +131,7 @@ def _matrices_to_structure_model(
     w_est: np.ndarray, a_est: np.ndarray
 ) -> StructureModel:
     """
-    Converts the matrices output by dynotears into a StructureModel
+    Converts the matrices output by dynotears (W and A) into a StructureModel
     We use the following convention:
     - {var}_lag{l} where l is the lag value (i.e. from how many previous timestamps the edge is coming
     - if we deal with a intra_slice_node, `l == 0`
@@ -152,12 +153,14 @@ def _matrices_to_structure_model(
     for i in range(w_est.shape[0]):
         for j in range(w_est.shape[1]):
             if w_est[i, j] != 0:
-                sm.add_edge(lag_cols[i], lag_cols[j])
+                sm.add_edge(lag_cols[i], lag_cols[j], weight=w_est[i, j])
 
     for i in range(a_est.shape[0]):
         for j in range(a_est.shape[1]):
             if a_est[i, j] != 0:
-                sm.add_edge(lag_cols[i + w_est.shape[0]], lag_cols[j])
+                sm.add_edge(
+                    lag_cols[i + w_est.shape[0]], lag_cols[j], weight=a_est[i, j]
+                )
     return sm
 
 
@@ -223,8 +226,8 @@ def _learn_dynamic_structure(
     }
 
     Args:
-        X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each row is x(m,t), the mth time
-        series at time t.
+        X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each column represents one variable,
+        and each row represents x(m,t) i.e. the mth time series at time t.
         Xlags (np.ndarray): shifted data of X with lag orders stacking horizontally. Xlags=[shift(X,1)|...|shift(X,p)]
         bnds: Box constraints of L-BFGS-B to ban self-loops in W, enforce non-negativity of w_plus, w_minus, a_plus,
         a_minus, and help with stationarity in A
