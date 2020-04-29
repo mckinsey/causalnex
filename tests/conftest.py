@@ -226,8 +226,6 @@ def train_data_discrete(train_data) -> pd.DataFrame:
     return df
 
 
-# Ignoring limit of 1000 lines per module, since this module contains test sets.
-# pylint: disable=C0302
 @pytest.fixture
 def train_data_idx(train_data) -> pd.DataFrame:
     """
