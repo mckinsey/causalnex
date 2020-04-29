@@ -220,7 +220,6 @@ def _learn_dynamic_structure(
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
-    w_threshold: float = 0.0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between data variables.
@@ -251,7 +250,6 @@ def _learn_dynamic_structure(
         lambda_a (float): l1 regularization parameter of inter-weights A
         max_iter (int): max number of dual ascent steps during optimisation
         h_tol (float): exit if h(W) < h_tol (as opposed to strict definition of 0)
-        w_threshold: fixed threshold for absolute edge weights.
 
     Returns:
         W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
@@ -377,5 +375,4 @@ def _learn_dynamic_structure(
             break
         if h_value > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
-    wa_est[np.abs(wa_est) < w_threshold] = 0
     return _reshape_wa(wa_est, d_vars, p_orders)
