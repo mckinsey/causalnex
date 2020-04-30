@@ -2,6 +2,7 @@
 
 * support for newer versions of scikit-learn
 * classification report now returns dict in line with scikit-learn
+* Bugfix on notears lasso (`from_numpy_lasso` and `from_pandas_lasso`)
 
 # Release 0.5.0
 
