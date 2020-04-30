@@ -2,7 +2,7 @@
 
 * support for newer versions of scikit-learn
 * classification report now returns dict in line with scikit-learn
-
+* adding dynotears (`from_numpy_dynamic`, an algorithm for structure learning on Dynamic Bayesian Networks)
 # Release 0.5.0
 
 * Plotting now backed by pygraphviz. This allows:
