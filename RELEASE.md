@@ -2,6 +2,7 @@
 
 * support for newer versions of scikit-learn
 * classification report now returns dict in line with scikit-learn
+* Minor fix on test cases
 
 # Release 0.5.0
 
