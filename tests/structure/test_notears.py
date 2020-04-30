@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from causalnex.structure import StructureModel
 from causalnex.structure.notears import (
     from_numpy,
     from_numpy_lasso,
@@ -311,6 +312,22 @@ class TestFromPandasLasso:
 
         assert f1_score > 0.8
 
+    def test_f1score_2(self, train_data_bn_2):
+        g = from_pandas_lasso(train_data_bn_2["X_pandas"], 0.1, w_threshold=0.1)
+        train_model = StructureModel(train_data_bn_2["W"])
+        map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
+        right_edges = [(map_[el1], map_[el2]) for el1, el2 in train_model.edges]
+
+        n_predictions_made = len(g.edges)
+        n_correct_predictions = len(set(g.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.85
+
 
 class TestFromNumpy:
     """Test behaviour of the from_numpy_lasso method"""
@@ -573,3 +590,18 @@ class TestFromNumpyLasso:
         f1_score = 2 * (precision * recall) / (precision + recall)
 
         assert f1_score > 0.8
+
+    def test_f1score_2(self, train_data_bn_2):
+        g = from_numpy_lasso(train_data_bn_2["X_array"], 0.1, w_threshold=0.1)
+        train_model = StructureModel(train_data_bn_2["W"])
+        right_edges = train_model.edges
+
+        n_predictions_made = len(g.edges)
+        n_correct_predictions = len(set(g.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.85
