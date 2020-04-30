@@ -71,7 +71,7 @@ def learn_dynamic_structure(
     Raises:
         ValueError: If X or Xlags does not contain data, or dimentions of X and Xlags do not conform
     """
-
+    # pylint: disable=R0914
     if X.size == 0:
         raise ValueError("Input data X is empty, cannot learn any structure")
     if Xlags.size == 0:
@@ -215,18 +215,20 @@ def learn_dynamic_structure(
 
     # initialise matrix, weights and constraints
     wa_est = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
+    wa_new = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
     rho, alpha, h_value, h_new = 1.0, 0.0, np.inf, np.inf
 
     for n_iter in range(max_iter):
-        while rho < 1e20:  # Should it be w_new???
-            wa_est = sopt.minimize(
+        while rho < 1e20:
+            wa_new = sopt.minimize(
                 _func, wa_est, method="L-BFGS-B", jac=_grad, bounds=_bnds()
             ).x
-            h_new = _h(wa_est)
+            h_new = _h(wa_new)
             if h_new > 0.25 * h_value:
                 rho *= 10
             else:
                 break
+        wa_est = wa_new
         h_value = h_new
         alpha += rho * h_value
         if h_value <= h_tol:
