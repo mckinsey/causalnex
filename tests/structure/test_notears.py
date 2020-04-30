@@ -286,14 +286,14 @@ class TestFromPandasLasso:
 
         g1 = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         g2 = from_pandas_lasso(train_data_idx, 1e-6, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
         g1 = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         g2 = from_pandas(train_data_idx, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_f1_score(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
@@ -547,14 +547,14 @@ class TestFromNumpyLasso:
 
         g1 = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
         g2 = from_numpy_lasso(train_data_idx.values, 1e-6, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
         g1 = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
         g2 = from_numpy(train_data_idx.values, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_f1_score(self, train_data_idx, train_model_idx):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""

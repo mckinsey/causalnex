@@ -171,7 +171,7 @@ def from_numpy_lasso(
         if tabu_parent_nodes is not None and i in tabu_parent_nodes
         else (0, 0)
         if tabu_child_nodes is not None and j in tabu_child_nodes
-        else (None, None)
+        else (0, None)
         for i in range(d)
         for j in range(d)
     ] * 2
@@ -548,6 +548,7 @@ def _learn_structure_lasso(
         if h_val > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
 
+    assert np.all(w_est >= 0)
     w_new = w_est[: d ** 2].reshape([d, d]) - w_est[d ** 2 :].reshape([d, d])
     w_new[np.abs(w_new) < w_threshold] = 0
     return StructureModel(w_new.reshape([d, d]))
