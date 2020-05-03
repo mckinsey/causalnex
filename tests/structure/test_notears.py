@@ -34,6 +34,7 @@ import scipy.optimize as sopt
 from mock import patch
 
 from causalnex.structure import StructureModel
+from causalnex.structure.data_generators import generate_continuous_dataframe
 from causalnex.structure.notears import (
     from_numpy,
     from_numpy_lasso,
@@ -316,10 +317,15 @@ class TestFromPandasLasso:
 
     def test_f1score_2(self, train_data_bn_2):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
-        g = from_pandas_lasso(train_data_bn_2["X_pandas"], 0.1, w_threshold=0.1)
-        train_model = StructureModel(train_data_bn_2["W"])
-        map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
-        right_edges = [(map_[el1], map_[el2]) for el1, el2 in train_model.edges]
+        df = pd.DataFrame(
+            10 * train_data_bn_2,
+            columns=["a", "b", "c", "d", "e"],
+            index=["a", "b", "c", "d", "e"],
+        )
+        train_model = StructureModel(df)
+        X = generate_continuous_dataframe(train_model, 50, noise_scale=1, seed=20)
+        g = from_pandas_lasso(X, 0.1, w_threshold=1)
+        right_edges = train_model.edges
 
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(set(g.edges).intersection(set(right_edges)))
@@ -596,8 +602,18 @@ class TestFromNumpyLasso:
 
     def test_f1score_2(self, train_data_bn_2):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
-        g = from_numpy_lasso(train_data_bn_2["X_array"], 0.1, w_threshold=0.1)
-        train_model = StructureModel(train_data_bn_2["W"])
+        df = pd.DataFrame(
+            10 * train_data_bn_2,
+            columns=["a", "b", "c", "d", "e"],
+            index=["a", "b", "c", "d", "e"],
+        )
+        train_model = StructureModel(df.values)
+        X = generate_continuous_dataframe(
+            StructureModel(df), 50, noise_scale=1, seed=20
+        )
+        g = from_numpy_lasso(
+            X.loc[:, ["a", "b", "c", "d", "e"]].values, 0.1, w_threshold=0.1
+        )
         right_edges = train_model.edges
 
         n_predictions_made = len(g.edges)
@@ -610,34 +626,35 @@ class TestFromNumpyLasso:
 
         assert f1_score > 0.85
 
+    def test_non_negativity_constraint(self, train_data_idx):
+        """
+        The optimisation in notears lasso involves reshaping the initial similarity matrix
+        into two strictly positive matrixes (w+ and w-) and imposing a non negativity constraint
+        to the solver. We test here if these two contraints are imposed.
 
-def test_non_negativity_constraint(train_data_idx):
-    """
-    The optimisation in notears lasso involves reshaping the initial similarity matrix
-    into two strictly positive matrixes (w+ and w-) and imposing a non negativity constraint
-    to the solver. We test here if these two contraints are imposed.
+        We check if:
+        (1) bounds impose non negativity constraint
+        (2) initial guess obeys non negativity constraint
+        (3) most importantly: output of sopt obeys the constraint
+        """
+        # using `wraps` to **spy** on the function
+        with patch(
+            "causalnex.structure.notears.sopt.minimize", wraps=sopt.minimize
+        ) as mocked:
+            from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
+            # We iterate over each time `sopt.minimize` was called
+            for called_arguments in list(mocked.call_args_list):
+                # These are the arguments with which the `sopt.minimize` was called
+                func_ = called_arguments[0][0]  # positional arg
+                w_est = called_arguments[0][1]  # positional arg
+                keyword_args = called_arguments[1]
 
-    We check if:
-    (1) bounds impose non negativity constraint
-    (2) initial guess obeys non negativity constraint
-    (3) most importantly: output of sopt obeys the constraint
-    """
-    # using `wraps` to **spy** on the function
-    with patch(
-        "causalnex.structure.notears.sopt.minimize", wraps=sopt.minimize
-    ) as mocked:
-        from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
-        # We iterate over each time `sopt.minimize` was called
-        for called_arguments in list(mocked.call_args_list):
-            # These are the arguments with which the `sopt.minimize` was called
-            func_ = called_arguments[0][0]  # positional arg
-            w_est = called_arguments[0][1]  # positional arg
-            keyword_args = called_arguments[1]
-
-            # check 1:
-            assert [(len(el) == 2) and (el[0] == 0) for el in keyword_args["bounds"]]
-            # check 2:
-            assert [el >= 0 for el in w_est]
-            # check 3
-            sol = sopt.minimize(func_, w_est, **keyword_args)
-            assert [el >= 0 for el in sol.x]
+                # check 1:
+                assert [
+                    (len(el) == 2) and (el[0] == 0) for el in keyword_args["bounds"]
+                ]
+                # check 2:
+                assert [el >= 0 for el in w_est]
+                # check 3
+                sol = sopt.minimize(func_, w_est, **keyword_args)
+                assert [el >= 0 for el in sol.x]
