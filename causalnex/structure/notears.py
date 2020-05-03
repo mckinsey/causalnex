@@ -533,7 +533,6 @@ def _learn_structure_lasso(
         while rho < 1e20:
             sol = sopt.minimize(_func, w_est, method="L-BFGS-B", jac=_grad, bounds=bnds)
             w_new = sol.x
-
             h_new = _h(
                 w_new[: d ** 2].reshape([d, d]) - w_new[d ** 2 :].reshape([d, d])
             )
@@ -548,7 +547,6 @@ def _learn_structure_lasso(
         if h_val > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
 
-    assert np.all(w_est >= 0)
     w_new = w_est[: d ** 2].reshape([d, d]) - w_est[d ** 2 :].reshape([d, d])
     w_new[np.abs(w_new) < w_threshold] = 0
     return StructureModel(w_new.reshape([d, d]))
