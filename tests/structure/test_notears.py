@@ -582,7 +582,7 @@ class TestFromNumpyLasso:
         g2 = from_numpy(train_data_idx.values, w_threshold=0.3)
         assert len(g1.edges) < len(g2.edges)
 
-    def test_f1_score(self, train_data_idx, train_model_idx):
+    def test_f1_score_fixed(self, train_data_idx, train_model_idx):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
 
