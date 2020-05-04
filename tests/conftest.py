@@ -490,7 +490,7 @@ def bn(train_data_idx, train_data_discrete) -> BayesianNetwork:
 
 
 @pytest.fixture
-def train_data_bn_2():
+def adjacency_mat_num_stability() -> np.ndarray:
     """
     Adjacency matrix for training structure learning algorithms
     """
