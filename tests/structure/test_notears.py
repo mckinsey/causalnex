@@ -299,7 +299,7 @@ class TestFromPandasLasso:
         g2 = from_pandas(train_data_idx, w_threshold=0.3)
         assert len(g1.edges) < len(g2.edges)
 
-    def test_f1_score(self, train_data_idx, train_model):
+    def test_f1_score_fixed(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         print(sorted(list(g.edges)))
