@@ -35,8 +35,6 @@ git hash: 31923cb22517f7bb6420dd0b6ef23ca550702b97
 
 """
 
-from typing import Tuple
-
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -48,7 +46,8 @@ def generate_structure(
     num_nodes: int,
     degree: float,
     graph_type: str = "erdos-renyi",
-    w_range: Tuple[float, float] = (0.5, 2.0),
+    w_min: float = 0.5,
+    w_max: float = 0.5,
 ) -> StructureModel:
     """Simulate random DAG with some expected degree.
     Notes:
@@ -63,9 +62,8 @@ def generate_structure(
             - erdos-renyi: constructs a graph such that the probability of any given edge is degree / (num_nodes - 1)
             - barabasi-albert: constructs a scale-free graph from an initial connected graph of (degree / 2) nodes
             - full: constructs a fully-connected graph - degree has no effect
-        w_range: (w_min, w_max)
-            - w_min (float): min absolute weight of an edge in the graph
-            - w_max (float): max absolute weight of an edge in the graph
+        w_min (float): min absolute weight of an edge in the graph
+        w_max (float): max absolute weight of an edge in the graph
     Raises:
         ValueError: if invalid arguments are provided
     Returns:
@@ -74,9 +72,6 @@ def generate_structure(
 
     if num_nodes < 2:
         raise ValueError("DAG must have at least 2 nodes")
-
-    w_min = w_range[0]
-    w_max = w_range[1]
 
     w_min, w_max = abs(w_min), abs(w_max)
 

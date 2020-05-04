@@ -81,7 +81,7 @@ class TestGenerateStructure:
     )
     def test_weight_range(self, num_nodes, degree, w_range):
         """ Test that w_range is respected in output """
-        sm = generate_structure(num_nodes, degree, w_range=w_range)
+        sm = generate_structure(num_nodes, degree, w_min=w_range[0], w_max=w_range[1])
         w_min = w_range[0]
         w_max = w_range[1]
         assert all(abs(sm[u][v]["weight"]) >= w_min for u, v in sm.edges)
@@ -99,12 +99,12 @@ class TestGenerateStructure:
             ValueError,
             match="Absolute minimum weight must be less than or equal to maximum weight:",
         ):
-            generate_structure(4, 1, w_range=(0.5, 0))
+            generate_structure(4, 1, w_min=0.5, w_max=0)
 
     def test_min_max_weights_equal(self):
         """ If w_range (w, w) has w=w, check abs value of all weights respect this """
         w = 1
-        sm = generate_structure(4, 1, w_range=(w, w))
+        sm = generate_structure(4, 1, w_min=w, w_max=w)
         w_mat = nx.to_numpy_array(sm)
         assert np.all((w_mat == 0) | (w_mat == w) | (w_mat == -w))
 
