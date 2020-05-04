@@ -600,7 +600,7 @@ class TestFromNumpyLasso:
 
         assert f1_score > 0.8
 
-    def test_f1score_2(self, adjacency_mat_num_stability):
+    def test_f1score_generated(self, adjacency_mat_num_stability):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         df = pd.DataFrame(
             10 * adjacency_mat_num_stability,
