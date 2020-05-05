@@ -298,8 +298,6 @@ class TestFromPandasLasso:
     def test_f1_score(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
-        print(sorted(list(g.edges)))
-        print(train_model.edges)
 
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(set(g.edges).intersection(set(train_model.edges)))
@@ -560,8 +558,6 @@ class TestFromNumpyLasso:
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
 
-        print(g.edges)
-        print(train_model_idx.edges)
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(
             set(g.edges).intersection(set(train_model_idx.edges))
