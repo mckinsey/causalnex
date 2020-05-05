@@ -612,7 +612,7 @@ class TestFromNumpyLasso:
             StructureModel(df), 50, noise_scale=1, seed=20
         )
         g = from_numpy_lasso(
-            X.loc[:, ["a", "b", "c", "d", "e"]].values, 0.1, w_threshold=0.1
+            X[["a", "b", "c", "d", "e"]].values, 0.1, w_threshold=0.1
         )
         right_edges = train_model.edges
 
