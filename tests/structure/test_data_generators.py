@@ -81,9 +81,9 @@ class TestGenerateStructure:
     )
     def test_weight_range(self, num_nodes, degree, w_range):
         """ Test that w_range is respected in output """
-        sm = generate_structure(num_nodes, degree, w_min=w_range[0], w_max=w_range[1])
         w_min = w_range[0]
         w_max = w_range[1]
+        sm = generate_structure(num_nodes, degree, w_min=w_min, w_max=w_max)
         assert all(abs(sm[u][v]["weight"]) >= w_min for u, v in sm.edges)
         assert all(abs(sm[u][v]["weight"]) <= w_max for u, v in sm.edges)
 
