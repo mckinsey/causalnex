@@ -159,7 +159,7 @@ class TestGenerateContinuousData:
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         with pytest.raises(ValueError, match="unknown sem type"):
-            generate_continuous_data(sm, sem_type="invalid", n_samples=10)
+            generate_continuous_data(sm, sem_type="invalid", n_samples=10, seed=10)
 
     @pytest.mark.parametrize("num_nodes", [5, 10, 15])
     def test_number_of_nodes(self, num_nodes):
@@ -168,32 +168,52 @@ class TestGenerateContinuousData:
         edges = [(n, n + 1, 1) for n in range(num_nodes - 1)]
         graph.add_weighted_edges_from(edges)
 
-        data = generate_continuous_data(graph, 100)
+        data = generate_continuous_data(graph, 100, seed=10)
         assert all(len(sample) == num_nodes for sample in data)
 
     @pytest.mark.parametrize("num_samples", [5, 10, 15])
     def test_number_of_samples(self, num_samples, graph):
         """ Assert number of samples generated (rows) = num_samples """
-        data = generate_continuous_data(graph, num_samples, "linear-gauss", 1)
+        data = generate_continuous_data(graph, num_samples, "linear-gauss", 1, seed=10)
         assert len(data) == num_samples
 
     def test_linear_gauss_parent_dist(self, graph):
         """ Anderson-Darling test for data coming from a particular distribution, for linear-gauss."""
-        data = generate_continuous_data(graph, 1000000, "linear-gauss", 1)
+        data = generate_continuous_data(graph, 1000000, "linear-gauss", 1, seed=10)
 
         stat, crit, sig = anderson(data[:, 0], "norm")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_exp_parent_dist(self, graph):
         """ Anderson-Darling test for data coming from a particular distribution, for linear-exp """
-        data = generate_continuous_data(graph, 1000000, "linear-exp", 1)
+        data = generate_continuous_data(graph, 1000000, "linear-exp", 1, seed=10)
 
         stat, crit, sig = anderson(data[:, 0], "expon")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_gumbel_parent_dist(self, graph):
         """ Anderson-Darling test for data coming from a particular distribution, for linear-exp """
-        data = generate_continuous_data(graph, 1000000, "linear-gumbel", 1)
+        data = generate_continuous_data(graph, 1000000, "linear-gumbel", 1, seed=10)
 
         stat, crit, sig = anderson(data[:, 0], "gumbel_r")
         assert stat < crit[list(sig).index(5)]
+
+    @pytest.mark.parametrize("num_nodes", (10, 20, 30))
+    @pytest.mark.parametrize("seed", (10, 20, 30))
+    def test_order_is_correct(self, num_nodes, seed):
+        """
+        Check if the order of the nodes is the same order as `sm.nodes`, which in turn is the same order as the
+        adjacency matrix.
+
+        To do so, we create graphs with degree in {0,1} by doing permutations on identity.
+        The edge values are always 100 and the noise is 1, so we expect `edge_from` < `edge_to` in absolute value
+        almost every time.
+        """
+        np.random.seed(seed)
+        perms = np.tril(np.random.permutation(np.eye(num_nodes, num_nodes)) * 100, -1)
+        perms = np.array(perms).T
+        edges_from, edges_to = np.where(perms)
+        sm = StructureModel(perms)
+        data = generate_continuous_data(sm, 10, "linear-gauss", 1, seed=10)
+        for edge_from, edge_to in zip(edges_from, edges_to):
+            assert np.all(np.abs(data[:, edge_from]) < np.abs(data[:, edge_to]))

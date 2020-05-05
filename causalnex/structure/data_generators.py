@@ -124,7 +124,10 @@ def generate_continuous_data(
     noise_scale: float = 1.0,
     seed: int = None,
 ) -> np.ndarray:
-    """Simulate samples from SEM with specified type of noise.
+    """
+    Simulate samples from SEM with specified type of noise.
+    The order of the columns on the returned array is the one provided by `sm.nodes`
+
     Args:
         sm: weigthed DAG - nodes must be zero-indexed
         n_samples: number of samples
@@ -138,12 +141,11 @@ def generate_continuous_data(
     """
     np.random.seed(seed)
 
-    # need to take transpose so that "parents" are aligned with weights
     ordered_vertices = list(nx.topological_sort(sm))
-    w_mat = nx.to_numpy_array(sm, nodelist=ordered_vertices)
+    w_mat = nx.to_numpy_array(sm, nodelist=sm.nodes)
     d_nodes = w_mat.shape[0]
     x_mat = np.zeros([n_samples, d_nodes])
-    vertices_to_idx = {c: i for i, c in enumerate(ordered_vertices)}
+    vertices_to_idx = {c: i for i, c in enumerate(sm.nodes)}
 
     for j_name in ordered_vertices:
         j_index = vertices_to_idx[j_name]
@@ -202,4 +204,4 @@ def generate_continuous_dataframe(
         seed=seed,
     )
 
-    return pd.DataFrame(x_mat, columns=nx.topological_sort(sm))
+    return pd.DataFrame(x_mat, columns=sm.nodes)
