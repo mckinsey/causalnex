@@ -29,12 +29,14 @@ import re
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 import pytest
 from networkx.algorithms.dag import is_directed_acyclic_graph
 from scipy.stats import anderson
 
 from causalnex.structure.data_generators import (
     generate_continuous_data,
+    generate_continuous_dataframe,
     generate_structure,
     generate_structure_dynamic,
 )
@@ -326,3 +328,63 @@ class TestGenerateStructureDynamic:
             ]
         )
         assert g.edges
+
+
+class TestGenerateContinuousDataFrame:
+    @pytest.mark.parametrize(
+        "sem_type", ["linear-gauss", "linear-exp", "linear-gumbel"]
+    )
+    def test_returns_dataframe(self, sem_type):
+        """ Return value is an ndarray - test over all sem_types """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure(d_nodes, degree, graph_type)
+        dataframe = generate_continuous_dataframe(sm, sem_type=sem_type, n_samples=10)
+        assert isinstance(dataframe, pd.DataFrame)
+
+    def test_bad_sem_type(self):
+        """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure(d_nodes, degree, graph_type)
+        with pytest.raises(ValueError, match="unknown sem type"):
+            generate_continuous_dataframe(sm, sem_type="invalid", n_samples=10, seed=10)
+
+    @pytest.mark.parametrize("num_nodes", [5, 10, 15])
+    def test_number_of_nodes(self, num_nodes):
+        """ Length of each row in generated data equals num_nodes """
+        graph = StructureModel()
+        edges = [(n, n + 1, 1) for n in range(num_nodes - 1)]
+        graph.add_weighted_edges_from(edges)
+
+        data = generate_continuous_dataframe(graph, 100, seed=10)
+        assert data.shape[1] == num_nodes
+
+    @pytest.mark.parametrize("num_samples", [5, 10, 15])
+    def test_number_of_samples(self, num_samples, graph):
+        """ Assert number of samples generated (rows) = num_samples """
+        data = generate_continuous_dataframe(
+            graph, num_samples, "linear-gauss", 1, seed=10
+        )
+        assert len(data) == num_samples
+
+    def test_linear_gauss_parent_dist(self, graph):
+        """ Anderson-Darling test for data coming from a particular distribution, for linear-gauss."""
+        data = generate_continuous_dataframe(graph, 1000000, "linear-gauss", 1, seed=10)
+
+        stat, crit, sig = anderson(data.iloc[:, 0], "norm")
+        assert stat < crit[list(sig).index(5)]
+
+    def test_linear_exp_parent_dist(self, graph):
+        """ Anderson-Darling test for data coming from a particular distribution, for linear-exp """
+        data = generate_continuous_dataframe(graph, 1000000, "linear-exp", 1, seed=10)
+
+        stat, crit, sig = anderson(data.iloc[:, 0], "expon")
+        assert stat < crit[list(sig).index(5)]
+
+    def test_linear_gumbel_parent_dist(self, graph):
+        """ Anderson-Darling test for data coming from a particular distribution, for linear-exp """
+        data = generate_continuous_dataframe(
+            graph, 1000000, "linear-gumbel", 1, seed=10
+        )
+
+        stat, crit, sig = anderson(data.iloc[:, 0], "gumbel_r")
+        assert stat < crit[list(sig).index(5)]
