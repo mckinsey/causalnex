@@ -32,7 +32,7 @@ dataset.
 
 import logging
 import warnings
-from collections import Sequence
+from collections.abc import Sequence
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
