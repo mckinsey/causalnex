@@ -279,6 +279,43 @@ def _convert_realisations_into_dynotears_format(
     return X, Xlags
 
 
+def format_df_to_match_structure(
+    time_series: Union[pd.DataFrame, List[pd.DataFrame]], p: int,
+) -> pd.DataFrame:
+    """
+    Format a time series dataframe or list of dataframes into the a format that matches the structure learned by
+    `from_pandas_dynamic`. This is done to allow for bayesian network probability fitting.
+    Args:
+        time_series: pd.DataFrame or List of pd.DataFrame instances.
+        If a list is provided each element of the list being an realisation of a time series (i.e. time series governed
+        by the same processes)
+        The columns of the data frame represent the variables in the model, and the *index represents the time index*.
+        Successive events, therefore, must be indexed with one integer of difference between them too.
+        p: Number of past interactions we allow the model to create. The state of a variable at time `t` is affected by
+
+    Returns:
+        Dataframe formatted to contain all nodes in the Dynamic Bayesian Network structure
+    """
+
+    if not isinstance(time_series, Sequence):
+        time_series = [time_series]
+    _check_input_from_pandas(time_series)
+    time_series_realisations = _cut_dataframes_on_discontinuity_points(time_series)
+    X, Xlags = _convert_realisations_into_dynotears_format(time_series_realisations, p)
+    df_x = pd.DataFrame(
+        X, columns=["{col}_lag0".format(col=col) for col in time_series[0].columns]
+    )
+    df_xlags = pd.DataFrame(
+        Xlags,
+        columns=[
+            "{col}_lag{l_}".format(col=col, l_=l)
+            for l in range(1, p + 1)
+            for col in time_series[0].columns
+        ],
+    )
+    return pd.concat([df_x, df_xlags], axis=1)
+
+
 def from_numpy_dynamic(  # pylint: disable=R0913
     X: np.ndarray,
     Xlags: np.ndarray,
