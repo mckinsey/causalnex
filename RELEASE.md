@@ -1,3 +1,6 @@
+# latest release
+* Updating tutorial
+
 # Release 0.6.0
 
 * support for newer versions of scikit-learn
