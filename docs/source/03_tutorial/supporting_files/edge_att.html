@@ -1,0 +1,51 @@
+<table>
+<th>Attribute</th>
+<th>Description</th>
+<th>values</th>
+<tr>
+<td>`penwidth`</td>
+<td>Width of that specific edge.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`weight`</td>
+<td>It is a way to indirectly control the edge size. A larger weight encourages the layout to make the edge length
+Weights in dot must be integers.
+For `dot`, larger values makes the edge shorter.
+
+See
+https://www.graphviz.org/doc/info/attrs.html#d:weight for details</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`label`</td>
+<td>Edge label, optional.</td>
+<td>`string`</td>
+</tr>
+<tr>
+<td>`fontcolor, fontsize, fontlabel`</td>
+<td>Same as for graphs; affects the edge label.</td>
+<td>--</td>
+</tr>
+<tr>
+<td>`color`</td>
+<td>Colour of the edge (not its label).</td>
+<td>RGB	HSV or colour name (`black`, `blue`...)</td>
+</tr>
+<tr>
+<td>`constraint`</td>
+<td>Works for `dot` only.
+
+If `false`, the edge is not used in ranking the nodes. As a result, child and parent may be in the same ranking level. A visual example is in https://www.graphviz.org/doc/info/attrs.html#d:constraint </td>
+<td>`"true"` or `"false"`</td>
+</tr>
+<tr>
+<td>`arrowhead`</td>
+<td>Style of `arrowhead`. Check https://www.graphviz.org/doc/info/attrs.html#k:arrowType To see all types available</td>
+<td>`string`. E.g.: `"open"`, `"vee"`, `"diamond"`...</td>
+</tr>
+<tr>
+<td>`arrowsize`</td>
+<td>Proportion of size of head relative to `penwidth`</td>
+<td>`double`</td>
+</tr>
