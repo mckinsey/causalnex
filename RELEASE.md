@@ -1,3 +1,7 @@
+# Upcoming release
+
+* Updated `viz.draw` syntax in tutorial notebooks
+
 # Release 0.6.0
 
 * support for newer versions of scikit-learn
