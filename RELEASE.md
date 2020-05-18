@@ -1,5 +1,6 @@
-# Release latest
+# Upcoming release
 
+* Updated `viz.draw` syntax in tutorial notebooks
 * Bugfix on notears lasso (`from_numpy_lasso` and `from_pandas_lasso`)
 
 # Release 0.6.0
