@@ -1,5 +1,6 @@
-# latest release
-* Updating tutorial
+# Upcoming release
+
+* Updated `viz.draw` syntax in tutorial notebooks
 
 # Release 0.6.0
 
