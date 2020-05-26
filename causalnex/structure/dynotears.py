@@ -318,8 +318,8 @@ def format_df_to_match_structure(
     df_xlags = pd.DataFrame(
         Xlags,
         columns=[
-            "{col}_lag{l_}".format(col=col, l_=l)
-            for l in range(1, p + 1)
+            "{col}_lag{l_}".format(col=col, l_=l_)
+            for l_ in range(1, p + 1)
             for col in time_series[0].columns
         ],
     )
