@@ -156,8 +156,8 @@ def _matrices_to_structure_model(
     """
     sm = StructureModel()
     lag_cols = [
-        "{var}_lag{l_val}".format(var=var, l_val=l)
-        for l in range(1 + (a_est.shape[0] // a_est.shape[1]))
+        "{var}_lag{l_val}".format(var=var, l_val=l_val)
+        for l_val in range(1 + (a_est.shape[0] // a_est.shape[1]))
         for var in range(a_est.shape[1])
     ]
     sm.add_nodes_from(lag_cols)
