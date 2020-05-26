@@ -235,9 +235,9 @@ class TestFromNumpyDynotears:
         """Every columns that is in the data should become a node in the learned structure"""
         sm = from_numpy_dynamic(data_dynotears_p2["X"], data_dynotears_p2["Y"],)
         assert sorted(sm.nodes) == [
-            "{var}_lag{l_val}".format(var=var, l_val=l)
+            "{var}_lag{l_val}".format(var=var, l_val=l_val)
             for var in range(5)
-            for l in range(3)
+            for l_val in range(3)
         ]
 
     def test_isolated_nodes_exist(self, data_dynotears_p2):
