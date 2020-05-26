@@ -62,6 +62,17 @@ def from_numpy_dynamic(  # pylint: disable=R0913
     h(W), where h_value(W) == 0 characterises an acyclic graph. h(W) > 0 is a continuous, differentiable function that
     encapsulated how acyclic the graph is (less = more acyclic).
 
+    Based on "DYNOTEARS: Structure Learning from Time-Series Data".
+    https://arxiv.org/abs/2002.00498
+    @misc{pamfil2020dynotears,
+        title={DYNOTEARS: Structure Learning from Time-Series Data},
+        author={Roxana Pamfil et. al},
+        year={2020},
+        eprint={2002.00498},
+        archivePrefix={arXiv},
+        primaryClass={stat.ML}
+    }
+
     Args:
         X (np.ndarray): 2d input data, axis=1 is data columns, axis=0 is data rows. Each column represents one variable,
         and each row represents x(m,t) i.e. the mth time series at time t.
