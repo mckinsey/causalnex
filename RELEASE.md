@@ -1,5 +1,6 @@
 # Upcoming release
 
+* Added plottting tutorial to the documentation
 * Updated `viz.draw` syntax in tutorial notebooks
 * Bugfix on notears lasso (`from_numpy_lasso` and `from_pandas_lasso`) where the non-negativity constraint was not being set
 
