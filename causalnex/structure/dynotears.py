@@ -64,6 +64,16 @@ def from_pandas_dynamic(  # pylint: disable=R0913
     h(W), where h_value(W) == 0 characterises an acyclic graph. h(W) > 0 is a continuous, differentiable function that
     encapsulated how acyclic the graph is (less = more acyclic).
 
+    Based on "DYNOTEARS: Structure Learning from Time-Series Data".
+    https://arxiv.org/abs/2002.00498
+    @misc{pamfil2020dynotears,
+        title={DYNOTEARS: Structure Learning from Time-Series Data},
+        author={Roxana Pamfil et. al},
+        year={2020},
+        eprint={2002.00498},
+        archivePrefix={arXiv},
+        primaryClass={stat.ML}
+    }
     Args:
         time_series: pd.DataFrame or List of pd.DataFrame instances.
         If a list is provided each element of the list being an realisation of a time series (i.e. time series governed
