@@ -33,6 +33,7 @@ describing causal relationships between variables and their distribution in a fa
 """
 
 import re
+from copy import deepcopy
 from typing import Dict, Hashable, List, Set, Tuple
 
 import networkx as nx
@@ -474,11 +475,13 @@ class BayesianNetwork:
             A dataframe of predictions, containing a single column name {node}_prediction.
         """
 
-        transformed_data = data.copy(deep=True)  # type: pd.DataFrame
+        transformed_data = deepcopy(data)  # type: pd.DataFrame
         self._state_to_index(transformed_data)
 
+        # transformed_data.is_copy()
+
         # pgmpy will predict all missing data, so drop column we want to predict
-        transformed_data.drop(node, axis=1, inplace=True)
+        transformed_data = transformed_data.drop(columns=[node])
 
         predictions = self._model.predict(transformed_data)[[node]]
 
@@ -560,7 +563,7 @@ class BayesianNetwork:
         self._state_to_index(transformed_data)
 
         # pgmpy will predict all missing data, so drop column we want to predict
-        transformed_data.drop(node, axis=1, inplace=True)
+        transformed_data = transformed_data.drop(columns=[node])
 
         probability = self._model.predict_probability(
             transformed_data

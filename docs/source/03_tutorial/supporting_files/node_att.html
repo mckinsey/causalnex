@@ -1,0 +1,90 @@
+<table>
+<th>Attribute</th>
+<th>Description</th>
+<th>Values</th>
+<tr>
+<td>`pos`</td>
+<td>Controls the position of a specific node.
+
+For `dot`: it has NO EFFECT</td>
+<td>- `"x,y"` for setting the node's initial position to (x,y). This position is modified until the convergence of the algorithm
+- `"x,y!"` to totally fix the position of the node at (x,y)</td>
+</tr>
+<tr>
+<td>`shape`</td>
+<td>The shape of the node, a variaty of choices is available.
+
+Check https://www.graphviz.org/doc/info/shapes.html#polygon</td>
+<td>`string`</td>
+</tr>
+<tr>
+<td>`image`</td>
+<td>Upload an image to be used as a node.
+
+N.B.: Use the attributes `imagescale`, and `imagepos` to have more control over the image in the node. See https://www.graphviz.org/doc/info/attrs.html#d:imagepos</td>
+<td>Path to the image</td>
+</tr>
+<tr>
+<td>`style`</td>
+<td>Information about the node style, whether it is filled, the border is dashed…
+
+Check https://www.graphviz.org/doc/info/attrs.html#k:style</td>
+<td>One of: `solid`, `dashed`, `dotted`, `bold`, `rounded`, `diagonals`, `filled`, `striped`, `wedged`</td>
+</tr>
+<tr>
+<td>`fixedsize`</td>
+<td>If false, the node width and height will be changed so that the label fits inside the node. If true, width and height attributes control this completely.
+
+Check https://www.graphviz.org/doc/info/attrs.html#d:fixedsize for details</td>
+<td>`"true"` or `"false"`</td>
+</tr>
+<tr>
+<td>`width`</td>
+<td>Width of node.
+
+If `fixedsize` is `false`, this is the minimal width.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`height`</td>
+<td>Height of node.
+If fixed size is false, this is the minimal height.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`regular`</td>
+<td>If regular is true, width and height are set to the same value.</td>
+<td>`"true"` or `"false"`</td>
+</tr>
+<tr>
+<td>`penwidth`</td>
+<td>Specifies the width of the pen, in points, used to the boundaries of node.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`color`</td>
+<td>Colour the node boundary. Check https://graphviz.gitlab.io/_pages/doc/info/colors.html to see all options</td>
+<td>RGB, HSV or colour name (`black`, `blue`, `red`...)</td>
+</tr>
+<tr>
+<td>`fillcolor`</td>
+<td>Colour inside the node.</td>
+<td>RGB, HSV or colour name (`black`, `blue`, `red`...)</td>
+</tr>
+<tr>
+<td>`label`</td>
+<td>Label for the node. If not specified, the node name is used as label.
+
+N.B.: We can write rich text by writing the node in HTML. The guide to do so is here https://www.graphviz.org/doc/info/shapes.html#html</td>
+<td>`string`</td>
+</tr>
+<tr>
+<td>`labelloc`</td>
+<td>Label position inside the node: bottom, top or centre.</td>
+<td>`b`, `t` or `c`</td>
+</tr>
+<tr>
+<td>`fontcolor, fontsize, fontlabel`</td>
+<td>Same as for graphs; affects the node label.</td>
+<td></td>
+</tr>

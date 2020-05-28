@@ -30,7 +30,11 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.optimize as sopt
+from mock import patch
 
+from causalnex.structure import StructureModel
+from causalnex.structure.data_generators import generate_continuous_dataframe
 from causalnex.structure.notears import (
     from_numpy,
     from_numpy_lasso,
@@ -286,16 +290,16 @@ class TestFromPandasLasso:
 
         g1 = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         g2 = from_pandas_lasso(train_data_idx, 1e-6, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
         g1 = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         g2 = from_pandas(train_data_idx, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
-    def test_f1_score(self, train_data_idx, train_model):
+    def test_f1_score_fixed(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
         print(sorted(list(g.edges)))
@@ -310,6 +314,28 @@ class TestFromPandasLasso:
         f1_score = 2 * (precision * recall) / (precision + recall)
 
         assert f1_score > 0.8
+
+    def test_f1score_generated(self, adjacency_mat_num_stability):
+        """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
+        df = pd.DataFrame(
+            10 * adjacency_mat_num_stability,
+            columns=["a", "b", "c", "d", "e"],
+            index=["a", "b", "c", "d", "e"],
+        )
+        train_model = StructureModel(df)
+        X = generate_continuous_dataframe(train_model, 50, noise_scale=1, seed=20)
+        g = from_pandas_lasso(X, 0.1, w_threshold=1)
+        right_edges = train_model.edges
+
+        n_predictions_made = len(g.edges)
+        n_correct_predictions = len(set(g.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.85
 
 
 class TestFromNumpy:
@@ -547,16 +573,16 @@ class TestFromNumpyLasso:
 
         g1 = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
         g2 = from_numpy_lasso(train_data_idx.values, 1e-6, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
         g1 = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
         g2 = from_numpy(train_data_idx.values, w_threshold=0.3)
-        assert len(g1.edges) > len(g2.edges)
+        assert len(g1.edges) < len(g2.edges)
 
-    def test_f1_score(self, train_data_idx, train_model_idx):
+    def test_f1_score_fixed(self, train_data_idx, train_model_idx):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
 
@@ -573,3 +599,60 @@ class TestFromNumpyLasso:
         f1_score = 2 * (precision * recall) / (precision + recall)
 
         assert f1_score > 0.8
+
+    def test_f1score_generated(self, adjacency_mat_num_stability):
+        """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
+        df = pd.DataFrame(
+            10 * adjacency_mat_num_stability,
+            columns=["a", "b", "c", "d", "e"],
+            index=["a", "b", "c", "d", "e"],
+        )
+        train_model = StructureModel(df.values)
+        X = generate_continuous_dataframe(
+            StructureModel(df), 50, noise_scale=1, seed=20
+        )
+        g = from_numpy_lasso(X[["a", "b", "c", "d", "e"]].values, 0.1, w_threshold=0.1)
+        right_edges = train_model.edges
+
+        n_predictions_made = len(g.edges)
+        n_correct_predictions = len(set(g.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.85
+
+    def test_non_negativity_constraint(self, train_data_idx):
+        """
+        The optimisation in notears lasso involves reshaping the initial similarity matrix
+        into two strictly positive matrixes (w+ and w-) and imposing a non negativity constraint
+        to the solver. We test here if these two contraints are imposed.
+
+        We check if:
+        (1) bounds impose non negativity constraint
+        (2) initial guess obeys non negativity constraint
+        (3) most importantly: output of sopt obeys the constraint
+        """
+        # using `wraps` to **spy** on the function
+        with patch(
+            "causalnex.structure.notears.sopt.minimize", wraps=sopt.minimize
+        ) as mocked:
+            from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
+            # We iterate over each time `sopt.minimize` was called
+            for called_arguments in list(mocked.call_args_list):
+                # These are the arguments with which the `sopt.minimize` was called
+                func_ = called_arguments[0][0]  # positional arg
+                w_est = called_arguments[0][1]  # positional arg
+                keyword_args = called_arguments[1]
+
+                # check 1:
+                assert [
+                    (len(el) == 2) and (el[0] == 0) for el in keyword_args["bounds"]
+                ]
+                # check 2:
+                assert [el >= 0 for el in w_est]
+                # check 3
+                sol = sopt.minimize(func_, w_est, **keyword_args)
+                assert [el >= 0 for el in sol.x]
