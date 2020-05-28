@@ -1,6 +1,9 @@
 # Upcoming release
 
-* Added plottting tutorial to the documentation
+
+# Release 0.7.0
+
+* Added plotting tutorial to the documentation
 * Updated `viz.draw` syntax in tutorial notebooks
 * Bugfix on notears lasso (`from_numpy_lasso` and `from_pandas_lasso`) where the non-negativity constraint was not being set
 * Added DAG-based synthetic data generator for mixed types (binary, categorical, continuous) using a linear SEM approach.
