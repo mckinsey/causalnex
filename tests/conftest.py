@@ -1014,3 +1014,21 @@ def data_dynotears_p3() -> Dict[str, np.ndarray]:
     del data["Y_1"]
     del data["Y_2"]
     return data
+
+
+@pytest.fixture
+def adjacency_mat_num_stability() -> np.ndarray:
+    """
+    Adjacency matrix for training structure learning algorithms
+    """
+
+    W = np.array(
+        [
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+            [-0.6, 0.0, 0.0, 0.0, 1.27],
+            [0.9, 0.0, 0.0, 0.0, -0.98],
+            [0.0, -0.89, 1.37, 0.0, 0.0],
+            [1.74, 0.0, 0.0, 0.0, 0.0],
+        ]
+    )
+    return W

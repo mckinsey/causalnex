@@ -1,0 +1,135 @@
+<table>
+<th>Attribute</th>
+<th>Description</th>
+<th>values</th>
+<tr>
+<td>`rankdir`</td>
+<td>Changes the direction of the hierarchy. By default, nodes are put from top to bottom, according to their rank.
+
+Only works for the `dot` layout.</td>
+<td>- `"LR"` (Left to Right),
+- `"TB"` (Top to Bottom),
+- `"RL"` or
+- `"BT"` </td>
+</tr>
+<tr>
+<td>`ranksep`</td>
+<td>Distance between ranks.
+
+Only works for the `dot` and `twopi` layouts.
+
+The suffix `"equally"` makes this distance to be uniform.</td>
+<td>`double` or `string`. Examples:
+
+- `1.2`
+- `"1.2 equally"`</td>
+</tr>
+<tr>
+<td>`nodesep`</td>
+<td>The minimum space between two adjacent nodes in the same rank.
+
+Only works for the `dot` layout.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`Ordering`</td>
+<td>Only works for the `dot` layout.
+
+By changing the edge order, we can have some control over the position of the nodes in the visualization.
+See https://www.graphviz.org/doc/info/attrs.html#d:ordering for precise explanation
+with this attibute.</td>
+<td>`"in"` or `"out"`</td>
+</tr>
+<tr>
+<td>`Damping, K`</td>
+<td>Parameters used by spring models to compute the node positions
+check https://www.graphviz.org/doc/info/attrs.html#d:Damping for details.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`splines`</td>
+<td>`Graphviz` tries to "curve" the edges to contour nodes, in order to avoid edges overlapping with some nodes. We choose the type of curve it is uses.
+
+A visual example can be found in https://www.graphviz.org/doc/info/attrs.html#d:splines</td>
+<td>- `"line"` - All edges will be STRAIGHT LINES
+- `"spline"` - Use splines
+- Others values are: `"polynine"`, `"curved"`, `"ortho"`
+</td>
+</tr>
+<tr>
+<td>`bgcolor`</td>
+<td>Background graph colour.</td>
+<td>"RGB	HSV or colour name (`black`, `blue`...)"
+
+`"transparent"` indicates that there is no background color set.</td>
+</tr>
+<tr>
+<td>`label`</td>
+<td>A label for the overall graph.</td>
+<td>`"string"`</td>
+</tr>
+<tr>
+<td>`fontcolor`</td>
+<td>Colour for the graph label (does not propagates to nodes).</td>
+<td>RGB	HSV or colour name (`black`, `blue`...)</td>
+</tr>
+<tr>
+<td>`fontname`</td>
+<td>Font name for the graph label.</td>
+<td>`"string"`</td>
+</tr>
+<tr>
+<td>`fontsize`</td>
+<td>Size for the graph label.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`labelloc`</td>
+<td>Sets the position of the label vertically.</td>
+<td>`"t"` or `"b"` (top, bottom)</td>
+</tr>
+<tr>
+<td>`labeljust`</td>
+<td>Sets the position of the label horizontally.</td>
+<td> `"l"`, `"r"`, `"c"` (left right center)</td>
+</tr>
+<tr>
+<td>`dpi`</td>
+<td>Resolution of image.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`scale`</td>
+<td>Scales all graph attributes up or down.
+
+Does not work with `dot`.</td>
+<td>`double`</td>
+</tr>
+<tr>
+<td>`pad`</td>
+<td>Sets a margin in the figure. This margin is exterior to the size of the figure.</td>
+<td>`string` with 2 values, e.g. `"1.3,0.8"`</td>
+</tr>
+<tr>
+<td>`size`</td>
+<td>Sets the dimensions of the figure.
+
+TO MAKE IT WORK AS EXPECTED, add the attribute `"ratio=fill"` to the graph.
+This sets the dimensions INSIDE the `pad`, so the final size is: `size + pad` value.</td>
+<td>`string` with 2 values, e.g. `"16,9"`</td>
+</tr>
+<tr>
+<td>`ratio`</td>
+<td>If numeric value is provided, it sets the ratio between width and height of the figure. Other options available, in which we pass a string as input.
+
+See the other options here https://www.graphviz.org/doc/info/attrs.html#d:ratio</td>
+<td>Numeric value or `string` (`"fill"`, `"compress"`, `"expand"`, `"auto"`) or not specified</td>
+</tr>
+<tr>
+<td>`overlap`</td>
+<td>Resolves overlaps between nodes.
+
+Does not work with `dot`.</td>
+<td>- `"true"` to retain overlaps
+- `"false"` or prism uses prism algorithm</td>
+</tr>

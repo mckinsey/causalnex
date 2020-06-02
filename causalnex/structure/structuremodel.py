@@ -262,7 +262,9 @@ class StructureModel(nx.DiGraph):
         largest_n_edges = 0
         largest_subgraph = None
 
-        for subgraph in nx.weakly_connected_component_subgraphs(self):
+        for subgraph in (
+            self.subgraph(c).copy() for c in nx.weakly_connected_components(self)
+        ):
             if len(subgraph.edges) > largest_n_edges:
                 largest_n_edges = len(subgraph.edges)
                 largest_subgraph = subgraph
@@ -283,7 +285,9 @@ class StructureModel(nx.DiGraph):
             NodeNotFound: if the node is not found in the graph.
         """
         if node in self.nodes:
-            for subgraph in nx.weakly_connected_component_subgraphs(self):
+            for subgraph in (
+                self.subgraph(c).copy() for c in nx.weakly_connected_components(self)
+            ):
                 if node in subgraph.nodes:
                     return subgraph
 

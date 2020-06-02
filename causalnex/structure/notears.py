@@ -171,7 +171,7 @@ def from_numpy_lasso(
         if tabu_parent_nodes is not None and i in tabu_parent_nodes
         else (0, 0)
         if tabu_child_nodes is not None and j in tabu_child_nodes
-        else (None, None)
+        else (0, None)
         for i in range(d)
         for j in range(d)
     ] * 2
@@ -533,7 +533,6 @@ def _learn_structure_lasso(
         while rho < 1e20:
             sol = sopt.minimize(_func, w_est, method="L-BFGS-B", jac=_grad, bounds=bnds)
             w_new = sol.x
-
             h_new = _h(
                 w_new[: d ** 2].reshape([d, d]) - w_new[d ** 2 :].reshape([d, d])
             )
