@@ -875,74 +875,72 @@ def gen_stationary_dyn_net_and_df(  # pylint: disable=R0913, R0914
         - Inter-slice nodes names
     """
 
-    old_settings = np.seterr(over="raise", invalid="raise")
-    burn_in = max(n_samples // 10, 50)
+    with np.errstate(over="raise", invalid="raise"):
+        burn_in = max(n_samples // 10, 50)
 
-    simulate_flag = True
-    g, intra_nodes, inter_nodes = None, None, None
+        simulate_flag = True
+        g, intra_nodes, inter_nodes = None, None, None
 
-    while simulate_flag:
-        max_data_gen_trials -= 1
-        if max_data_gen_trials <= 0:
-            simulate_flag = False
+        while simulate_flag:
+            max_data_gen_trials -= 1
+            if max_data_gen_trials <= 0:
+                simulate_flag = False
 
-        try:
-            simulate_graphs_flag = True
-            while simulate_graphs_flag:
+            try:
+                simulate_graphs_flag = True
+                while simulate_graphs_flag:
 
-                g = generate_structure_dynamic(
-                    num_nodes=num_nodes,
-                    p=p,
-                    degree_intra=degree_intra,
-                    degree_inter=degree_inter,
-                    graph_type_intra=graph_type_intra,
-                    graph_type_inter=graph_type_inter,
-                    w_min_intra=w_min_intra,
-                    w_max_intra=w_max_intra,
-                    w_min_inter=w_min_inter,
-                    w_max_inter=w_max_inter,
-                    w_decay=w_decay,
-                )
-                intra_nodes = sorted([el for el in g.nodes if "_lag0" in el])
-                inter_nodes = sorted([el for el in g.nodes if "_lag0" not in el])
-                # Exclude empty graphs from consideration unless input degree is 0
-                if (
-                    (
-                        [(u, v) for u, v in g.edges if u in intra_nodes]
-                        and [(u, v) for u, v in g.edges if u in inter_nodes]
+                    g = generate_structure_dynamic(
+                        num_nodes=num_nodes,
+                        p=p,
+                        degree_intra=degree_intra,
+                        degree_inter=degree_inter,
+                        graph_type_intra=graph_type_intra,
+                        graph_type_inter=graph_type_inter,
+                        w_min_intra=w_min_intra,
+                        w_max_intra=w_max_intra,
+                        w_min_inter=w_min_inter,
+                        w_max_inter=w_max_inter,
+                        w_decay=w_decay,
                     )
-                    or degree_intra == 0
-                    or degree_inter == 0
-                ):
-                    simulate_graphs_flag = False
+                    intra_nodes = sorted([el for el in g.nodes if "_lag0" in el])
+                    inter_nodes = sorted([el for el in g.nodes if "_lag0" not in el])
+                    # Exclude empty graphs from consideration unless input degree is 0
+                    if (
+                        (
+                            [(u, v) for u, v in g.edges if u in intra_nodes]
+                            and [(u, v) for u, v in g.edges if u in inter_nodes]
+                        )
+                        or degree_intra == 0
+                        or degree_inter == 0
+                    ):
+                        simulate_graphs_flag = False
 
-            # generate single time series
-            df = (
-                generate_dataframe_dynamic(
-                    g,
-                    n_samples=n_samples + burn_in,
-                    sem_type=sem_type,
-                    noise_scale=noise_scale,
+                # generate single time series
+                df = (
+                    generate_dataframe_dynamic(
+                        g,
+                        n_samples=n_samples + burn_in,
+                        sem_type=sem_type,
+                        noise_scale=noise_scale,
+                    )
+                    .loc[burn_in:, intra_nodes + inter_nodes]
+                    .reset_index(drop=True)
                 )
-                .loc[burn_in:, intra_nodes + inter_nodes]
-                .reset_index(drop=True)
+
+                if df.isna().any(axis=None):
+                    continue
+            except (OverflowError, FloatingPointError):
+                continue
+            if (df.abs().max().max() < 1e3) or (max_data_gen_trials <= 0):
+                simulate_flag = False
+        if max_data_gen_trials <= 0:
+            warnings.warn(
+                "Could not simulate data, returning constant dataframe", UserWarning
             )
 
-            if df.isna().any(axis=None):
-                continue
-        except (OverflowError, FloatingPointError):
-            continue
-        if (df.abs().max().max() < 1e3) or (max_data_gen_trials <= 0):
-            simulate_flag = False
-    if max_data_gen_trials <= 0:
-        warnings.warn(
-            "Could not simulate data, returning constant dataframe", UserWarning
-        )
-
-        df = pd.DataFrame(
-            np.ones((n_samples, num_nodes * (1 + p))),
-            columns=intra_nodes + inter_nodes,
-        )
-    # Reset seterr settings
-    np.seterr(**old_settings)
+            df = pd.DataFrame(
+                np.ones((n_samples, num_nodes * (1 + p))),
+                columns=intra_nodes + inter_nodes,
+            )
     return g, df, intra_nodes, inter_nodes
