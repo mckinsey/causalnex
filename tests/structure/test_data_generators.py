@@ -25,6 +25,8 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# pylint: disable=C0302
 import operator
 import re
 import string
@@ -39,11 +41,13 @@ from networkx.algorithms.dag import is_directed_acyclic_graph
 from scipy.stats import anderson, stats
 
 from causalnex.structure.data_generators import (
+    gen_stationary_dyn_net_and_df,
     generate_binary_data,
     generate_binary_dataframe,
     generate_categorical_dataframe,
     generate_continuous_data,
     generate_continuous_dataframe,
+    generate_dataframe_dynamic,
     generate_structure,
     generate_structure_dynamic,
     sem_generator,
@@ -997,3 +1001,90 @@ class TestGenerateStructureDynamic:
             for v_f in range(num_nodes)  # var from
             for v_t in range(num_nodes)  # var to
         )
+
+
+class TestGenerateDataframeDynamic:
+    @pytest.mark.parametrize(
+        "sem_type", ["linear-gauss", "linear-exp", "linear-gumbel"]
+    )
+    def test_returns_dateframe(self, sem_type):
+        """ Return value is an ndarray - test over all sem_types """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type=sem_type, n_samples=10)
+        assert isinstance(data, pd.DataFrame)
+
+    def test_bad_sem_type(self):
+        """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        with pytest.raises(ValueError, match="unknown sem type"):
+            generate_dataframe_dynamic(sm, sem_type="invalid", n_samples=10)
+
+    @pytest.mark.parametrize("p", [0, 1, 2])
+    def test_labels_correct(self, p):
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, p, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type="linear-gauss", n_samples=10)
+        intra_nodes = sorted([el for el in sm.nodes if "_lag0" in el])
+        inter_nodes = sorted([el for el in sm.nodes if "_lag0" not in el])
+        assert sorted(data.columns) == sorted(list(inter_nodes) + list(intra_nodes))
+
+
+class TestGenerateStationaryDynamicStructureAndSamples:
+    def test_wta(self):
+        with pytest.warns(
+            UserWarning, match="Could not simulate data, returning constant dataframe"
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=1, w_max_inter=2, max_data_gen_trials=2
+            )
+
+    @pytest.mark.parametrize("seed", [2, 3, 5])
+    def test_seems_stationary(self, seed):
+        np.random.seed(seed)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            w_min_inter=0.1, w_max_inter=0.2, max_data_gen_trials=2
+        )
+        assert np.all(df.max() - df.min() < 10)
+
+    def test_error_if_wmin_less_wmax(self):
+        with pytest.raises(
+            ValueError,
+            match="Absolute minimum weight must be less than or equal to maximum weight: 2 > 1",
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=2, w_max_inter=1, max_data_gen_trials=2
+            )
+
+    def test_dense_networks(self):
+        """dense network are more likely to be non stationary. we check that the simulator is still able to provide a
+        stationary time-deries in that case.
+
+        If df contain only ones it means that the generator failed to obtain a stationary structure"""
+        np.random.seed(4)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.2,
+            w_max_inter=0.5,
+            max_data_gen_trials=10,
+            degree_intra=4,
+            degree_inter=7,
+        )
+        assert np.any(np.ones(df.shape) != df)
+
+    def test_fail_to_find_stationary_network(self):
+        """if fail to find suiatble network, retur dataset of ones"""
+        np.random.seed(5)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.6,
+            w_max_inter=0.6,
+            max_data_gen_trials=20,
+            degree_intra=4,
+            degree_inter=7,
+        )
+        print(df.head(3))
+        assert np.any(np.ones(df.shape) == df)
