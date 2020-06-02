@@ -32,13 +32,298 @@ dataset.
 
 import logging
 import warnings
-from typing import List, Tuple
+from collections.abc import Sequence
+from copy import deepcopy
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
 from causalnex.structure import StructureModel
+
+
+def from_pandas_dynamic(  # pylint: disable=R0913
+    time_series: Union[pd.DataFrame, List[pd.DataFrame]],
+    p: int,
+    lambda_w: float = 0.1,
+    lambda_a: float = 0.1,
+    max_iter: int = 100,
+    h_tol: float = 1e-8,
+    w_threshold: float = 0.0,
+    tabu_edges: List[Tuple[int, int, int]] = None,
+    tabu_parent_nodes: List[int] = None,
+    tabu_child_nodes: List[int] = None,
+) -> StructureModel:
+    """
+    Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between variables in
+    data. The input data is a time series or a list of realisations of a same time series.
+    The optimisation is to minimise a score function F(W, A) over the graph's contemporaneous (intra-slice) weighted
+    adjacency matrix, W, and lagged (inter-slice) weighted adjacency matrix, A, subject to the a constraint function
+    h(W), where h_value(W) == 0 characterises an acyclic graph. h(W) > 0 is a continuous, differentiable function that
+    encapsulated how acyclic the graph is (less = more acyclic).
+
+    Based on "DYNOTEARS: Structure Learning from Time-Series Data".
+    https://arxiv.org/abs/2002.00498
+    @misc{pamfil2020dynotears,
+        title={DYNOTEARS: Structure Learning from Time-Series Data},
+        author={Roxana Pamfil et. al},
+        year={2020},
+        eprint={2002.00498},
+        archivePrefix={arXiv},
+        primaryClass={stat.ML}
+    }
+    Args:
+        time_series: pd.DataFrame or List of pd.DataFrame instances.
+        If a list is provided each element of the list being an realisation of a time series (i.e. time series governed
+        by the same processes)
+        The columns of the data frame represent the variables in the model, and the *index represents the time index*.
+        Successive events, therefore, must be indexed with one integer of difference between them too.
+        p: Number of past interactions we allow the model to create. The state of a variable at time `t` is affected by
+        past variables up to a `t-p`, as well as by other variables at `t`.
+        lambda_w: parameter for l1 regularisation of intra-slice edges
+        lambda_a: parameter for l1 regularisation of inter-slice edges
+        max_iter: max number of dual ascent steps during optimisation.
+        h_tol: exit if h(W) < h_tol (as opposed to strict definition of 0).
+        w_threshold: fixed threshold for absolute edge weights.
+        tabu_edges: list of edges(lag, from, to) not to be included in the graph. `lag == 0` implies that the edge is
+        forbidden in the INTRA graph (W), while lag > 0 implies an INTER-slice weight equal zero.
+        tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+        tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+
+    Returns:
+        StructureModel representing the model learnt. The node names are noted as `{var}_lag{l}`, where `var` is the
+        original variable name as in the give in the input data frames and `l`, in 0,1,2..p is the correspondent
+        time lag.
+    """
+    if not isinstance(time_series, Sequence):
+        time_series = [time_series]
+
+    _check_input_from_pandas(time_series)
+
+    col_idx = {c: i for i, c in enumerate(time_series[0].columns)}
+    idx_col = {i: c for c, i in col_idx.items()}
+
+    if tabu_edges:
+        tabu_edges = [(lag, col_idx[u], col_idx[v]) for lag, u, v in tabu_edges]
+    if tabu_parent_nodes:
+        tabu_parent_nodes = [col_idx[n] for n in tabu_parent_nodes]
+    if tabu_child_nodes:
+        tabu_child_nodes = [col_idx[n] for n in tabu_child_nodes]
+
+    time_series_realisations = _cut_dataframes_on_discontinuity_points(time_series)
+
+    X, Xlags = _convert_realisations_into_dynotears_format(time_series_realisations, p)
+
+    g = from_numpy_dynamic(
+        X,
+        Xlags,
+        lambda_w,
+        lambda_a,
+        max_iter,
+        h_tol,
+        w_threshold,
+        tabu_edges,
+        tabu_parent_nodes,
+        tabu_child_nodes,
+    )
+
+    sm = StructureModel()
+    sm.add_nodes_from(
+        [
+            "{var}_lag{l_val}".format(var=var, l_val=l_val)
+            for var in col_idx.keys()
+            for l_val in range(p + 1)
+        ]
+    )
+    sm.add_weighted_edges_from(
+        [
+            (
+                _format_name_from_pandas(idx_col, u),
+                _format_name_from_pandas(idx_col, v),
+                w,
+            )
+            for u, v, w in g.edges.data("weight")
+        ],
+        origin="learned",
+    )
+
+    return sm
+
+
+def _format_name_from_pandas(idx_col: Dict[int, str], from_numpy_node: str) -> str:
+    """
+    Helper function for `from_pandas_dynamic`. converts a node from the `from_numpy_dynamic` format to the `from_pandas`
+    format
+    Args:
+        idx_col: map from variable to intdex
+        from_numpy_node: nodes in the structure model output by `from_numpy_dynamic`.
+    Returns:
+        nodes in from_pandas_dynamic format
+    """
+    idx, lag_val = from_numpy_node.split("_lag")
+    return "{var}_lag{l_val}".format(var=idx_col[int(idx)], l_val=lag_val)
+
+
+def _check_input_from_pandas(time_series: List[pd.DataFrame]):
+    """
+    Check if the input of function `from_pandas_dynamic` is valid
+    Args:
+        time_series: List of pd.DataFrame instances. each element of the list being an realisation of a same time series
+
+    Returns:
+
+    Raises:
+        ValueError: if empty list of time_series is provided
+        ValueError: if dataframes contain non numeric data
+        ValueError: if elements provided are not pandas dataframes
+        ValueError: if dataframes contain different columns
+        ValueError: if dataframes index is not in increasing order
+    """
+    if not time_series:
+        raise ValueError(
+            "Provided empty list of time_series. At least one DataFrame must be provided"
+        )
+
+    df = deepcopy(time_series[0])
+
+    for t in time_series:
+        if not isinstance(t, pd.DataFrame):
+            raise ValueError("Time series entries must be instances of `pd.DataFrame`")
+
+        non_numeric_cols = t.select_dtypes(exclude="number").columns
+
+        if not non_numeric_cols.empty:
+            raise ValueError(
+                "All columns must have numeric data. "
+                "Consider mapping the following columns to int: {non_numeric_cols}".format(
+                    non_numeric_cols=list(non_numeric_cols)
+                )
+            )
+
+        if (not np.all(df.columns == t.columns)) or (not np.all(df.dtypes == t.dtypes)):
+            raise ValueError("All inputs must have the same columns and same types")
+
+        if not np.all(t.index == t.index.sort_values()):
+            raise ValueError("Index for dataframe must be provided in increasing order")
+
+        if t.index.dtype != int:
+            raise ValueError("Index must be integers")
+
+
+def _cut_dataframes_on_discontinuity_points(
+    time_series: List[pd.DataFrame],
+) -> List[np.ndarray]:
+    """
+    Helper function for `from_pandas_dynamic`
+    Receive a list of dataframes. For each dataframe, cut the points of discontinuity as two different dataframes
+
+    For Example:
+    If the following is a dataframe:
+        index   variable_1  variable_2
+        1       X           X
+        2       X           X
+        3       X           X
+        5       X           X
+        8       X           X               <- discontinuity point
+        9       X           X
+        10      X           X
+
+    We cut this dataset in two:
+
+        index   variable_1  variable_2
+        1       X           X
+        2       X           X
+        3       X           X
+        5       X           X
+
+        and:
+        index   variable_1  variable_2
+        8       X           X
+        9       X           X
+        10      X           X
+
+
+    Args:
+        time_series: list of dataframes representing various realisations of a same time series
+
+    Returns:
+        List of np.ndarrays representing the pieces of the input datasets with no discontinuity
+
+    """
+    time_series_realisations = []
+    for t in time_series:  # type: pd.DataFrame
+        cutting_points = np.where(np.diff(t.index) > 1)[0]
+        cutting_points = [0] + list(cutting_points + 1) + [len(t)]
+        for start, end in zip(cutting_points[:-1], cutting_points[1:]):
+            time_series_realisations.append(t.iloc[start:end, :].values)
+    return time_series_realisations
+
+
+def _convert_realisations_into_dynotears_format(
+    realisations: List[np.ndarray], p: int
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Given a list of realisations of a time series, convert it to the format received by the dynotears algorithm.
+    Each realisation on `realisations` is a realisation of the time series, where the time dimension is represented by
+    the rows.
+        - The higher the row, the higher the time index
+        - The data is complete, meaning that the difference between two time stamps is one time unit todo rephrase
+    Args:
+        realisations: a list of realisations of a time series
+        p: the number of lagged columns to create
+
+    Returns:
+        X and Y as in the SVAR model and DYNOTEARS paper. I.e. X being representing X(m,t) and Y the concatenated
+        differences [X(m,t-1) | X(m,t-2) | ... | X(m,t-p)]
+    """
+    X = np.concatenate([realisation[p:] for realisation in realisations], axis=0)
+    Xlags_s = []
+    for realisation in realisations:
+        Xlags_s.append(
+            np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
+        )
+    Xlags = np.concatenate(Xlags_s, axis=0)
+
+    return X, Xlags
+
+
+def format_df_to_match_structure(
+    time_series: Union[pd.DataFrame, List[pd.DataFrame]], p: int,
+) -> pd.DataFrame:
+    """
+    Format a time series dataframe or list of dataframes into the a format that matches the structure learned by
+    `from_pandas_dynamic`. This is done to allow for bayesian network probability fitting.
+    Args:
+        time_series: pd.DataFrame or List of pd.DataFrame instances.
+        If a list is provided each element of the list being an realisation of a time series (i.e. time series governed
+        by the same processes)
+        The columns of the data frame represent the variables in the model, and the *index represents the time index*.
+        Successive events, therefore, must be indexed with one integer of difference between them too.
+        p: Number of past interactions we allow the model to create. The state of a variable at time `t` is affected by
+
+    Returns:
+        Dataframe formatted to contain all nodes in the Dynamic Bayesian Network structure
+    """
+
+    if not isinstance(time_series, Sequence):
+        time_series = [time_series]
+    _check_input_from_pandas(time_series)
+    time_series_realisations = _cut_dataframes_on_discontinuity_points(time_series)
+    X, Xlags = _convert_realisations_into_dynotears_format(time_series_realisations, p)
+    df_x = pd.DataFrame(
+        X, columns=["{col}_lag0".format(col=col) for col in time_series[0].columns]
+    )
+    df_xlags = pd.DataFrame(
+        Xlags,
+        columns=[
+            "{col}_lag{l_}".format(col=col, l_=l_)
+            for l_ in range(1, p + 1)
+            for col in time_series[0].columns
+        ],
+    )
+    return pd.concat([df_x, df_xlags], axis=1)
 
 
 def from_numpy_dynamic(  # pylint: disable=R0913
@@ -220,7 +505,6 @@ def _learn_dynamic_structure(
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
-    w_threshold: float = 0.0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between data variables.
@@ -251,7 +535,6 @@ def _learn_dynamic_structure(
         lambda_a (float): l1 regularization parameter of inter-weights A
         max_iter (int): max number of dual ascent steps during optimisation
         h_tol (float): exit if h(W) < h_tol (as opposed to strict definition of 0)
-        w_threshold: fixed threshold for absolute edge weights.
 
     Returns:
         W (np.ndarray): d x d estimated weighted adjacency matrix of intra slices
@@ -260,7 +543,6 @@ def _learn_dynamic_structure(
     Raises:
         ValueError: If X or Xlags does not contain data, or dimensions of X and Xlags do not conform
     """
-    # pylint: disable=R0914
     if X.size == 0:
         raise ValueError("Input data X is empty, cannot learn any structure")
     if Xlags.size == 0:
@@ -377,5 +659,4 @@ def _learn_dynamic_structure(
             break
         if h_value > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
-    wa_est[np.abs(wa_est) < w_threshold] = 0
     return _reshape_wa(wa_est, d_vars, p_orders)
