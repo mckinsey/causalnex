@@ -407,7 +407,7 @@ class TestFromPandasDynotears:
         sm_inter_edges = [el for el in sm.edges if "lag0" not in el[0]]
         print(a_edges)
         print(sm_inter_edges)
-        assert sorted([el for el in sm.edges if "lag0" in el[0]]) == sorted(w_edges)
+        assert sorted(el for el in sm.edges if "lag0" in el[0]) == sorted(w_edges)
         assert len(edges_in_sm_and_a) / len(a_edges) > 0.6
         assert len(edges_in_sm_and_a) / len(sm_inter_edges) > 0.9
 
