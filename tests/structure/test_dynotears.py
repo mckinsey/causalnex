@@ -738,7 +738,6 @@ class TestFormatDataframeToMatchStructure:
         df = format_df_to_match_structure(
             pd.DataFrame(data_dynotears_p3["X"], columns=cols), p=3,
         )
-        print(list(df.columns))
         assert list(df.columns) == [
             el + "_lag" + str(i) for i in range(4) for el in cols
         ]
