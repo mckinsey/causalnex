@@ -627,7 +627,8 @@ def generate_structure_dynamic(  # pylint: disable=R0913
     w_decay: float = 1.0,
 ) -> StructureModel:
     """
-        Generates a dynamic DAG at random.
+    Generates a dynamic DAG at random.
+
     Args:
         num_nodes: Number of nodes
         p: maximum lag to be considered in the structure
