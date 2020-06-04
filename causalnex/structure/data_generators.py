@@ -613,7 +613,7 @@ def _raise_dist_error(name: str, dist: str, dist_options):
     )
 
 
-def generate_structure_dynamic(  # pylint: disable=R0913
+def generate_structure_dynamic(  # pylint: disable=too-many-arguments
     num_nodes: int,
     p: int,
     degree_intra: float,
