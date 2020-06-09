@@ -80,6 +80,22 @@ class TestFromPandas:
         with pytest.raises(ValueError, match="All columns must have numeric data.*"):
             from_pandas(pd.DataFrame(data=["x"], columns=["a"]))
 
+    def test_array_with_nan_raises_error(self):
+        """
+        Providing a data set including nan should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError, match="Input contains NaN, infinity or a value too large for dtype*"):            
+            from_pandas(pd.DataFrame(data=[np.nan], columns=["a"]))
+
+    def test_array_with_inf_raises_error(self):
+        """
+        Providing a data set including infinite values should result in a Value Error explaining that data contains infinite values.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):
+            from_pandas(pd.DataFrame(data=[np.inf], columns=["a"]))
+
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
         With a single iteration on this dataset, learn_structure fails to converge and should give warnings.
@@ -205,6 +221,22 @@ class TestFromPandasLasso:
 
         with pytest.raises(ValueError, match="All columns must have numeric data.*"):
             from_pandas_lasso(pd.DataFrame(data=["x"], columns=["a"]), 0.1)
+
+    def test_array_with_nan_raises_error(self):
+        """
+        Providing a data set including nan should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):            
+            from_pandas_lasso(pd.DataFrame(data=[np.nan], columns=["a"]), 0.1)
+
+    def test_array_with_inf_raises_error(self):
+        """
+        Providing a data set including infinite values should result in a Value Error explaining that data contains infinite values.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):
+            from_pandas_lasso(pd.DataFrame(data=[np.inf], columns=["a"]), 0.1)
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
@@ -369,6 +401,22 @@ class TestFromNumpy:
         with pytest.raises(ValueError):
             from_numpy(np.empty([0, 5]))
 
+    def test_array_with_nan_raises_error(self):
+        """
+        Providing a data set including nan should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):            
+            from_numpy(np.ones([3, 5])*np.nan)
+
+    def test_array_with_inf_raises_error(self):
+        """
+        Providing a data set including infinite values should result in a Value Error explaining that data contains infinite values.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):
+            from_numpy(np.ones([3, 5])*np.inf)
+
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
         With a single iteration on this dataset, learn_structure fails to converge and should give warnings.
@@ -488,6 +536,22 @@ class TestFromNumpyLasso:
 
         with pytest.raises(ValueError):
             from_numpy_lasso(np.empty([0, 5]), 0.1)
+
+    def test_array_with_nan_raises_error(self):
+        """
+        Providing a data set including nan should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):            
+            from_numpy_lasso(np.ones([3, 5])*np.nan, 0.1)
+
+    def test_array_with_inf_raises_error(self):
+        """
+        Providing a data set including infinite values should result in a Value Error explaining that data contains infinite values.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(ValueError):
+            from_numpy_lasso(np.ones([3, 5])*np.inf, 0.1)
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """

@@ -49,6 +49,8 @@ import pandas as pd
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
+from causalnex.contrib.utils.validation import assert_all_finite
+
 from causalnex.structure.structuremodel import StructureModel
 
 __all__ = ["from_numpy", "from_pandas", "from_numpy_lasso", "from_pandas_lasso"]
@@ -101,6 +103,8 @@ def from_numpy(
 
     # n examples, d properties
     _, d = X.shape
+    
+    assert_all_finite(X, allow_nan=False)
 
     bnds = [
         (0, 0)
@@ -161,6 +165,8 @@ def from_numpy_lasso(
 
     # n examples, d properties
     _, d = X.shape
+
+    assert_all_finite(X, allow_nan=False)
 
     bnds = [
         (0, 0)
