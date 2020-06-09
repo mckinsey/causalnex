@@ -25,7 +25,3 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-__all__ = ["assert_all_finite"]
-
-from .utils.validation import assert_all_finite

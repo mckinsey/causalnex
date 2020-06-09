@@ -49,8 +49,6 @@ import pandas as pd
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
-from causalnex.contrib.utils.validation import assert_all_finite
-
 from causalnex.structure.structuremodel import StructureModel
 
 __all__ = ["from_numpy", "from_pandas", "from_numpy_lasso", "from_pandas_lasso"]
@@ -103,8 +101,8 @@ def from_numpy(
 
     # n examples, d properties
     _, d = X.shape
-    
-    assert_all_finite(X, allow_nan=False)
+
+    _assert_all_finite(X)
 
     bnds = [
         (0, 0)
@@ -166,7 +164,7 @@ def from_numpy_lasso(
     # n examples, d properties
     _, d = X.shape
 
-    assert_all_finite(X, allow_nan=False)
+    _assert_all_finite(X)
 
     bnds = [
         (0, 0)
@@ -556,3 +554,50 @@ def _learn_structure_lasso(
     w_new = w_est[: d ** 2].reshape([d, d]) - w_est[d ** 2 :].reshape([d, d])
     w_new[np.abs(w_new) < w_threshold] = 0
     return StructureModel(w_new.reshape([d, d]))
+
+
+def _assert_all_finite(X: np.ndarray, allow_nan: bool = False):
+    """Throw a ValueError if X contains NaN or Infinity.
+
+    Based on Sklearn method to handle NaN & Infinity.
+        @inproceedings{sklearn_api,
+        author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                    Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                    Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                    and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                    Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+        title     = {{API} design for machine learning software: experiences from the scikit-learn
+                    project},
+        booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+        year      = {2013},
+        pages = {108--122},
+        }
+
+    Args:
+        X: Array to validate
+        allow_nan: Whether to allow `NaN`s or not
+
+    Raises:
+        ValueError: If X contains NaN or Infinity
+    """
+    is_float = X.dtype.kind in ("f", "c")
+    if is_float and (np.isfinite(np.sum(X))):
+        return
+
+    msg_err = "Input contains {} or a value too large for {!r}."
+    if (allow_nan and np.isinf(X).any()):
+        type_err = 'infinity'
+        raise ValueError(
+                msg_err.format
+                (type_err,
+                X.dtype)
+        )
+
+    elif not allow_nan and not np.isfinite(X).all():
+        type_err = 'NaN, infinity'
+        raise ValueError(
+                msg_err.format
+                (type_err,
+                X.dtype)
+        )
+        
