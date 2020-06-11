@@ -89,16 +89,19 @@ class TestFromPandas:
             ValueError,
             match="Input contains NaN, infinity or a value too large for dtype*",
         ):
-            from_pandas(pd.DataFrame(data=[np.nan], columns=["a"]))
+            from_pandas(pd.DataFrame(data=[np.nan, 0], columns=["a"]))
 
     def test_array_with_inf_raises_error(self):
         """
-        Providing a data set including infinite values should result in a Value Error explaining that data 
+        Providing a data set including infinite values should result in a Value Error explaining that data
         contains infinite values.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_pandas(pd.DataFrame(data=[np.inf], columns=["a"]))
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_pandas(pd.DataFrame(data=[np.inf, 0], columns=["a"]))
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
@@ -231,17 +234,23 @@ class TestFromPandasLasso:
         Providing a data set including nan should result in a Value Error explaining that data contains nan.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_pandas_lasso(pd.DataFrame(data=[np.nan], columns=["a"]), 0.1)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_pandas_lasso(pd.DataFrame(data=[np.nan, 0], columns=["a"]), 0.1)
 
     def test_array_with_inf_raises_error(self):
         """
-        Providing a data set including infinite values should result in a Value Error explaining that data 
+        Providing a data set including infinite values should result in a Value Error explaining that data
         contains infinite values.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_pandas_lasso(pd.DataFrame(data=[np.inf], columns=["a"]), 0.1)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_pandas_lasso(pd.DataFrame(data=[np.inf, 0], columns=["a"]), 0.1)
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
@@ -411,8 +420,11 @@ class TestFromNumpy:
         Providing a data set including nan should result in a Value Error explaining that data contains nan.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_numpy(np.ones([3, 5]) * np.nan)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_numpy(np.array([[0, np.nan]]))
 
     def test_array_with_inf_raises_error(self):
         """
@@ -420,8 +432,11 @@ class TestFromNumpy:
         contains infinite values.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_numpy(np.ones([3, 5]) * np.inf)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_numpy(np.array([[0, np.inf]]))
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
@@ -548,17 +563,23 @@ class TestFromNumpyLasso:
         Providing a data set including nan should result in a Value Error explaining that data contains nan.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_numpy_lasso(np.ones([3, 5]) * np.nan, 0.1)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_numpy_lasso(np.array([[3, np.nan]]), 0.1)
 
     def test_array_with_inf_raises_error(self):
         """
-        Providing a data set including infinite values should result in a Value Error explaining that data 
+        Providing a data set including infinite values should result in a Value Error explaining that data
         contains infinite values.
         This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
         """
-        with pytest.raises(ValueError):
-            from_numpy_lasso(np.ones([3, 5]) * np.inf, 0.1)
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_numpy_lasso(np.array([[3, np.inf]]), 0.1)
 
     def test_single_iter_gets_converged_fail_warnings(self, train_data_idx):
         """
