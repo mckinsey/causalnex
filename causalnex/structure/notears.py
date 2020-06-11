@@ -556,7 +556,7 @@ def _learn_structure_lasso(
     return StructureModel(w_new.reshape([d, d]))
 
 
-def _assert_all_finite(X: np.ndarray, allow_nan: bool = False):
+def _assert_all_finite(X: np.ndarray):
     """Throw a ValueError if X contains NaN or Infinity.
 
     Based on Sklearn method to handle NaN & Infinity.
@@ -575,7 +575,6 @@ def _assert_all_finite(X: np.ndarray, allow_nan: bool = False):
 
     Args:
         X: Array to validate
-        allow_nan: Whether to allow `NaN`s or not
 
     Raises:
         ValueError: If X contains NaN or Infinity
@@ -584,20 +583,6 @@ def _assert_all_finite(X: np.ndarray, allow_nan: bool = False):
     if is_float and (np.isfinite(np.sum(X))):
         return
 
-    msg_err = "Input contains {} or a value too large for {!r}."
-    if (allow_nan and np.isinf(X).any()):
-        type_err = 'infinity'
-        raise ValueError(
-                msg_err.format
-                (type_err,
-                X.dtype)
-        )
-
-    elif not allow_nan and not np.isfinite(X).all():
-        type_err = 'NaN, infinity'
-        raise ValueError(
-                msg_err.format
-                (type_err,
-                X.dtype)
-        )
-        
+    msg_err = "Input contains NaN, infinity or a value too large for {!r}."
+    if not np.isfinite(X).all():
+        raise ValueError(msg_err.format(X.dtype))
