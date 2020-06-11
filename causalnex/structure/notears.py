@@ -579,9 +579,6 @@ def _assert_all_finite(X: np.ndarray):
     Raises:
         ValueError: If X contains NaN or Infinity
     """
-    is_float = X.dtype.kind in ("f", "c")
-    if is_float and (np.isfinite(np.sum(X))):
-        return
 
     msg_err = "Input contains NaN, infinity or a value too large for {!r}."
     if not np.isfinite(X).all():
