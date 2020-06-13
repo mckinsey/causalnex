@@ -85,7 +85,7 @@ class TestFromNumpyDynotears:
         """
 
         with pytest.warns(
-            UserWarning, match="Failed to converge. Consider increasing max_iter."
+            UserWarning, match=r"Failed to converge\. Consider increasing max_iter."
         ):
             from_numpy_dynamic(
                 data_dynotears_p1["X"], data_dynotears_p1["Y"], max_iter=1
@@ -345,7 +345,7 @@ class TestFromPandasDynotears:
         """
 
         with pytest.warns(
-            UserWarning, match="Failed to converge. Consider increasing max_iter."
+            UserWarning, match=r"Failed to converge\. Consider increasing max_iter."
         ):
             from_pandas_dynamic(pd.DataFrame(data_dynotears_p1["X"]), p=1, max_iter=1)
 
@@ -664,13 +664,13 @@ class TestFromPandasDynotears:
 
         with pytest.raises(
             ValueError,
-            match="All columns must have numeric data. "
+            match=r"All columns must have numeric data\. "
             r"Consider mapping the following columns to int: \['a'\]",
         ):
             from_pandas_dynamic(pd.DataFrame([["1"]], columns=["a"]), 1)
 
         with pytest.raises(
-            ValueError, match="Time series entries must be instances of `pd.DataFrame`",
+            TypeError, match="Time series entries must be instances of `pd.DataFrame`",
         ):
             from_pandas_dynamic([np.array([1, 2])], 1)
 
@@ -705,7 +705,7 @@ class TestFromPandasDynotears:
             from_pandas_dynamic([df, df_2], 1)
 
         with pytest.raises(
-            ValueError, match="Index must be integers",
+            TypeError, match="Index must be integers",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
             from_pandas_dynamic(df, 1)
@@ -749,13 +749,13 @@ class TestFormatDataframeToMatchStructure:
 
         with pytest.raises(
             ValueError,
-            match="All columns must have numeric data. "
+            match=r"All columns must have numeric data\. "
             r"Consider mapping the following columns to int: \['a'\]",
         ):
             format_df_to_match_structure(pd.DataFrame([["1"]], columns=["a"]), 1)
 
         with pytest.raises(
-            ValueError, match="Time series entries must be instances of `pd.DataFrame`",
+            TypeError, match="Time series entries must be instances of `pd.DataFrame`",
         ):
             format_df_to_match_structure([np.array([1, 2])], 1)
 
@@ -790,7 +790,7 @@ class TestFormatDataframeToMatchStructure:
             format_df_to_match_structure([df, df_2], 1)
 
         with pytest.raises(
-            ValueError, match="Index must be integers",
+            TypeError, match="Index must be integers",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
             format_df_to_match_structure(df, 1)

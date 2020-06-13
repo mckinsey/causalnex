@@ -30,9 +30,7 @@ Tools to learn a Dynamic Bayesian Network which describe the conditional depende
 dataset.
 """
 
-import logging
 import warnings
-from collections.abc import Sequence
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
@@ -44,7 +42,7 @@ import scipy.optimize as sopt
 from causalnex.structure import StructureModel
 
 
-def from_pandas_dynamic(  # pylint: disable=R0913
+def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     time_series: Union[pd.DataFrame, List[pd.DataFrame]],
     p: int,
     lambda_w: float = 0.1,
@@ -97,8 +95,7 @@ def from_pandas_dynamic(  # pylint: disable=R0913
         original variable name as in the give in the input data frames and `l`, in 0,1,2..p is the correspondent
         time lag.
     """
-    if not isinstance(time_series, Sequence):
-        time_series = [time_series]
+    time_series = [time_series] if not isinstance(time_series, list) else time_series
 
     _check_input_from_pandas(time_series)
 
@@ -177,9 +174,10 @@ def _check_input_from_pandas(time_series: List[pd.DataFrame]):
     Raises:
         ValueError: if empty list of time_series is provided
         ValueError: if dataframes contain non numeric data
-        ValueError: if elements provided are not pandas dataframes
+        TypeError: if elements provided are not pandas dataframes
         ValueError: if dataframes contain different columns
         ValueError: if dataframes index is not in increasing order
+        TypeError: if dataframes index are not index
     """
     if not time_series:
         raise ValueError(
@@ -190,7 +188,7 @@ def _check_input_from_pandas(time_series: List[pd.DataFrame]):
 
     for t in time_series:
         if not isinstance(t, pd.DataFrame):
-            raise ValueError("Time series entries must be instances of `pd.DataFrame`")
+            raise TypeError("Time series entries must be instances of `pd.DataFrame`")
 
         non_numeric_cols = t.select_dtypes(exclude="number").columns
 
@@ -209,7 +207,7 @@ def _check_input_from_pandas(time_series: List[pd.DataFrame]):
             raise ValueError("Index for dataframe must be provided in increasing order")
 
         if t.index.dtype != int:
-            raise ValueError("Index must be integers")
+            raise TypeError("Index must be integers")
 
 
 def _cut_dataframes_on_discontinuity_points(
@@ -253,7 +251,7 @@ def _cut_dataframes_on_discontinuity_points(
 
     """
     time_series_realisations = []
-    for t in time_series:  # type: pd.DataFrame
+    for t in time_series:
         cutting_points = np.where(np.diff(t.index) > 1)[0]
         cutting_points = [0] + list(cutting_points + 1) + [len(t)]
         for start, end in zip(cutting_points[:-1], cutting_points[1:]):
@@ -307,8 +305,8 @@ def format_df_to_match_structure(
         Dataframe formatted to contain all nodes in the Dynamic Bayesian Network structure
     """
 
-    if not isinstance(time_series, Sequence):
-        time_series = [time_series]
+    time_series = [time_series] if not isinstance(time_series, list) else time_series
+
     _check_input_from_pandas(time_series)
     time_series_realisations = _cut_dataframes_on_discontinuity_points(time_series)
     X, Xlags = _convert_realisations_into_dynotears_format(time_series_realisations, p)
@@ -553,7 +551,6 @@ def _learn_dynamic_structure(
         raise ValueError(
             "Number of columns of Xlags must be a multiple of number of columns of X"
         )
-    logging.info("Learning dynamic structure using 'DYNOTEARS' optimisation")
 
     # n = #time series*(#time points+1-p), d variables, p lags
     n, d_vars = X.shape

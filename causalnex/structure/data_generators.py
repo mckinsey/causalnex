@@ -106,7 +106,10 @@ def generate_structure(
         edge_flags = np.tril(np.ones([num_nodes, num_nodes]), k=-1)
 
     else:
-        raise ValueError("unknown graph type")
+        raise ValueError(
+            "unknown graph type {t}. ".format(t=graph_type)
+            + "Available types are ['erdos-renyi', 'barabasi-albert', 'full']"
+        )
 
     # randomly permute edges - required because we limited ourselves to lower diagonal previously
     perms = np.random.permutation(np.eye(num_nodes, num_nodes))
@@ -715,13 +718,15 @@ def _generate_inter_structure(
         )
 
     if graph_type == "erdos-renyi":
-        prob = float(degree) / num_nodes
+        prob = degree / num_nodes
         b = (np.random.rand(p * num_nodes, num_nodes) < prob).astype(float)
-        # np.fill_diagonal(B, 0)  # get rid of autoregressive terms
     elif graph_type == "full":  # ignore degree, only for experimental use
         b = np.ones([p * num_nodes, num_nodes])
     else:
-        raise ValueError("Unknown inter-slice graph type")
+        raise ValueError(
+            "Unknown inter-slice graph type `{n}`".format(n=graph_type)
+            + ". Valid types are 'erdos-renyi' and 'full'"
+        )
     u = []
     for i in range(p):
         u_i = np.random.uniform(low=w_min, high=w_max, size=[num_nodes, num_nodes]) / (
@@ -780,10 +785,15 @@ def generate_dataframe_dynamic(  # pylint: disable=R0914
     Raises:
         ValueError: if sem_type isn't linear-gauss/linear_exp/linear-gumbel
     """
-    if sem_type not in ("linear-gauss", "linear-exp", "linear-gumbel"):
-        raise ValueError("unknown sem type")
-    intra_nodes = sorted([el for el in g.nodes if "_lag0" in el])
-    inter_nodes = sorted([el for el in g.nodes if "_lag0" not in el])
+    s_types = ("linear-gauss", "linear-exp", "linear-gumbel")
+    if sem_type not in s_types:
+        raise ValueError(
+            "unknown sem type {st}. Available types are: {sts}".format(
+                st=sem_type, sts=s_types
+            )
+        )
+    intra_nodes = sorted(el for el in g.nodes if "_lag0" in el)
+    inter_nodes = sorted(el for el in g.nodes if "_lag0" not in el)
     w_mat = nx.to_numpy_array(g, nodelist=intra_nodes)
     a_mat = nx.to_numpy_array(g, nodelist=intra_nodes + inter_nodes)[
         len(intra_nodes) :, : len(intra_nodes)

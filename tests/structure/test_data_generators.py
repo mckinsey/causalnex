@@ -26,7 +26,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=C0302
+# pylint: disable=too-many-lines
 import operator
 import re
 import string
@@ -114,7 +114,11 @@ class TestGenerateStructure:
         """ Test that a value other than "erdos-renyi", "barabasi-albert", "full" throws ValueError """
         graph_type = "invalid"
         degree, d_nodes = 4, 10
-        with pytest.raises(ValueError, match="unknown graph type"):
+        with pytest.raises(
+            ValueError,
+            match="unknown graph type invalid. Available types are"
+            r" \['erdos-renyi', 'barabasi-albert', 'full'\]",
+        ):
             generate_structure(d_nodes, degree, graph_type)
 
     @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
@@ -976,16 +980,25 @@ class TestGenerateStructureDynamic:
 
     def test_raise_error_if_wrong_graph_type(self):
         """if the graph_type chosen is not among the options available, raise error"""
-        with pytest.raises(ValueError, match="unknown graph type"):
+        with pytest.raises(
+            ValueError,
+            match=r"unknown graph type some_type\. "
+            r"Available types are \['erdos-renyi', 'barabasi-albert', 'full'\]",
+        ):
             generate_structure_dynamic(10, 10, 10, 10, graph_type_intra="some_type")
-        with pytest.raises(ValueError, match="Unknown inter-slice graph type"):
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown inter-slice graph type `some_type`\. "
+            "Valid types are 'erdos-renyi' and 'full'",
+        ):
             generate_structure_dynamic(10, 10, 10, 10, graph_type_inter="some_type")
 
     def test_raise_error_if_min_greater_than_max(self):
         """if min > max,raise error"""
         with pytest.raises(
             ValueError,
-            match="Absolute minimum weight must be less than or equal to maximum weight: 3 > 2",
+            match="Absolute minimum weight must be "
+            r"less than or equal to maximum weight\: 3 \> 2",
         ):
             generate_structure_dynamic(10, 10, 10, 10, w_min_inter=3, w_max_inter=2)
 
@@ -1018,7 +1031,11 @@ class TestGenerateDataframeDynamic:
         """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
-        with pytest.raises(ValueError, match="unknown sem type"):
+        with pytest.raises(
+            ValueError,
+            match="unknown sem type invalid. Available types are:"
+            r" \('linear-gauss', 'linear-exp', 'linear-gumbel'\)",
+        ):
             generate_dataframe_dynamic(sm, sem_type="invalid", n_samples=10)
 
     @pytest.mark.parametrize("p", [0, 1, 2])
