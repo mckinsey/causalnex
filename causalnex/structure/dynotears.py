@@ -215,7 +215,8 @@ def _cut_dataframes_on_discontinuity_points(
 ) -> List[np.ndarray]:
     """
     Helper function for `from_pandas_dynamic`
-    Receive a list of dataframes. For each dataframe, cut the points of discontinuity as two different dataframes
+    Receive a list of dataframes. For each dataframe, cut the points of discontinuity as two different dataframes.
+    Discontinuities are determined by the indexes.
 
     For Example:
     If the following is a dataframe:
@@ -223,7 +224,7 @@ def _cut_dataframes_on_discontinuity_points(
         1       X           X
         2       X           X
         3       X           X
-        5       X           X
+        4       X           X
         8       X           X               <- discontinuity point
         9       X           X
         10      X           X
@@ -234,7 +235,7 @@ def _cut_dataframes_on_discontinuity_points(
         1       X           X
         2       X           X
         3       X           X
-        5       X           X
+        4       X           X
 
         and:
         index   variable_1  variable_2
@@ -267,7 +268,7 @@ def _convert_realisations_into_dynotears_format(
     Each realisation on `realisations` is a realisation of the time series, where the time dimension is represented by
     the rows.
         - The higher the row, the higher the time index
-        - The data is complete, meaning that the difference between two time stamps is one time unit todo rephrase
+        - The data is complete, meaning that the difference between two time stamps is equal one
     Args:
         realisations: a list of realisations of a time series
         p: the number of lagged columns to create
@@ -277,14 +278,14 @@ def _convert_realisations_into_dynotears_format(
         differences [X(m,t-1) | X(m,t-2) | ... | X(m,t-p)]
     """
     X = np.concatenate([realisation[p:] for realisation in realisations], axis=0)
-    Xlags_s = []
+    y_lag_list = []
     for realisation in realisations:
-        Xlags_s.append(
+        y_lag_list.append(
             np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
         )
-    Xlags = np.concatenate(Xlags_s, axis=0)
+    y_lag = np.concatenate(y_lag_list, axis=0)
 
-    return X, Xlags
+    return X, y_lag
 
 
 def format_df_to_match_structure(
