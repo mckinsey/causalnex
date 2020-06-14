@@ -31,9 +31,10 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.exceptions import NotFittedError
 
 from causalnex.structure.dynotears import (
-    format_df_to_match_structure,
+    DynamicDataTransformer,
     from_numpy_dynamic,
     from_pandas_dynamic,
 )
@@ -711,18 +712,16 @@ class TestFromPandasDynotears:
             from_pandas_dynamic(df, 1)
 
 
-class TestFormatDataframeToMatchStructure:
+class TestDynamicDataTransformer:
     def test_naming_nodes(self, data_dynotears_p3):
         """
         Nodes should have the format {var}_lag{l}
         """
-        df = format_df_to_match_structure(
-            pd.DataFrame(data_dynotears_p3["X"], columns=["a", "b", "c", "d", "e"]),
-            p=3,
-        )
-        pattern = re.compile(r"[abcde]_lag[0-3]")
+        df = pd.DataFrame(data_dynotears_p3["X"], columns=["a", "b", "c", "d", "e"])
+        df_dyno = DynamicDataTransformer(p=3).fit_transform(df)
 
-        for node in df.columns:
+        pattern = re.compile(r"[abcde]_lag[0-3]")
+        for node in df_dyno.columns:
             match = pattern.match(node)
             assert match
             assert match.group() == node
@@ -731,12 +730,11 @@ class TestFormatDataframeToMatchStructure:
         """
         Nodes should have the format {var}_lag{l}
         """
-        cols = ["a", "b", "c", "d", "e"]
-        df = format_df_to_match_structure(
-            pd.DataFrame(data_dynotears_p3["X"], columns=cols), p=3,
-        )
-        assert list(df.columns) == [
-            el + "_lag" + str(i) for i in range(4) for el in cols
+        df = pd.DataFrame(data_dynotears_p3["X"], columns=["a", "b", "c", "d", "e"])
+        df_dyno = DynamicDataTransformer(p=3).fit_transform(df)
+
+        assert list(df_dyno.columns) == [
+            el + "_lag" + str(i) for i in range(4) for el in ["a", "b", "c", "d", "e"]
         ]
 
     def test_incorrect_input_format(self):
@@ -745,26 +743,28 @@ class TestFormatDataframeToMatchStructure:
             match="Provided empty list of time_series."
             " At least one DataFrame must be provided",
         ):
-            format_df_to_match_structure([], 1)
+            DynamicDataTransformer(p=3).fit_transform([])
 
         with pytest.raises(
             ValueError,
             match=r"All columns must have numeric data\. "
             r"Consider mapping the following columns to int: \['a'\]",
         ):
-            format_df_to_match_structure(pd.DataFrame([["1"]], columns=["a"]), 1)
+            DynamicDataTransformer(p=1).fit_transform(
+                pd.DataFrame([["1"]], columns=["a"])
+            )
 
         with pytest.raises(
             TypeError, match="Time series entries must be instances of `pd.DataFrame`",
         ):
-            format_df_to_match_structure([np.array([1, 2])], 1)
+            DynamicDataTransformer(p=1).fit_transform([np.array([1, 2])])
 
         with pytest.raises(
             ValueError,
             match="Index for dataframe must be provided in increasing order",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[3, 1, 2, 5, 0])
-            format_df_to_match_structure(df, 1)
+            DynamicDataTransformer(p=1).fit_transform(df)
 
         with pytest.raises(
             ValueError, match="All inputs must have the same columns and same types",
@@ -775,22 +775,134 @@ class TestFormatDataframeToMatchStructure:
             df_2 = pd.DataFrame(
                 np.random.random([5, 5]), columns=["a", "b", "c", "d", "f"],
             )
-            format_df_to_match_structure([df, df_2], 1)
+            DynamicDataTransformer(p=1).fit_transform([df, df_2])
 
         with pytest.raises(
             ValueError, match="All inputs must have the same columns and same types",
         ):
-            df = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
-            )
-            df_2 = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
-            )
+            cols = ["a", "b", "c", "d", "e"]
+            df = pd.DataFrame(np.random.random([5, 5]), columns=cols)
+            df_2 = pd.DataFrame(np.random.random([5, 5]), columns=cols)
             df_2["a"] = df_2["a"].astype(int)
-            format_df_to_match_structure([df, df_2], 1)
+            DynamicDataTransformer(p=1).fit_transform([df, df_2])
 
         with pytest.raises(
             TypeError, match="Index must be integers",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
-            format_df_to_match_structure(df, 1)
+            DynamicDataTransformer(p=1).fit_transform(df)
+
+    def test_not_fitted_transform(self):
+        """if transform called before fit: raise error"""
+        with pytest.raises(
+            NotFittedError,
+            match=r"This DynamicDataTransformer is not fitted yet\."
+            " Call `fit` before using this method",
+        ):
+            df = pd.DataFrame(np.random.random([5, 5]))
+            DynamicDataTransformer(p=1).transform(df)
+
+    def test_transform_wrong_input(self):
+        """If transform df does not have all necessaty columns, raise error"""
+        with pytest.raises(
+            ValueError,
+            match="We should provide all necessary columns in "
+            r"the time series\. Columns not provided: \[2, 3\]",
+        ):
+            df = pd.DataFrame(np.random.random([5, 5]))
+            ddt = DynamicDataTransformer(p=1).fit(df)
+            ddt.transform(df.drop([2, 3], axis=1))
+
+    def test_return_df_true_equivalent_to_false(self):
+        """Check that the df from `return_df=true` is
+         equivalent the result if `return_df=false`"""
+        df = pd.DataFrame(np.random.random([50, 10]))
+        df_dyno = DynamicDataTransformer(p=3).fit_transform(df, return_df=True)
+        X, Xlags = DynamicDataTransformer(p=3).fit_transform(df, return_df=False)
+        assert np.all(df_dyno.values[:, :10] == X)
+        assert np.all(df_dyno.values[:, 10:] == Xlags)
+
+
+# class TestFormatDataframeToMatchStructure:
+#     def test_naming_nodes(self, data_dynotears_p3):
+#         """
+#         Nodes should have the format {var}_lag{l}
+#         """
+#         df = format_df_to_match_structure(
+#             pd.DataFrame(data_dynotears_p3["X"], columns=["a", "b", "c", "d", "e"]),
+#             p=3,
+#         )
+#         pattern = re.compile(r"[abcde]_lag[0-3]")
+#
+#         for node in df.columns:
+#             match = pattern.match(node)
+#             assert match
+#             assert match.group() == node
+#
+#     def test_all_nodes_in_df(self, data_dynotears_p3):
+#         """
+#         Nodes should have the format {var}_lag{l}
+#         """
+#         cols = ["a", "b", "c", "d", "e"]
+#         df = format_df_to_match_structure(
+#             pd.DataFrame(data_dynotears_p3["X"], columns=cols), p=3,
+#         )
+#         assert list(df.columns) == [
+#             el + "_lag" + str(i) for i in range(4) for el in cols
+#         ]
+#
+#     def test_incorrect_input_format(self):
+#         with pytest.raises(
+#             ValueError,
+#             match="Provided empty list of time_series."
+#             " At least one DataFrame must be provided",
+#         ):
+#             format_df_to_match_structure([], 1)
+#
+#         with pytest.raises(
+#             ValueError,
+#             match=r"All columns must have numeric data\. "
+#             r"Consider mapping the following columns to int: \['a'\]",
+#         ):
+#             format_df_to_match_structure(pd.DataFrame([["1"]], columns=["a"]), 1)
+#
+#         with pytest.raises(
+#             TypeError, match="Time series entries must be instances of `pd.DataFrame`",
+#         ):
+#             format_df_to_match_structure([np.array([1, 2])], 1)
+#
+#         with pytest.raises(
+#             ValueError,
+#             match="Index for dataframe must be provided in increasing order",
+#         ):
+#             df = pd.DataFrame(np.random.random([5, 5]), index=[3, 1, 2, 5, 0])
+#             format_df_to_match_structure(df, 1)
+#
+#         with pytest.raises(
+#             ValueError, match="All inputs must have the same columns and same types",
+#         ):
+#             df = pd.DataFrame(
+#                 np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+#             )
+#             df_2 = pd.DataFrame(
+#                 np.random.random([5, 5]), columns=["a", "b", "c", "d", "f"],
+#             )
+#             format_df_to_match_structure([df, df_2], 1)
+#
+#         with pytest.raises(
+#             ValueError, match="All inputs must have the same columns and same types",
+#         ):
+#             df = pd.DataFrame(
+#                 np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+#             )
+#             df_2 = pd.DataFrame(
+#                 np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+#             )
+#             df_2["a"] = df_2["a"].astype(int)
+#             format_df_to_match_structure([df, df_2], 1)
+#
+#         with pytest.raises(
+#             TypeError, match="Index must be integers",
+#         ):
+#             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
+#             format_df_to_match_structure(df, 1)
