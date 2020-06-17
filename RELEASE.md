@@ -1,5 +1,6 @@
 # Upcoming release
 
+* Bugfix to resolve issue when applying notears on data containing NaN
 
 # Release 0.7.0
 
