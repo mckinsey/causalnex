@@ -1,5 +1,6 @@
 # Upcoming release
 
+* Added Pytorch implementation for NOTEARS MLP which is much faster (Only supporting linear structure learning for now)
 
 # Release 0.7.0
 

@@ -711,11 +711,15 @@ class TestMixedDataGen:
         # test categorical:
         for col in ["1_{}".format(i) for i in range(3)]:
             assert df[col].nunique() == 2
-        assert len([x for x in df.columns if isinstance(x, str) and "1_" in x]) == 3
+        assert (
+            len([x for x in list(df.columns) if isinstance(x, str) and "1_" in x]) == 3
+        )
 
         for col in ["5_{}".format(i) for i in range(5)]:
             assert df[col].nunique() == 2
-        assert len([x for x in df.columns if isinstance(x, str) and "5_" in x]) == 5
+        assert (
+            len([x for x in list(df.columns) if isinstance(x, str) and "5_" in x]) == 5
+        )
 
         # test continuous
         assert df[3].nunique() == 1000
