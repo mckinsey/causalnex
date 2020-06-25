@@ -1,5 +1,15 @@
-# Release latest
+# Upcoming release
+
+* Added Pytorch implementation for NOTEARS MLP which is much faster (Only supporting linear structure learning for now)
 * Minor fix on test cases
+
+# Release 0.7.0
+
+* Added plotting tutorial to the documentation
+* Updated `viz.draw` syntax in tutorial notebooks
+* Bugfix on notears lasso (`from_numpy_lasso` and `from_pandas_lasso`) where the non-negativity constraint was not being set
+* Added DAG-based synthetic data generator for mixed types (binary, categorical, continuous) using a linear SEM approach.
+* Unpinned some requirements
 
 # Release 0.6.0
 

@@ -1,0 +1,6 @@
+digraph G {
+	graph [dpi=100];
+    a [color=blue, shape=cylinder]
+    a -> b[color=red];
+    a -> c;
+}

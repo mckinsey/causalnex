@@ -487,3 +487,21 @@ def bn(train_data_idx, train_data_discrete) -> BayesianNetwork:
     return BayesianNetwork(
         from_pandas(train_data_idx, w_threshold=0.3)
     ).fit_node_states_and_cpds(train_data_discrete)
+
+
+@pytest.fixture
+def adjacency_mat_num_stability() -> np.ndarray:
+    """
+    Adjacency matrix for training structure learning algorithms
+    """
+
+    W = np.array(
+        [
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+            [-0.6, 0.0, 0.0, 0.0, 1.27],
+            [0.9, 0.0, 0.0, 0.0, -0.98],
+            [0.0, -0.89, 1.37, 0.0, 0.0],
+            [1.74, 0.0, 0.0, 0.0, 0.0],
+        ]
+    )
+    return W
