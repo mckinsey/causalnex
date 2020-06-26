@@ -1092,7 +1092,7 @@ class TestGenerateStationaryDynamicStructureAndSamples:
         assert np.any(np.ones(df.shape) != df)
 
     def test_fail_to_find_stationary_network(self):
-        """if fail to find suiatble network, retur dataset of ones"""
+        """if fails to find suitable network, returns dataset of ones"""
         np.random.seed(5)
         _, df, _, _ = gen_stationary_dyn_net_and_df(
             n_samples=1000,
@@ -1103,5 +1103,4 @@ class TestGenerateStationaryDynamicStructureAndSamples:
             degree_intra=4,
             degree_inter=7,
         )
-        print(df.head(3))
         assert np.any(np.ones(df.shape) == df)

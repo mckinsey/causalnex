@@ -358,8 +358,6 @@ class DynamicDataTransformer(TransformerMixin):
             time_series: List of pd.DataFrame instances.
                 each element of the list being an realisation of a same time series
 
-        Returns:
-
         Raises:
             ValueError: if empty list of time_series is provided
             ValueError: if dataframes contain non numeric data
@@ -413,7 +411,7 @@ class DynamicDataTransformer(TransformerMixin):
                     )
 
 
-def from_numpy_dynamic(  # pylint: disable=R0913
+def from_numpy_dynamic(  # pylint: disable=too-many-arguments
     X: np.ndarray,
     Xlags: np.ndarray,
     lambda_w: float = 0.1,
