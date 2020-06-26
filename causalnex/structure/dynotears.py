@@ -99,8 +99,7 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     """
     time_series = [time_series] if not isinstance(time_series, list) else time_series
 
-    ddt = DynamicDataTransformer(p=p).fit(time_series, return_df=False)
-    X, Xlags = ddt.transform(time_series)
+    X, Xlags = DynamicDataTransformer(p=p).fit_transform(time_series, return_df=False)
 
     col_idx = {c: i for i, c in enumerate(time_series[0].columns)}
     idx_col = {i: c for c, i in col_idx.items()}
@@ -230,11 +229,10 @@ def _convert_realisations_into_dynotears_format(
         differences [X(m,t-1) | X(m,t-2) | ... | X(m,t-p)]
     """
     X = np.concatenate([realisation[p:] for realisation in realisations], axis=0)
-    y_lag_list = []
-    for realisation in realisations:
-        y_lag_list.append(
-            np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
-        )
+    y_lag_list = [
+        np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
+        for realisation in realisations
+    ]
     y_lag = np.concatenate(y_lag_list, axis=0)
 
     return X, y_lag
