@@ -28,7 +28,6 @@
 
 """
 This code is modified from this git repo: https://github.com/xunzheng/notears
-
 @inproceedings{zheng2020learning,
     author = {Zheng, Xun and Dan, Chen and Aragam, Bryon and Ravikumar, Pradeep and Xing, Eric P.},
     booktitle = {International Conference on Artificial Intelligence and Statistics},
@@ -63,16 +62,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
     ):
         """
         Constructor for NOTEARS MLP class.
-
         Args:
             n_features: number of input features
             bias: True to add the intercept to the model
             and the numbers determine the number of nodes used for the layer in order.
             bounds: bound constraint for each parameter.
-            lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
-            It only applies to adjacency weights (fc1 weights)
+            lasso_beta: Constant that multiplies the lasso term (l1 regularisation). It only applies to fc1 weight
             ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
-            It applies to both adjacency (fc1) and fc2 weights.
+            It applies to both fc1 and fc2 weights.
         """
         super().__init__()
         self.device = torch.device("cpu")
@@ -111,10 +108,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # [n, d] -> [n, d]
         """
         Feed forward calculation for the model.
-
         Args:
             x: input torch tensor
-
         Returns:
             output tensor from the model
         """
@@ -126,7 +121,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def get_adj(self, w_threshold: float = None) -> np.ndarray:
         """
         Get the adjacency matrix from NOTEARS MLP
-
         Args:
             w_threshold: fixed threshold for absolute edge weights.
         Returns:
@@ -145,6 +139,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         max_iter: int = 100,
         h_tol: float = 1e-8,
         rho_max: float = 1e16,
+        use_gpu: bool = True,
     ):
         """
         Fit NOTEARS MLP model using the input data x
@@ -153,7 +148,13 @@ class NotearsMLP(nn.Module, BaseEstimator):
             max_iter: max number of dual ascent steps during optimisation.
             h_tol: exit if h(w) < h_tol (as opposed to strict definition of 0).
             rho_max: to be updated
+            use_gpu: use gpu if it is set to True and CUDA is available
         """
+        if torch.cuda.is_available() and use_gpu:
+            self.device = torch.device("cuda")
+            self.fc1_pos.cuda()
+            self.fc1_neg.cuda()
+
         rho, alpha, h = 1.0, 0.0, np.inf
         X_torch = torch.from_numpy(x).float().to(self.device)
 
@@ -171,14 +172,12 @@ class NotearsMLP(nn.Module, BaseEstimator):
     ) -> Tuple[float, float, float]:
         """
         Perform one step of dual ascent in augmented Lagrangian.
-
         Args:
             X: input tensor data.
             rho: max number of dual ascent steps during optimisation.
             alpha: exit if h(w) < h_tol (as opposed to strict definition of 0).
             h: DAGness of the adjacency matrix
             rho_max: to be updated
-
         Returns:
             rho, alpha and h
         """
@@ -186,10 +185,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
         def _get_flat_grad(params: List[torch.Tensor]) -> np.ndarray:
             """
             Get flatten gradient vector from the parameters of the model
-
             Args:
                 params: parameters of the model
-
             Returns:
                 flatten gradient vector in numpy form
             """
@@ -206,10 +203,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
         def _get_flat_params(params: List[torch.Tensor]) -> np.ndarray:
             """
             Get parameters in flatten vector from the parameters of the model
-
             Args:
                 params: parameters of the model
-
             Returns:
                 flatten parameters vector in numpy form
             """
@@ -224,7 +219,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
         ):
             """
             Updata parameters of the model from the parameters in the form of flatten vector
-
             Args:
                 params: parameters of the model
                 flat_params: parameters in the form of flatten vector
@@ -239,13 +233,15 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 p.data = flat_params_torch[offset : offset + n_params].view_as(p.data)
                 offset += n_params
 
+            if self.device.type == "cuda":
+                self.fc1_pos.cuda()
+                self.fc1_neg.cuda()
+
         def _func(flat_params: np.ndarray) -> Tuple[float, np.ndarray]:
             """
             Objective function that the NOTEARS algorithm tries to minimise.
-
             Args:
                 flat_params: parameters to be optimised to minimise the objective function
-
             Returns:
                 Loss and gradient
             """
@@ -295,7 +291,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         Constraint function of the NOTEARS algorithm.
         Constrain 2-norm-squared of fc1 weights of the model along m1 dim to be a DAG
-
         Returns:
             DAGness of the adjacency matrix
         """
@@ -314,7 +309,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def _l2_reg(self) -> torch.Tensor:
         """
         Take 2-norm-squared of all parameters of the model
-
         Returns:
             l2 regularisation term
         """

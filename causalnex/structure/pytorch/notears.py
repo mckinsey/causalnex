@@ -50,12 +50,12 @@ def from_numpy(
     tabu_edges: List[Tuple[int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
+    use_gpu: bool = True,
     **kwargs
 ) -> StructureModel:
     """
     Learn the `StructureModel`, the graph structure with lasso regularisation
     describing conditional dependencies between variables in data presented as a numpy array.
-
     Based on DAGs with NO TEARS.
     @inproceedings{zheng2018dags,
         author = {Zheng, Xun and Aragam, Bryon and Ravikumar, Pradeep and Xing, Eric P.},
@@ -64,7 +64,6 @@ def from_numpy(
         year = {2018},
         codebase = {https://github.com/xunzheng/notears}
     }
-
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
         beta: Constant that multiplies the lasso term (l1 regularisation)
@@ -74,11 +73,10 @@ def from_numpy(
         tabu_edges: list of edges(from, to) not to be included in the graph.
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+        use_gpu: use gpu if it is set to True and CUDA is available.
         **kwargs: additional arguments for NOTEARS MLP model
-
     Returns:
         StructureModel: a graph of conditional dependencies between data variables.
-
     Raises:
         ValueError: If X does not contain data.
     """
@@ -106,7 +104,7 @@ def from_numpy(
 
     model = NotearsMLP(n_features=d, lasso_beta=beta, bounds=bnds, **kwargs)
 
-    model.fit(X, max_iter=max_iter)
+    model.fit(X, max_iter=max_iter, use_gpu=use_gpu)
 
     return StructureModel(model.get_adj(w_threshold))
 
@@ -119,19 +117,18 @@ def from_pandas(
     tabu_edges: List[Tuple[str, str]] = None,
     tabu_parent_nodes: List[str] = None,
     tabu_child_nodes: List[str] = None,
+    use_gpu: bool = True,
     **kwargs
 ) -> StructureModel:
     """
     Learn the `StructureModel`, the graph structure describing conditional dependencies between variables
     in data presented as a pandas dataframe.
-
     The optimisation is to minimise a score function :math:`F(W)` over the graph's
     weighted adjacency matrix, :math:`W`, subject to the a constraint function :math:`h(W)`,
     where :math:`h(W) == 0` characterises an acyclic graph.
     :math:`h(W) > 0` is a continuous, differentiable function that encapsulated how acyclic the graph is
     (less == more acyclic).
     Full details of this approach to structure learning are provided in the publication:
-
     Based on DAGs with NO TEARS.
     @inproceedings{zheng2018dags,
         author = {Zheng, Xun and Aragam, Bryon and Ravikumar, Pradeep and Xing, Eric P.},
@@ -140,7 +137,6 @@ def from_pandas(
         year = {2018},
         codebase = {https://github.com/xunzheng/notears}
     }
-
     Args:
         X: input pandas dataframe
         beta: Constant that multiplies the lasso term (l1 regularisation)
@@ -151,11 +147,10 @@ def from_pandas(
         tabu_edges: list of edges(from, to) not to be included in the graph.
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+        use_gpu: use gpu if it is set to True and CUDA is available
         **kwargs: additional arrguments for NOYEARS MLP
-
     Returns:
          StructureModel: graph of conditional dependencies between data variables.
-
     Raises:
         ValueError: If X does not contain data.
     """
@@ -190,6 +185,7 @@ def from_pandas(
         tabu_edges,
         tabu_parent_nodes,
         tabu_child_nodes,
+        use_gpu,
         **kwargs
     )
 
