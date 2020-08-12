@@ -56,7 +56,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def __init__(
         self,
         n_features: int,
-        bias: bool = False,
+        use_bias: bool = False,
         bounds: List[Tuple[int, int]] = None,
         lasso_beta: float = 0.0,
         ridge_beta: float = 0.0,
@@ -66,7 +66,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         Args:
             n_features: number of input features
-            bias: True to add the intercept to the model
+            use_bias: True to add the intercept to the model
             and the numbers determine the number of nodes used for the layer in order.
             bounds: bound constraint for each parameter.
             lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
@@ -79,24 +79,35 @@ class NotearsMLP(nn.Module, BaseEstimator):
         self.lasso_beta = lasso_beta
         self.ridge_beta = ridge_beta
         self.dims = [n_features, 1]
+
         # fc1: variable splitting for l1
         self.fc1_pos = nn.Linear(
-            self.dims[0], self.dims[0] * self.dims[1], bias=bias
+            self.dims[0], self.dims[0] * self.dims[1], bias=True
         ).float()
-
         nn.init.zeros_(self.fc1_pos.weight)
+        nn.init.zeros_(self.fc1_pos.bias)
 
         self.fc1_neg = nn.Linear(
-            self.dims[0], self.dims[0] * self.dims[1], bias=bias
+            self.dims[0], self.dims[0] * self.dims[1], bias=True
         ).float()
-
         nn.init.zeros_(self.fc1_neg.weight)
+        nn.init.zeros_(self.fc1_neg.bias)
 
+        self.use_bias = use_bias
         self.bounds = bounds
 
     @property
     def _logger(self):
         return logging.getLogger(self.__class__.__name__)
+
+    @property
+    def fc1_bias(self) -> torch.Tensor:
+        """
+        fc1 bias is the bias of the first fully connected layer which determines the causal structure.
+        Returns:
+            fc1 bias
+        """
+        return self.fc1_pos.bias - self.fc1_neg.bias
 
     @property
     def fc1_weight(self) -> torch.Tensor:
@@ -122,6 +133,16 @@ class NotearsMLP(nn.Module, BaseEstimator):
         x = x.view(-1, self.dims[0], self.dims[1])  # [n, d, m1]
         x = x.squeeze(dim=2)  # [n, d]
         return x
+
+    @property
+    def bias(self) -> np.ndarray:
+        """
+        Get the vector of feature biases
+
+        Returns:
+            bias vector
+        """
+        return self.fc1_bias.cpu().detach().numpy()
 
     def get_adj(self, w_threshold: float = None) -> np.ndarray:
         """
@@ -166,6 +187,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
                     "Failed to converge. Consider increasing max_iter."
                 )
 
+    # pylint: disable=too-many-locals
     def _dual_ascent_step(
         self, X: torch.Tensor, rho: float, alpha: float, h: float, rho_max: float
     ) -> Tuple[float, float, float]:
@@ -223,7 +245,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             params: List[torch.Tensor], flat_params: np.ndarray
         ):
             """
-            Updata parameters of the model from the parameters in the form of flatten vector
+            Update parameters of the model from the parameters in the form of flatten vector
 
             Args:
                 params: parameters of the model
@@ -258,6 +280,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
             loss = (0.5 / X.shape[0]) * torch.sum((X_hat - X) ** 2)
             lagrange_penalty = 0.5 * rho * h_val * h_val + alpha * h_val
+            # NOTE: both the l2 and l1 regularization are not applied to the bias parameters
             l2_reg = 0.5 * self.ridge_beta * self._l2_reg()
             l1_reg = self.lasso_beta * torch.sum(params[0] + params[1])
 
@@ -270,10 +293,25 @@ class NotearsMLP(nn.Module, BaseEstimator):
             return loss, flat_grad.astype("float64")
 
         optimizer = torch.optim.Optimizer(self.parameters(), dict())
-        params = optimizer.param_groups[0]["params"]
-        bounds = self.bounds * 2
+
+        # pack the bias parameters into the END of the parameter set
+        params = [
+            param for name, param in self.named_parameters() if "bias" not in name
+        ]
+        params.extend(
+            [param for name, param in self.named_parameters() if "bias" in name]
+        )
 
         flat_params = _get_flat_params(params)
+
+        # duplicate the bounds for pos and neg fc1
+        bounds = self.bounds * 2
+        # get the number of additional bounds needed for intercepts
+        n_intercept_bounds = len(flat_params) - len(bounds)
+        # if use_bias=False, force intercepts to be zero
+        rh_bias_bound = None if self.use_bias else 0
+        # add the bias bounds to the END for the bound set
+        bounds += [(0, rh_bias_bound)] * n_intercept_bounds
 
         while rho < rho_max:
             # Magic
