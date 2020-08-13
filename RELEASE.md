@@ -1,6 +1,8 @@
 # Upcoming release
 
 * Added Pytorch implementation for NOTEARS MLP which is much faster (Only supporting linear structure learning for now)
+* Added StructureRegressor sklearn interface using the Pytorch NOTEARS implementation.
+* Hotfix for data_gen system. Fixes issues with root node initialization.
 
 # Release 0.7.0
 

@@ -44,6 +44,17 @@ from causalnex.structure.categorical_variable_mapper import (
 )
 from causalnex.structure.structuremodel import StructureModel
 
+# dict mapping distributions names to their functions
+__distribution_mapper = {
+    "gaussian": np.random.normal,
+    "normal": np.random.normal,
+    "student-t": np.random.standard_t,
+    "gumbel": np.random.gumbel,
+    "exponential": np.random.exponential,
+    "probit": np.random.normal,
+    "logit": np.random.logistic,
+}
+
 
 def generate_structure(
     num_nodes: int,
@@ -328,6 +339,11 @@ def sem_generator(
     """
     Generator for tabular data with mixed variable types from a DAG.
 
+    NOTE: the root nodes of the DAG are sampled from a distribution with noise_std=1.0 always.
+    This is so that increases in the noise_std are in relation to a fixed spread, and therefore
+    actually have an impact on the fit. Not using this method causes the noise_std to only change
+    the axis scaling.
+
     Supported variable types: `'binary', 'categorical', 'continuous'`. The number
     of categories can be determined using a colon, e.g. `'categorical:5'`
     specifies a categorical feature with 5 categories.
@@ -422,10 +438,15 @@ def sem_generator(
     )
 
     # pre-allocate array
-    x_mat = np.empty([n_samples, n_columns + 1 if intercept else n_columns])
+    x_mat = np.zeros([n_samples, n_columns + 1 if intercept else n_columns])
     # intercept, append ones to the feature matrix
     if intercept:
         x_mat[:, -1] = 1
+
+    # if intercept is used, the root nodes have len = 1
+    root_node_len = 0
+    if intercept:
+        root_node_len = 1
 
     # loop over sorted features according to ancestry (no parents first)
     for j_node in nx.topological_sort(graph):
@@ -437,12 +458,18 @@ def sem_generator(
         if intercept:
             parents_idx += [n_columns]
 
+        # if the data is a root node, must initialise the axis separate from noise parameter
+        root_node = False
+        if len(parents_idx) <= root_node_len:
+            root_node = True
+
         # continuous variable
         if var_fte_mapper.is_var_of_type(j_node, "continuous"):
             x_mat[:, j_idx_list[0]] = _add_continuous_noise(
                 mean=x_mat[:, parents_idx].dot(w_mat[parents_idx, j_idx_list[0]]),
                 distribution=distributions["continuous"],
                 noise_std=noise_std,
+                root_node=root_node,
             )
 
         # binary variable
@@ -453,6 +480,7 @@ def sem_generator(
                 ),
                 distribution=distributions["binary"],
                 noise_std=noise_std,
+                root_node=root_node,
             )
 
         # categorical variable
@@ -463,6 +491,7 @@ def sem_generator(
                 ),
                 distribution=distributions["categorical"],
                 noise_std=noise_std,
+                root_node=root_node,
             )
 
     return pd.DataFrame(
@@ -470,66 +499,96 @@ def sem_generator(
     )
 
 
+def _handle_distribution_sampling(
+    distribution: str,
+    distribution_func,
+    noise_std: float,
+    size: Tuple[int],
+    root_node: bool,
+):
+    # force scale to be 1 for the root node
+    if root_node:
+        noise_std = 1
+
+    # special sampling syntax
+    if distribution == "student-t":
+        return distribution_func(df=5, size=size) * noise_std
+
+    # default sampling syntax
+    return distribution_func(scale=noise_std, size=size)
+
+
 def _add_continuous_noise(
-    mean: np.ndarray, distribution: str, noise_std: float,
+    mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
 ) -> np.ndarray:
     n_samples = mean.shape[0]
 
-    # add noise to mean
-    if distribution in ("gaussian", "normal"):
-        x = mean + np.random.normal(scale=noise_std, size=n_samples)
-    elif distribution == "student-t":
-        x = mean + np.random.standard_t(df=5, size=n_samples) * noise_std
-    elif distribution == "exponential":
-        x = mean + np.random.exponential(scale=noise_std, size=n_samples)
-    elif distribution == "gumbel":
-        x = mean + np.random.gumbel(scale=noise_std, size=n_samples)
-    else:
+    # try and get the requested distribution from the mapper
+    distribution_func = __distribution_mapper.get(distribution, None)
+    if distribution_func is None:
         _raise_dist_error(
             "continuous",
             distribution,
             ["gaussian", "normal", "student-t", "exponential", "gumbel"],
         )
 
-    return x
+    # add noise to mean
+    mean += _handle_distribution_sampling(
+        distribution=distribution,
+        distribution_func=distribution_func,
+        noise_std=noise_std,
+        size=(n_samples,),
+        root_node=root_node,
+    )
+
+    return mean
 
 
 def _sample_binary_from_latent(
-    latent_mean: np.ndarray, distribution: str, noise_std: float,
+    latent_mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
 ) -> np.ndarray:
     n_samples = latent_mean.shape[0]
 
-    # add noise to latent variable
-    if distribution in ("normal", "probit"):
-        eta = latent_mean + np.random.normal(scale=noise_std, size=n_samples)
-    elif distribution == "logit":
-        eta = latent_mean + np.random.logistic(scale=noise_std, size=n_samples)
-    else:
+    # try and get the requested distribution from the mapper
+    distribution_func = __distribution_mapper.get(distribution, None)
+    if distribution_func is None:
         _raise_dist_error("binary", distribution, ["logit", "probit", "normal"])
 
+    # add noise to mean
+    latent_mean += _handle_distribution_sampling(
+        distribution=distribution,
+        distribution_func=distribution_func,
+        noise_std=noise_std,
+        size=(n_samples,),
+        root_node=root_node,
+    )
+
     # using a latent variable approach
-    return (eta > 0).astype(int)
+    return (latent_mean > 0).astype(int)
 
 
 def _sample_categories_from_latent(
-    latent_mean: np.ndarray, distribution: str, noise_std: float,
+    latent_mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
 ) -> np.ndarray:
 
     one_hot = np.empty_like(latent_mean)
     n_samples, n_cardinality = latent_mean.shape
 
-    if distribution in ("normal", "probit"):
-        latent_mean += np.random.normal(
-            scale=noise_std, size=(n_samples, n_cardinality)
-        )
-    elif distribution in ("logit", "gumbel"):
-        latent_mean += np.random.gumbel(
-            scale=noise_std, size=(n_samples, n_cardinality)
-        )
-    else:
+    # try and get the requested distribution from the mapper
+    distribution_func = __distribution_mapper.get(distribution, None)
+    if distribution_func is None:
         _raise_dist_error(
             "categorical", distribution, ["logit", "gumbel", "probit", "normal"]
         )
+
+    # add noise to mean
+    latent_mean += _handle_distribution_sampling(
+        distribution=distribution,
+        distribution_func=distribution_func,
+        noise_std=noise_std,
+        size=(n_samples, n_cardinality),
+        root_node=root_node,
+    )
 
     x_cat = np.argmax(latent_mean, axis=1)
 
