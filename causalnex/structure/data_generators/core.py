@@ -32,7 +32,7 @@ Module of methods to generate random StructureModel and datasets with various pr
 Structure generator based on implementation found in: from https://github.com/xunzheng/notears
 git hash: 31923cb22517f7bb6420dd0b6ef23ca550702b97
 """
-from typing import Dict, Hashable, List, Optional, Tuple
+from typing import Dict, Hashable, List, Optional, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -131,208 +131,13 @@ def generate_structure(
     return graph
 
 
-def generate_continuous_data(
-    sm: nx.DiGraph,
-    n_samples: int,
-    distribution: str = "gaussian",
-    noise_scale: float = 1.0,
-    intercept: bool = False,
-    seed: int = None,
-) -> np.ndarray:
-    """
-    Simulate samples from SEM with specified type of noise.
-    The order of the columns on the returned array is the one provided by `sm.nodes`
-
-    Args:
-        sm: A DAG in form of a networkx or StructureModel. Does not require weights.
-        n_samples: The number of rows/observations to sample.
-        distribution: The type of distribution to use for the noise
-            of a variable. Options: 'gaussian'/'normal' (alias), 'student-t',
-            'exponential', 'gumbel'.
-        noise_scale: The standard deviation of the noise.
-        intercept: Whether to use an intercept for each feature.
-        seed: Random state
-    Returns:
-        x_mat: [n_samples,d_nodes] sample matrix
-    Raises:
-        ValueError: if distribution isn't gaussian/normal/student-t/exponential/gumbel
-    """
-    df = sem_generator(
-        graph=sm,
-        default_type="continuous",
-        n_samples=n_samples,
-        distributions={"continuous": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
-    return df[list(sm.nodes())].values
-
-
-def generate_binary_data(
-    sm: nx.DiGraph,
-    n_samples: int,
-    distribution: str = "logit",
-    noise_scale: float = 1.0,
-    intercept: bool = False,
-    seed: int = None,
-) -> np.ndarray:
-    """
-    Simulate samples from SEM with specified type of noise.
-    The order of the columns on the returned array is the one provided by `sm.nodes`
-
-    Args:
-        sm: A DAG in form of a networkx or StructureModel. Does not require weights.
-        n_samples: The number of rows/observations to sample.
-        distribution: The type of distribution to use for the noise
-            of a variable. Options: 'probit'/'normal' (alias),
-            'logit' (default).
-        noise_scale: The standard deviation of the noise. The binary and
-            categorical features are created using a latent variable approach.
-            The noise standard deviation determines how much weight the "mean"
-            estimate has on the feature value.
-        intercept: Whether to use an intercept for the latent variable of each feature.
-        seed: Random state
-    Returns:
-        x_mat: [n_samples,d_nodes] sample matrix
-    Raises:
-        ValueError: if distribution isn't 'probit', 'normal', 'logit'
-    """
-    df = sem_generator(
-        graph=sm,
-        default_type="binary",
-        n_samples=n_samples,
-        distributions={"binary": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
-    return df[list(sm.nodes())].values
-
-
-def generate_continuous_dataframe(
-    sm: nx.DiGraph,
-    n_samples: int,
-    distribution: str = "gaussian",
-    noise_scale: float = 1.0,
-    intercept: bool = False,
-    seed: int = None,
-) -> pd.DataFrame:
-    """
-    Generates a dataframe with samples from SEM with specified type of noise.
-    Args:
-        sm: A DAG in form of a networkx or StructureModel. Does not require weights.
-        n_samples: The number of rows/observations to sample.
-        distribution: The type of distribution to use for the noise
-            of a variable. Options: 'gaussian'/'normal' (alias), 'student-t',
-            'exponential', 'gumbel'.
-        noise_scale: The standard deviation of the noise.
-        intercept: Whether to use an intercept for each feature.
-        seed: Random state
-    Returns:
-        Dataframe with the node names as column names
-    Raises:
-        ValueError: if distribution is not 'gaussian', 'normal', 'student-t',
-            'exponential', 'gumbel'
-    """
-    return sem_generator(
-        graph=sm,
-        default_type="continuous",
-        n_samples=n_samples,
-        distributions={"continuous": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
-
-
-def generate_binary_dataframe(
-    sm: nx.DiGraph,
-    n_samples: int,
-    distribution: str = "logit",
-    noise_scale: float = 1.0,
-    intercept: bool = False,
-    seed: int = None,
-) -> pd.DataFrame:
-    """
-    Generates a dataframe with samples from SEM with specified type of noise.
-
-    Args:
-        sm: A DAG in form of a networkx or StructureModel. Does not require weights.
-        n_samples: The number of rows/observations to sample.
-        distribution: The type of distribution to use for the noise
-            of a variable. Options: 'probit'/'normal' (alias),
-            'logit' (default).
-        noise_scale: The standard deviation of the noise. The binary and
-            categorical features are created using a latent variable approach.
-            The noise standard deviation determines how much weight the "mean"
-            estimate has on the feature value.
-        intercept: Whether to use an intercept for the latent variable of each feature.
-        seed: Random state
-    Returns:
-        x_mat: [n_samples,d_nodes] sample matrix
-    Raises:
-        ValueError: if distribution is not 'probit', 'normal', 'logit'
-    """
-    return sem_generator(
-        graph=sm,
-        default_type="binary",
-        n_samples=n_samples,
-        distributions={"binary": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
-
-
-def generate_categorical_dataframe(
-    sm: nx.DiGraph,
-    n_samples: int,
-    distribution: str = "logit",
-    n_categories: int = 3,
-    noise_scale: float = 1.0,
-    intercept: bool = False,
-    seed: int = None,
-) -> pd.DataFrame:
-    """
-    Generates a dataframe with samples from SEM with specified type of noise.
-
-    Args:
-        sm: A DAG in form of a networkx or StructureModel. Does not require weights.
-        n_samples: The number of rows/observations to sample.
-        distribution: The type of distribution to use for the noise
-            of a variable. Options: 'probit'/'normal' (alias),
-            "logit"/"gumbel" (alias). Logit is default.
-        n_categories: Number of categories per variable/node.
-        noise_scale: The standard deviation of the noise. The categorical features
-            are created using a latent variable approach. The noise standard
-            deviation determines how much weight the "mean" estimate has on
-            the feature value.
-        intercept: Whether to use an intercept for the latent variable of each feature.
-        seed: Random state
-    Returns:
-        x_mat: [n_samples, d_nodes] sample matrix
-    Raises:
-        ValueError: if distribution is not 'probit', 'normal', 'logit', 'gumbel'
-    """
-    return sem_generator(
-        graph=sm,
-        default_type="categorical:{}".format(n_categories),
-        n_samples=n_samples,
-        distributions={"categorical": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
-
-
 def sem_generator(
     graph: nx.DiGraph,
     schema: Optional[Dict] = None,
     default_type: str = "continuous",
     noise_std: float = 1.0,
     n_samples: int = 1000,
-    distributions: Dict[str, str] = None,
+    distributions: Dict[str, Union[str, float]] = None,
     intercept: bool = True,
     seed: int = None,
 ) -> pd.DataFrame:
@@ -378,6 +183,7 @@ def sem_generator(
             ``intercept'': The type of distribution to use for the intercept. For
                 binary/categorical: this is the mean in the latent space.
                 Options: 'gaussian'/'normal' (alias), 'uniform' (default).
+            ``count``: The zero-inflation probability as a float.
         intercept: Whether to use an intercept for each feature. The intercept
             is sampled once and held constant for all rows. For binary or
             categorical the intercept determines the class imbalance.
@@ -397,7 +203,7 @@ def sem_generator(
         ValueError: if distributions['categorical'] is not 'probit', 'normal', 'logit', 'gumbel'.
         ValueError: if distributions['weight'] is not 'normal' / 'gaussian' (alias), 'uniform'.
         ValueError: if distributions['intercept'] is not 'normal' / 'gaussian' (alias), 'uniform'.
-
+        ValueError: if distributions['count'], the zero-inflation factor is not a float in [0, 1].
 
     Example:
         sm = StructureModel()
@@ -414,19 +220,14 @@ def sem_generator(
                           intercept=True,
                           )
     """
-
-    np.random.seed(seed)
-
-    if not nx.algorithms.is_directed_acyclic_graph(graph):
-        raise ValueError("Provided graph is not a DAG.")
-
-    distributions = _set_default_distributions(distributions=distributions)
-    validated_schema = validate_schema(
-        nodes=graph.nodes(), schema=schema, default_type=default_type
+    distributions, var_fte_mapper, x_mat = _init_sem_data_gen(
+        graph=graph,
+        schema=schema,
+        n_samples=n_samples,
+        default_type=default_type,
+        distributions=distributions,
+        seed=seed,
     )
-    var_fte_mapper = VariableFeatureMapper(validated_schema)
-
-    n_columns = var_fte_mapper.n_features
 
     # get dependence based on edges in graph (not via adjacency matrix)
     w_mat = _create_weight_matrix(
@@ -437,16 +238,13 @@ def sem_generator(
         intercept=intercept,
     )
 
-    # pre-allocate array
-    x_mat = np.zeros([n_samples, n_columns + 1 if intercept else n_columns])
     # intercept, append ones to the feature matrix
     if intercept:
-        x_mat[:, -1] = 1
+        x_mat = np.append(x_mat, np.ones(shape=(n_samples, 1)), axis=1)
+        intercept_idx = [x_mat.shape[1] - 1]
 
     # if intercept is used, the root nodes have len = 1
-    root_node_len = 0
-    if intercept:
-        root_node_len = 1
+    root_node_len = 1 if intercept else 0
 
     # loop over sorted features according to ancestry (no parents first)
     for j_node in nx.topological_sort(graph):
@@ -456,7 +254,7 @@ def sem_generator(
         # get all parent feature indices for the variable/node
         parents_idx = var_fte_mapper.get_indices(list(graph.predecessors(j_node)))
         if intercept:
-            parents_idx += [n_columns]
+            parents_idx += intercept_idx
 
         # if the data is a root node, must initialise the axis separate from noise parameter
         root_node = False
@@ -481,6 +279,17 @@ def sem_generator(
                 distribution=distributions["binary"],
                 noise_std=noise_std,
                 root_node=root_node,
+            )
+
+        elif var_fte_mapper.is_var_of_type(j_node, "count"):
+            # latent_mean = x_mat[:, parents_idx].dot(w_mat[parents_idx, j_idx_list[0]])
+            # # add noise if count variable has no parents
+            # # uniform [0, 1] makes sure that the counts are small
+            # if not parents_idx:
+            #     latent_mean += np.random.uniform(n_samples)
+            x_mat[:, j_idx_list[0]] = _sample_count_from_latent(
+                eta=x_mat[:, parents_idx].dot(w_mat[parents_idx, j_idx_list[0]]),
+                zero_inflation_pct=distributions["count"],
             )
 
         # categorical variable
@@ -545,7 +354,11 @@ def _add_continuous_noise(
 
 
 def _sample_binary_from_latent(
-    latent_mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
+    latent_mean: np.ndarray,
+    distribution: str,
+    noise_std: float,
+    root_node: bool,
+    max_imbalance: float = 0.05,
 ) -> np.ndarray:
     n_samples = latent_mean.shape[0]
 
@@ -563,8 +376,82 @@ def _sample_binary_from_latent(
         root_node=root_node,
     )
 
-    # using a latent variable approach
-    return (latent_mean > 0).astype(int)
+    # use an alternative threshold if 0 leads to heavy imbalance
+    labels = (latent_mean > 0).astype(int)
+    share_positive = np.mean(labels)
+    if share_positive < max_imbalance:
+        return (latent_mean > np.quantile(latent_mean, max_imbalance)).astype(int)
+    if share_positive > (1 - max_imbalance):
+        return (latent_mean > np.quantile(latent_mean, 1 - max_imbalance)).astype(int)
+    return labels
+
+
+def _sample_count_from_latent(
+    eta: np.ndarray, zero_inflation_pct: float = 0.05,
+) -> np.ndarray:
+    """
+    Samples a zero-inflated poisson distribution.
+    Returns:
+        Samples from a Poisson distribution.
+    Raises:
+        ValueError: Unsupported zero-inflation factor.
+    """
+    if (
+        not isinstance(zero_inflation_pct, (float, int))
+        or zero_inflation_pct < 0
+        or zero_inflation_pct > 1
+    ):
+        raise ValueError(
+            "Unsupported zero-inflation factor, distribution['count'] needs to be a float in [0, 1]"
+        )
+    n_samples = eta.shape[0]
+
+    zif = np.random.uniform(size=n_samples) < zero_inflation_pct
+    count = _sample_poisson(expected_count=_exp_relu(eta))
+
+    # inflate the zeros:
+    count[zif] = 0
+    return count
+
+
+def _exp_relu(x):
+    x[x < 0] = np.exp(x[x < 0])
+    return x
+
+
+def _sample_poisson(expected_count: np.ndarray, max_count: int = 5000) -> np.ndarray:
+    """
+    Samples from a poisson distribution using each element in ``latent_mean``
+    as the Poisson parameter.
+
+    Args:
+        expected_count: Event rate of the Poisson process, can be of any array
+            dimension. Defined on (0, infty).
+        max_count: Bounds the count from above. The count sample is created
+            with a while loop. This argument is the maximum number of loop
+            iterations before stopping. Default value should run on most
+            machines in reasonable amount of time.
+    Returns:
+        Sampled count of a Poisson distribution from the given mean.
+    """
+    # use log for numeric stability for large count values
+    log_cond_intensity = -expected_count
+    log_intensity_budget = np.copy(log_cond_intensity)
+
+    count = np.zeros_like(expected_count)
+
+    log_uni = np.log(np.random.uniform(size=expected_count.shape))
+    mask = log_uni >= log_intensity_budget
+
+    while np.any(mask) and count.max() < max_count:
+        mask = log_uni >= log_intensity_budget
+        count[mask] += 1
+        log_cond_intensity[mask] += np.log(expected_count[mask] / count[mask])
+        log_intensity_budget[mask] = np.logaddexp(
+            log_intensity_budget[mask], log_cond_intensity[mask]
+        )
+
+    return count
 
 
 def _sample_categories_from_latent(
@@ -598,13 +485,16 @@ def _sample_categories_from_latent(
     return one_hot
 
 
-def _set_default_distributions(distributions: Dict[str, str]) -> Dict[str, str]:
+def _set_default_distributions(
+    distributions: Dict[str, Union[str, float]]
+) -> Dict[str, Union[str, float]]:
     default_distributions = {
         "continuous": "gaussian",
         "binary": "logit",
         "categorical": "logit",
         "weight": "uniform",
         "intercept": "uniform",
+        "count": 0.05,
     }
 
     if distributions is None:
@@ -685,3 +575,29 @@ def _raise_dist_error(name: str, dist: str, dist_options):
             ", ".join(valid_dist for valid_dist in dist_options)
         )
     )
+
+
+def _init_sem_data_gen(
+    graph: nx.DiGraph,
+    schema: Dict,
+    n_samples: int,
+    default_type: str,
+    distributions: Dict[str, str],
+    seed: int,
+):
+    np.random.seed(seed)
+
+    if not nx.algorithms.is_directed_acyclic_graph(graph):
+        raise ValueError("Provided graph is not a DAG.")
+
+    distributions = _set_default_distributions(distributions=distributions)
+    validated_schema = validate_schema(
+        nodes=graph.nodes(), schema=schema, default_type=default_type
+    )
+    var_fte_mapper = VariableFeatureMapper(validated_schema)
+
+    # pre-allocate array
+    n_columns = var_fte_mapper.n_features
+    x_mat = np.empty([n_samples, n_columns])
+
+    return distributions, var_fte_mapper, x_mat
