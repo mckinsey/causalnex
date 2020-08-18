@@ -33,12 +33,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from networkx.algorithms.dag import is_directed_acyclic_graph
+from sklearn.gaussian_process.kernels import RBF
 
 from causalnex.structure.data_generators.core import (
     _sample_binary_from_latent,
     _sample_count_from_latent,
     _sample_poisson,
     generate_structure,
+    nonlinear_sem_generator,
     sem_generator,
 )
 from causalnex.structure.structuremodel import StructureModel
@@ -175,7 +177,7 @@ class TestMixedDataGen:
 
         # test binary:
         assert df[0].nunique() == 2
-        assert df[0].nunique() == 2
+        assert df[2].nunique() == 2
 
         # test categorical:
         for col in ["1_{}".format(i) for i in range(3)]:
@@ -195,7 +197,7 @@ class TestMixedDataGen:
         graph.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
         with pytest.raises(ValueError, match="Provided graph is not a DAG"):
-            _ = sem_generator(graph=graph)
+            _ = sem_generator(graph=graph, seed=42)
 
     def test_not_permissible_type(self, graph):
         schema = {
@@ -446,7 +448,9 @@ def test_sample_count_from_latent_zero_inflation(poisson_lambda, zero_inflation_
     We test whether the zero-inflation is functional using the first two moments.
     """
     sample = _sample_count_from_latent(
-        np.ones(shape=10000) * poisson_lambda, zero_inflation_pct=zero_inflation_pct
+        np.ones(shape=10000) * poisson_lambda,
+        zero_inflation_pct=zero_inflation_pct,
+        root_node=False,
     )
     if poisson_lambda < 0:
         poisson_lambda = np.exp(poisson_lambda)
@@ -475,6 +479,7 @@ class TestCountGenerator:
             default_type="count",
             n_samples=1000,
             distributions={"count": zero_inflation_pct},
+            seed=43,
         )
         # count puts a lower bound on the output:
         assert np.all(df.min() >= 0)
@@ -492,5 +497,38 @@ class TestCountGenerator:
         """
         with pytest.raises(ValueError, match="Unsupported zero-inflation factor"):
             sem_generator(
-                graph, default_type="count", distributions={"count": wrong_count_zif}
+                graph,
+                default_type="count",
+                distributions={"count": wrong_count_zif},
+                seed=42,
             )
+
+
+class TestNonlinearGenerator:
+    def test_run(self, graph, schema):
+        df = nonlinear_sem_generator(
+            graph=graph,
+            schema=schema,
+            kernel=RBF(1),
+            default_type="continuous",
+            noise_std=1.0,
+            n_samples=1000,
+            seed=13,
+        )
+
+        # test binary:
+        assert df[0].nunique() == 2
+        assert df[2].nunique() == 2
+
+        # test categorical:
+        for col in ["1_{}".format(i) for i in range(3)]:
+            assert df[col].nunique() == 2
+        assert len([x for x in df.columns if isinstance(x, str) and "1_" in x]) == 3
+
+        for col in ["5_{}".format(i) for i in range(5)]:
+            assert df[col].nunique() == 2
+        assert len([x for x in df.columns if isinstance(x, str) and "5_" in x]) == 5
+
+        # test continuous
+        assert df[3].nunique() == 1000
+        assert df[4].nunique() == 1000

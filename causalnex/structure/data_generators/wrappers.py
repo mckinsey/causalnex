@@ -29,11 +29,14 @@
 """
 Module of methods to sample variables of a single data type.
 """
+from typing import Optional
+
 import networkx as nx
 import numpy as np
 import pandas as pd
+from sklearn.gaussian_process.kernels import Kernel
 
-from causalnex.structure.data_generators import sem_generator
+from causalnex.structure.data_generators import nonlinear_sem_generator, sem_generator
 
 
 def generate_continuous_data(
@@ -43,6 +46,7 @@ def generate_continuous_data(
     noise_scale: float = 1.0,
     intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> np.ndarray:
     """
     Simulate samples from SEM with specified type of noise.
@@ -51,6 +55,10 @@ def generate_continuous_data(
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         distribution: The type of distribution to use for the noise
             of a variable. Options: 'gaussian'/'normal' (alias), 'student-t',
             'exponential', 'gumbel'.
@@ -62,15 +70,26 @@ def generate_continuous_data(
     Raises:
         ValueError: if distribution isn't gaussian/normal/student-t/exponential/gumbel
     """
-    df = sem_generator(
-        graph=sm,
-        default_type="continuous",
-        n_samples=n_samples,
-        distributions={"continuous": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
+    if kernel is None:
+        df = sem_generator(
+            graph=sm,
+            default_type="continuous",
+            n_samples=n_samples,
+            distributions={"continuous": distribution},
+            noise_std=noise_scale,
+            intercept=intercept,
+            seed=seed,
+        )
+    else:
+        df = nonlinear_sem_generator(
+            graph=sm,
+            kernel=kernel,
+            default_type="continuous",
+            n_samples=n_samples,
+            distributions={"continuous": distribution},
+            noise_std=noise_scale,
+            seed=seed,
+        )
     return df[list(sm.nodes())].values
 
 
@@ -81,6 +100,7 @@ def generate_binary_data(
     noise_scale: float = 1.0,
     intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> np.ndarray:
     """
     Simulate samples from SEM with specified type of noise.
@@ -89,6 +109,10 @@ def generate_binary_data(
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         distribution: The type of distribution to use for the noise
             of a variable. Options: 'probit'/'normal' (alias),
             'logit' (default).
@@ -103,15 +127,26 @@ def generate_binary_data(
     Raises:
         ValueError: if distribution isn't 'probit', 'normal', 'logit'
     """
-    df = sem_generator(
-        graph=sm,
-        default_type="binary",
-        n_samples=n_samples,
-        distributions={"binary": distribution},
-        noise_std=noise_scale,
-        intercept=intercept,
-        seed=seed,
-    )
+    if kernel is None:
+        df = sem_generator(
+            graph=sm,
+            default_type="binary",
+            n_samples=n_samples,
+            distributions={"binary": distribution},
+            noise_std=noise_scale,
+            intercept=intercept,
+            seed=seed,
+        )
+    else:
+        df = nonlinear_sem_generator(
+            graph=sm,
+            kernel=kernel,
+            default_type="binary",
+            n_samples=n_samples,
+            distributions={"binary": distribution},
+            noise_std=noise_scale,
+            seed=seed,
+        )
     return df[list(sm.nodes())].values
 
 
@@ -122,12 +157,17 @@ def generate_continuous_dataframe(
     noise_scale: float = 1.0,
     intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> pd.DataFrame:
     """
     Generates a dataframe with samples from SEM with specified type of noise.
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         distribution: The type of distribution to use for the noise
             of a variable. Options: 'gaussian'/'normal' (alias), 'student-t',
             'exponential', 'gumbel'.
@@ -140,13 +180,24 @@ def generate_continuous_dataframe(
         ValueError: if distribution is not 'gaussian', 'normal', 'student-t',
             'exponential', 'gumbel'
     """
-    return sem_generator(
+    if kernel is None:
+        return sem_generator(
+            graph=sm,
+            default_type="continuous",
+            n_samples=n_samples,
+            distributions={"continuous": distribution},
+            noise_std=noise_scale,
+            intercept=intercept,
+            seed=seed,
+        )
+
+    return nonlinear_sem_generator(
         graph=sm,
+        kernel=kernel,
         default_type="continuous",
         n_samples=n_samples,
         distributions={"continuous": distribution},
         noise_std=noise_scale,
-        intercept=intercept,
         seed=seed,
     )
 
@@ -158,6 +209,7 @@ def generate_binary_dataframe(
     noise_scale: float = 1.0,
     intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> pd.DataFrame:
     """
     Generates a dataframe with samples from SEM with specified type of noise.
@@ -165,6 +217,10 @@ def generate_binary_dataframe(
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         distribution: The type of distribution to use for the noise
             of a variable. Options: 'probit'/'normal' (alias),
             'logit' (default).
@@ -179,13 +235,24 @@ def generate_binary_dataframe(
     Raises:
         ValueError: if distribution is not 'probit', 'normal', 'logit'
     """
-    return sem_generator(
+    if kernel is None:
+        return sem_generator(
+            graph=sm,
+            default_type="binary",
+            n_samples=n_samples,
+            distributions={"binary": distribution},
+            noise_std=noise_scale,
+            intercept=intercept,
+            seed=seed,
+        )
+
+    return nonlinear_sem_generator(
         graph=sm,
+        kernel=kernel,
         default_type="binary",
         n_samples=n_samples,
         distributions={"binary": distribution},
         noise_std=noise_scale,
-        intercept=intercept,
         seed=seed,
     )
 
@@ -194,7 +261,9 @@ def generate_count_dataframe(
     sm: nx.DiGraph,
     n_samples: int,
     zero_inflation_factor: float = 0.1,
+    intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> pd.DataFrame:
     """
     Generates a dataframe with samples from SEM with specified type of noise.
@@ -202,20 +271,37 @@ def generate_count_dataframe(
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         zero_inflation_factor: The probability of zero inflation for count data.
+        intercept: Whether to use an intercept for the latent variable of each feature.
         seed: Random state
     Returns:
         x_mat: [n_samples, d_nodes] sample matrix
     Raises:
         ValueError: if ``zero_inflation_factor`` is not a float in [0, 1].
     """
-    return sem_generator(
+
+    if kernel is None:
+        return sem_generator(
+            graph=sm,
+            default_type="count",
+            n_samples=n_samples,
+            distributions={"count": zero_inflation_factor},
+            noise_std=1,  # not used for poisson
+            intercept=intercept,
+            seed=seed,
+        )
+
+    return nonlinear_sem_generator(
         graph=sm,
+        kernel=kernel,
         default_type="count",
         n_samples=n_samples,
         distributions={"count": zero_inflation_factor},
         noise_std=1,  # not used for poisson
-        intercept=True,
         seed=seed,
     )
 
@@ -228,6 +314,7 @@ def generate_categorical_dataframe(
     noise_scale: float = 1.0,
     intercept: bool = False,
     seed: int = None,
+    kernel: Optional[Kernel] = None,
 ) -> pd.DataFrame:
     """
     Generates a dataframe with samples from SEM with specified type of noise.
@@ -235,6 +322,10 @@ def generate_categorical_dataframe(
     Args:
         sm: A DAG in form of a networkx or StructureModel. Does not require weights.
         n_samples: The number of rows/observations to sample.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
         distribution: The type of distribution to use for the noise
             of a variable. Options: 'probit'/'normal' (alias),
             "logit"/"gumbel" (alias). Logit is default.
@@ -250,12 +341,24 @@ def generate_categorical_dataframe(
     Raises:
         ValueError: if distribution is not 'probit', 'normal', 'logit', 'gumbel'
     """
-    return sem_generator(
+
+    if kernel is None:
+        return sem_generator(
+            graph=sm,
+            default_type="categorical:{}".format(n_categories),
+            n_samples=n_samples,
+            distributions={"categorical": distribution},
+            noise_std=noise_scale,
+            intercept=intercept,
+            seed=seed,
+        )
+
+    return nonlinear_sem_generator(
         graph=sm,
+        kernel=kernel,
         default_type="categorical:{}".format(n_categories),
         n_samples=n_samples,
         distributions={"categorical": distribution},
         noise_std=noise_scale,
-        intercept=intercept,
         seed=seed,
     )

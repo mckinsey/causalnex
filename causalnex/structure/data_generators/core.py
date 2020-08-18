@@ -37,6 +37,7 @@ from typing import Dict, Hashable, List, Optional, Tuple, Union
 import networkx as nx
 import numpy as np
 import pandas as pd
+from sklearn.gaussian_process.kernels import RBF, Kernel
 
 from causalnex.structure.categorical_variable_mapper import (
     VariableFeatureMapper,
@@ -257,9 +258,7 @@ def sem_generator(
             parents_idx += intercept_idx
 
         # if the data is a root node, must initialise the axis separate from noise parameter
-        root_node = False
-        if len(parents_idx) <= root_node_len:
-            root_node = True
+        root_node = len(parents_idx) <= root_node_len
 
         # continuous variable
         if var_fte_mapper.is_var_of_type(j_node, "continuous"):
@@ -281,15 +280,12 @@ def sem_generator(
                 root_node=root_node,
             )
 
+        # count variable
         elif var_fte_mapper.is_var_of_type(j_node, "count"):
-            # latent_mean = x_mat[:, parents_idx].dot(w_mat[parents_idx, j_idx_list[0]])
-            # # add noise if count variable has no parents
-            # # uniform [0, 1] makes sure that the counts are small
-            # if not parents_idx:
-            #     latent_mean += np.random.uniform(n_samples)
             x_mat[:, j_idx_list[0]] = _sample_count_from_latent(
                 eta=x_mat[:, parents_idx].dot(w_mat[parents_idx, j_idx_list[0]]),
                 zero_inflation_pct=distributions["count"],
+                root_node=root_node,
             )
 
         # categorical variable
@@ -387,7 +383,7 @@ def _sample_binary_from_latent(
 
 
 def _sample_count_from_latent(
-    eta: np.ndarray, zero_inflation_pct: float = 0.05,
+    eta: np.ndarray, root_node: bool, zero_inflation_pct: float = 0.05,
 ) -> np.ndarray:
     """
     Samples a zero-inflated poisson distribution.
@@ -405,6 +401,11 @@ def _sample_count_from_latent(
             "Unsupported zero-inflation factor, distribution['count'] needs to be a float in [0, 1]"
         )
     n_samples = eta.shape[0]
+
+    # add noise manually if root node
+    # uniform [0, 1] makes sure that the counts are small
+    if root_node:
+        eta += np.random.uniform(size=n_samples)
 
     zif = np.random.uniform(size=n_samples) < zero_inflation_pct
     count = _sample_poisson(expected_count=_exp_relu(eta))
@@ -601,3 +602,229 @@ def _init_sem_data_gen(
     x_mat = np.empty([n_samples, n_columns])
 
     return distributions, var_fte_mapper, x_mat
+
+
+def nonlinear_sem_generator(
+    graph: nx.DiGraph,
+    kernel: Kernel = RBF(1),
+    schema: Optional[Dict] = None,
+    default_type: str = "continuous",
+    noise_std: float = 1.0,
+    n_samples: int = 1000,
+    distributions: Dict[str, str] = None,
+    seed: int = None,
+) -> pd.DataFrame:
+    """
+    Generator for non-linear tabular data with mixed variable types from a DAG.
+
+    The nonlinearity can be controlled via the ``kernel``. Note that a
+    ``DotProduct`` is equivalent to a linear function (without mean).
+
+    Supported variable types: `'binary', 'categorical', 'continuous'`. The number
+    of categories can be determined using a colon, e.g. `'categorical:5'`
+    specifies a categorical feature with 5 categories.
+
+    Notation: For binary and continuous variables, a ``variable'' refers to a
+    ``node'', a ``feature'' refers to the one-hot column for categorical
+    variables and is equivalent to a binary or continuous variable.
+
+    Args:
+        graph: A DAG in form of a networkx or StructureModel.
+        kernel: A kernel from sklearn.gaussian_process.kernels like RBF(1) or
+            Matern(1) or any combinations thereof. The kernels are used to
+            create the latent variable for the binary / categorical variables
+            and are directly used for continuous variables.
+        schema: Dictionary with schema for a node/variable, if a node is missing
+            uses ``default_type``. Format, {node_name: variable type}.
+        default_type: The default data type for a node/variable not listed
+            in the schema, or when the schema is empty.
+        noise_std: The standard deviation of the noise. The binary and
+            categorical features are created using a latent variable approach.
+            The noise standard deviation determines how much weight the "mean"
+            estimate has on the feature value.
+        n_samples: The number of rows/observations to sample.
+        distributions:
+            ``continuous'': The type of distribution to use for the noise
+                of a continuous variable. Options: 'gaussian'/'normal' (alias)
+                (default), 'student-t', 'exponential', 'gumbel'.
+            ``binary'': The type of distribution to use for the noise
+                of the latent binary variable. Options: 'probit'/'normal' (alias),
+                'logit' (default).
+            ``categorical'': The type of distribution to use for the noise
+                of a latent continuous feature. Options: 'probit'/'normal' (alias),
+                'logit'/'gumbel' (alias) (default).
+        seed: Random State
+
+    Returns:
+        DataFrame with generated features, uses a one-hot coding for
+        categorical features.
+
+    Raises:
+        ValueError: if the graph is not a DAG.
+        ValueError: if schema variable type is not in `'binary', 'categorical',
+            'continuous', 'continuous:X` (for variables with X categories).
+        ValueError: if distributions['continuous'] is not 'gaussian', 'normal', 'student-t',
+            'exponential', 'gumbel'.
+        ValueError: if distributions['binary'] is not 'probit', 'normal', 'logit'.
+        ValueError: if distributions['categorical'] is not 'probit', 'normal', 'logit', 'gumbel'.
+        ValueError: if distributions['count'], the zero-inflation factor is not a float in [0, 1].
+
+    Example:
+        sm = StructureModel()
+
+        sm.add_edges_from([('A', 'C'), ('D', 'C'), ('E', 'D')])
+
+        sm.add_nodes_from(['B', 'F'])
+
+        schema = {'B': 'binary', 'C': 'categorical:5',
+                  'E': 'binary', 'F': 'continuous'}
+
+        df = sem_generator(sm, schema, kernel=RBF(1), noise_scale=1,
+                          n_samples=10000)
+    """
+    distributions, var_fte_mapper, x_mat = _init_sem_data_gen(
+        graph=graph,
+        schema=schema,
+        n_samples=n_samples,
+        default_type=default_type,
+        distributions=distributions,
+        seed=seed,
+    )
+
+    # loop over sorted features according to ancestry (no parents first)
+    for j_node in nx.topological_sort(graph):
+        # all feature indices corresponding to the node/variable
+        j_idx_list = var_fte_mapper.get_indices(j_node)
+
+        # get all parent feature indices for the variable/node
+        parents_idx = var_fte_mapper.get_indices(list(graph.predecessors(j_node)))
+
+        # if the data is a root node, must initialise the axis separate from noise parameter
+        root_node = len(parents_idx) <= 0
+
+        # continuous variable
+        if var_fte_mapper.is_var_of_type(j_node, "continuous"):
+            x_mat[:, j_idx_list[0]] = _add_continuous_noise(
+                mean=_gp_index(x_mat[:, parents_idx], kernel),
+                distribution=distributions["continuous"],
+                noise_std=noise_std,
+                root_node=root_node,
+            )
+
+        # binary variable
+        elif var_fte_mapper.is_var_of_type(j_node, "binary"):
+            x_mat[:, j_idx_list[0]] = _sample_binary_from_latent(
+                latent_mean=_gp_index(x_mat[:, parents_idx], kernel),
+                distribution=distributions["binary"],
+                noise_std=noise_std,
+                root_node=root_node,
+            )
+
+        # count
+        if var_fte_mapper.is_var_of_type(j_node, "count"):
+            x_mat[:, j_idx_list[0]] = _sample_count_from_latent(
+                eta=_gp_index(x_mat[:, parents_idx], kernel),
+                zero_inflation_pct=distributions["count"],
+                root_node=root_node,
+            )
+
+        # categorical variable
+        elif var_fte_mapper.is_var_of_type(j_node, "categorical"):
+            x_mat[:, j_idx_list] = _sample_categories_from_latent(
+                latent_mean=np.concatenate(
+                    [
+                        np.expand_dims(_gp_index(x_mat[:, parents_idx], kernel), axis=1)
+                        for _ in j_idx_list
+                    ],
+                    axis=1,
+                ),
+                distribution=distributions["categorical"],
+                noise_std=noise_std,
+                root_node=root_node,
+            )
+    return pd.DataFrame(x_mat, columns=var_fte_mapper.feature_list)
+
+
+def _unconditional_sample(x, kernel):
+    cov_mat = kernel(x)
+    y = np.random.multivariate_normal(mean=np.zeros(shape=x.shape[0]), cov=cov_mat)
+    return y.squeeze(), cov_mat
+
+
+def _conditional_sample(
+    x_new, x_old, f_old, kernel, cov_mat_old: np.ndarray = None, epsilon=0.00001
+):
+
+    cov_mat_new = kernel(x_new)
+    cross_cov = kernel(x_old, x_new)
+    # X_no.T @ inv(X_oo):
+    reg_coef = np.linalg.solve(
+        cov_mat_old + epsilon * np.eye(x_old.shape[0]), cross_cov
+    ).T
+
+    # calculate conditional mean and cov
+    cond_cov = (cov_mat_new - reg_coef @ cross_cov) + epsilon * np.eye(x_new.shape[0])
+    cond_mean = (reg_coef @ f_old).squeeze()
+
+    # sample
+    y_new = np.random.multivariate_normal(mean=cond_mean, cov=cond_cov).squeeze()
+    return y_new, cov_mat_new
+
+
+def _gp_index(x: np.ndarray, kernel: Kernel, max_chunk_size: int = 100,) -> np.ndarray:
+    """
+    Sample a Gaussian process using input data.
+    ``f(x) ~ GP(0, K)``
+
+    If the number of samples is larger than ``max_chunk_size``, the sampling is
+    split in sorted batches (first dimension) and sampled using a conditional
+    multivariate normal.
+
+    Args:
+        x:
+        kernel:
+        max_chunk_size:
+
+    Returns:
+        A one-dimensional numpy array with a sample of f(x)
+    """
+    # if we dont have a parent, the input will have no columns
+    if x.shape[1] == 0:
+        return np.zeros(shape=(x.shape[0],))
+
+    use_batches = x.shape[0] > max_chunk_size
+
+    if not use_batches:
+        y, _ = _unconditional_sample(x, kernel=kernel)
+        return _scale_y(y)
+
+    # if we need batches, we sort according to the first dimension
+    ix_sort = np.argsort(x, axis=0)[:, 0].squeeze()
+    reverse_ix = np.argsort(ix_sort).squeeze()
+
+    # split into smaller pieces
+    n_splits = (x.shape[0] // max_chunk_size) + 1
+    x_splits = np.array_split(x[ix_sort, :], n_splits)
+
+    outputs = []
+    y, cov_mat = _unconditional_sample(x_splits[0], kernel=kernel)
+    outputs.append(y)
+    x_old = x_splits[0]
+    for x_subset in x_splits[1:]:
+        y, cov_mat = _conditional_sample(
+            x_new=x_subset,
+            x_old=x_old,
+            f_old=outputs[-1],
+            kernel=kernel,
+            cov_mat_old=cov_mat,
+        )
+        outputs.append(y)
+        x_old = x_subset
+
+    y_all = _scale_y(np.concatenate(outputs))
+    return y_all[reverse_ix]
+
+
+def _scale_y(y):
+    """Normalize variance to 1."""
+    return y / y.std()

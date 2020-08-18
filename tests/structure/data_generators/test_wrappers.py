@@ -33,6 +33,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from scipy.stats import anderson, stats
+from sklearn.gaussian_process.kernels import RBF
 
 from causalnex.structure import StructureModel
 from causalnex.structure.data_generators import (
@@ -160,7 +161,8 @@ class TestGenerateContinuousData:
     @pytest.mark.parametrize(
         "distribution", ["gaussian", "normal", "student-t", "exponential", "gumbel"]
     )
-    def test_intercept(self, distribution):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, noise_scale):
         graph = StructureModel()
         graph.add_node("123")
 
@@ -168,7 +170,7 @@ class TestGenerateContinuousData:
             graph,
             n_samples=100000,
             distribution=distribution,
-            noise_scale=0.1,
+            noise_scale=noise_scale,
             seed=10,
             intercept=False,
         )
@@ -176,33 +178,7 @@ class TestGenerateContinuousData:
             graph,
             n_samples=100000,
             distribution=distribution,
-            noise_scale=0.1,
-            seed=10,
-            intercept=True,
-        )
-        assert not np.isclose(data_noint[:, 0].mean(), data_intercept[:, 0].mean())
-        assert np.isclose(data_noint[:, 0].std(), data_intercept[:, 0].std(), rtol=0.01)
-
-    @pytest.mark.parametrize(
-        "distribution", ["gaussian", "normal", "student-t", "exponential", "gumbel"]
-    )
-    def test_intercept_no_noise(self, distribution):
-        graph = StructureModel()
-        graph.add_node("123")
-
-        data_noint = generate_continuous_data(
-            graph,
-            n_samples=100000,
-            distribution=distribution,
-            noise_scale=0.0,
-            seed=10,
-            intercept=False,
-        )
-        data_intercept = generate_continuous_data(
-            graph,
-            n_samples=100000,
-            distribution=distribution,
-            noise_scale=0.0,
+            noise_scale=noise_scale,
             seed=10,
             intercept=True,
         )
@@ -259,7 +235,8 @@ class TestGenerateContinuousData:
     @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
     @pytest.mark.parametrize("intercept", [True, False])
     @pytest.mark.parametrize("seed", [10, 12])
-    def test_dataframe(self, graph, distribution, noise_std, intercept, seed):
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    def test_dataframe(self, graph, distribution, noise_std, intercept, seed, kernel):
         """
         Tests equivalence of dataframe wrapper
         """
@@ -270,6 +247,7 @@ class TestGenerateContinuousData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
         df = generate_continuous_dataframe(
             graph,
@@ -278,6 +256,7 @@ class TestGenerateContinuousData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
 
         assert np.array_equal(data, df[list(graph.nodes())].values)
@@ -347,28 +326,26 @@ class TestGenerateBinaryData:
         assert not np.isclose(mean_prob, 0.5, atol=0.05)
 
     @pytest.mark.parametrize("distribution", ["logit", "probit", "normal"])
-    def test_intercept(self, distribution):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, noise_scale):
         graph = StructureModel()
         graph.add_node("123")
 
         data_noint = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0.1, seed=10, intercept=False
+            graph,
+            100000,
+            distribution,
+            noise_scale=noise_scale,
+            seed=10,
+            intercept=False,
         )
         data_intercept = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0.1, seed=10, intercept=True
-        )
-        assert not np.isclose(data_noint[:, 0].mean(), data_intercept[:, 0].mean())
-
-    @pytest.mark.parametrize("distribution", ["logit", "probit", "normal"])
-    def test_intercept_no_noise(self, distribution):
-        graph = StructureModel()
-        graph.add_node("123")
-
-        data_noint = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0.0, seed=10, intercept=False
-        )
-        data_intercept = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0.0, seed=10, intercept=True
+            graph,
+            100000,
+            distribution,
+            noise_scale=noise_scale,
+            seed=10,
+            intercept=True,
         )
         assert not np.isclose(data_noint[:, 0].mean(), data_intercept[:, 0].mean())
 
@@ -417,7 +394,8 @@ class TestGenerateBinaryData:
     @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
     @pytest.mark.parametrize("intercept", [True, False])
     @pytest.mark.parametrize("seed", [10, 12])
-    def test_dataframe(self, graph, distribution, noise_std, intercept, seed):
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    def test_dataframe(self, graph, distribution, noise_std, intercept, seed, kernel):
         """
         Tests equivalence of dataframe wrapper
         """
@@ -428,6 +406,7 @@ class TestGenerateBinaryData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
         df = generate_binary_dataframe(
             graph,
@@ -436,6 +415,7 @@ class TestGenerateBinaryData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
 
         assert np.array_equal(data, df[list(graph.nodes())].values)
@@ -535,6 +515,45 @@ class TestGenerateCategoricalData:
         # without intercept, the probabilities should be fairly uniform
         assert np.allclose(data.mean(axis=0), 1 / n_categories, atol=0.01, rtol=0)
 
+    @pytest.mark.parametrize("distribution", ["logit", "probit", "normal", "gumbel"])
+    @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
+    @pytest.mark.parametrize("intercept", [True, False])
+    @pytest.mark.parametrize("seed", [10, 42])
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    @pytest.mark.parametrize("n_categories", (2, 10,))
+    def test_dataframe(
+        self, graph, distribution, noise_std, intercept, seed, kernel, n_categories
+    ):
+        """
+        Tests equivalence of dataframe wrapper
+        """
+        data = generate_categorical_dataframe(
+            graph,
+            100,
+            distribution,
+            noise_scale=noise_std,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+            n_categories=n_categories,
+        )
+        df = generate_categorical_dataframe(
+            graph,
+            100,
+            distribution,
+            noise_scale=noise_std,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+            n_categories=n_categories,
+        )
+
+        cols = []
+        for node in graph.nodes():
+            for cat in range(n_categories):
+                cols.append("{}_{}".format(node, cat))
+        assert np.array_equal(data, df[cols].values)
+
     @pytest.mark.parametrize(
         "distribution,n_categories",
         list(product(["logit", "probit", "normal", "gumbel"], [3, 5, 7])),
@@ -556,7 +575,8 @@ class TestGenerateCategoricalData:
 
     @pytest.mark.parametrize("n_categories", (2, 10,))
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
-    def test_intercept(self, distribution, n_categories):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, n_categories, noise_scale):
         graph = StructureModel()
         graph.add_node("A")
 
@@ -564,7 +584,7 @@ class TestGenerateCategoricalData:
             graph,
             100000,
             distribution,
-            noise_scale=0.1,
+            noise_scale=noise_scale,
             n_categories=n_categories,
             seed=10,
             intercept=False,
@@ -573,39 +593,7 @@ class TestGenerateCategoricalData:
             graph,
             100000,
             distribution,
-            noise_scale=0.1,
-            n_categories=n_categories,
-            seed=10,
-            intercept=True,
-        )
-
-        # NOTE: as n_categories increases, the probability that at least one category with
-        # intercept=True will be the same as intercept=False -> 1.0
-        num_similar = np.isclose(
-            data_intercept.mean(axis=0), data_noint.mean(axis=0), atol=0.05, rtol=0
-        ).sum()
-        assert num_similar < n_categories / 2
-
-    @pytest.mark.parametrize("n_categories", (2, 10,))
-    @pytest.mark.parametrize("distribution", ["probit", "logit"])
-    def test_intercept_no_noise(self, distribution, n_categories):
-        graph = StructureModel()
-        graph.add_node("A")
-
-        data_noint = generate_categorical_dataframe(
-            graph,
-            100000,
-            distribution,
-            noise_scale=0.0,
-            n_categories=n_categories,
-            seed=10,
-            intercept=False,
-        )
-        data_intercept = generate_categorical_dataframe(
-            graph,
-            100000,
-            distribution,
-            noise_scale=0.0,
+            noise_scale=noise_scale,
             n_categories=n_categories,
             seed=10,
             intercept=True,
@@ -653,12 +641,42 @@ class TestGenerateCategoricalData:
                 assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
 
-def test_zero_lambda():
-    """
-    A wrong initialisation could lead to counts always being zero if they dont
-    have parents.
-    """
-    graph = StructureModel()
-    graph.add_nodes_from(list(range(20)))
-    df = generate_count_dataframe(graph, 10000)
-    assert not np.any(df.mean() == 0)
+class TestGenerateCountData:
+    def test_zero_lambda(self):
+        """
+        A wrong initialisation could lead to counts always being zero if they dont
+        have parents.
+        """
+        graph = StructureModel()
+        graph.add_nodes_from(list(range(20)))
+        df = generate_count_dataframe(graph, 10000)
+        assert not np.any(df.mean() == 0)
+
+    @pytest.mark.parametrize("intercept", [True, False])
+    @pytest.mark.parametrize("seed", [10, 12])
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    @pytest.mark.parametrize(
+        "zero_inflation_factor", [int(0), 0.0, 0.01, 0.1, 0.5, 1.0, int(1)]
+    )
+    def test_dataframe(self, graph, intercept, seed, kernel, zero_inflation_factor):
+        """
+        Tests equivalence of dataframe wrapper
+        """
+        data = generate_count_dataframe(
+            graph,
+            100,
+            zero_inflation_factor=zero_inflation_factor,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+        )
+        df = generate_count_dataframe(
+            graph,
+            100,
+            zero_inflation_factor=zero_inflation_factor,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+        )
+
+        assert np.array_equal(data, df[list(graph.nodes())].values)
