@@ -27,9 +27,10 @@
 # limitations under the License.
 
 """
-``causalnex.structure`` provides functionality to define or learn structure.
+``causalnex.structure.pytorch`` provides functionality to define or learn structure using pytorch.
 """
 
-__all__ = ["StructureModel", "notears", "dynotears", "data_generators"]
+__all__ = ["from_numpy", "from_pandas", "NotearsMLP"]
 
-from .structuremodel import StructureModel
+from .core import NotearsMLP
+from .notears import from_numpy, from_pandas

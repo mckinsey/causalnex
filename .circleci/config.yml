@@ -27,6 +27,9 @@ utils:
       echo ". /home/circleci/miniconda/etc/profile.d/conda.sh" >> $BASH_ENV
       echo "conda deactivate; conda activate causalnex_env" >> $BASH_ENV
 
+      # needed to control numpy multithreading code since circleci gives incorrect CPU counts
+      echo "export MKL_NUM_THREADS=1 && export OMP_NUM_THREADS=1 && export NUMEXPR_NUM_THREADS=1" >> $BASH_ENV
+
   setup_requirements: &setup_requirements
     name: Install PIP dependencies
     command: |

@@ -573,7 +573,7 @@ class BayesianNetwork:
         cols = []
         pattern = re.compile("^{node}_[0-9]+$".format(node=node))
         # disabled open pylint issue (https://github.com/PyCQA/pylint/issues/2962)
-        for col in probability.columns:  # pylint: disable=E1133
+        for col in probability.columns:
             if pattern.match(col):
                 cols.append(col)
         probability = probability[cols]

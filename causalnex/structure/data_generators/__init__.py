@@ -27,9 +27,33 @@
 # limitations under the License.
 
 """
-``causalnex.structure`` provides functionality to define or learn structure.
+Data generators using DAGs for benchmarking and synthetic data generation.
 """
 
-__all__ = ["StructureModel", "notears", "dynotears", "data_generators"]
+__all__ = [
+    "generate_structure",
+    "nonlinear_sem_generator",
+    "sem_generator",
+    "generate_binary_data",
+    "generate_binary_dataframe",
+    "generate_categorical_dataframe",
+    "generate_continuous_data",
+    "generate_continuous_dataframe",
+    "generate_count_dataframe",
+    "gen_stationary_dyn_net_and_df",
+    "generate_dataframe_dynamic",
+    "generate_structure_dynamic",
+]
 
-from .structuremodel import StructureModel
+from .core import generate_structure, nonlinear_sem_generator, sem_generator
+from .wrappers import (
+    generate_binary_data,
+    generate_binary_dataframe,
+    generate_categorical_dataframe,
+    generate_continuous_data,
+    generate_continuous_dataframe,
+    generate_count_dataframe,
+    gen_stationary_dyn_net_and_df,
+    generate_dataframe_dynamic,
+    generate_structure_dynamic,
+)
