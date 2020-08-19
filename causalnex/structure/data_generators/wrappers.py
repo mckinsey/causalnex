@@ -29,18 +29,20 @@
 """
 Module of methods to sample variables of a single data type.
 """
-from typing import Optional, List, Tuple
+import warnings
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
 import pandas as pd
+from scipy.sparse import csr_matrix
 from sklearn.gaussian_process.kernels import Kernel
 
-from causalnex.structure.data_generators import nonlinear_sem_generator, sem_generator, generate_structure
-import warnings
-
-from scipy.sparse import csr_matrix
-
+from causalnex.structure.data_generators import (
+    generate_structure,
+    nonlinear_sem_generator,
+    sem_generator,
+)
 from causalnex.structure.structuremodel import StructureModel
 
 

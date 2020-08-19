@@ -27,8 +27,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=too-many-lines
-import operator
 import re
 import string
 from itertools import product
@@ -47,10 +45,10 @@ from causalnex.structure.data_generators import (
     generate_categorical_dataframe,
     generate_continuous_data,
     generate_continuous_dataframe,
-    generate_dataframe_dynamic,
-    generate_structure_dynamic,
     generate_count_dataframe,
+    generate_dataframe_dynamic,
     generate_structure,
+    generate_structure_dynamic,
 )
 from tests.structure.data_generators.test_core import calculate_proba
 

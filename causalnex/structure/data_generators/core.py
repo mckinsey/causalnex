@@ -122,6 +122,7 @@ def generate_structure(
     graph = StructureModel(adj_matrix)
     return graph
 
+
 # dict mapping distributions names to their functions
 __distribution_mapper = {
     "gaussian": np.random.normal,
