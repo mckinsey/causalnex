@@ -628,6 +628,7 @@ class TestFromPandasDynotears:
 
         assert list(sm_2.edges) == list(sm_1.edges)
         assert list(sm.edges) == list(sm_1.edges)
+
         weights = np.array([w for _, _, w in sm.edges(data="weight")])
         weights_1 = np.array([w for _, _, w in sm_1.edges(data="weight")])
         weights_2 = np.array([w for _, _, w in sm_2.edges(data="weight")])
