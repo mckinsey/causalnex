@@ -66,13 +66,13 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
 
     Based on "DYNOTEARS: Structure Learning from Time-Series Data".
     https://arxiv.org/abs/2002.00498
-    @misc{pamfil2020dynotears,
+    @inproceedings{pamfil2020dynotears,
         title={DYNOTEARS: Structure Learning from Time-Series Data},
-        author={Roxana Pamfil et. al},
-        year={2020},
-        eprint={2002.00498},
-        archivePrefix={arXiv},
-        primaryClass={stat.ML}
+        author={Pamfil, Roxana and Sriwattanaworachai, Nisara and Desai, Shaan and Pilgerstorfer,
+        Philip and Georgatzis, Konstantinos and Beaumont, Paul and Aragam, Bryon},
+        booktitle={International Conference on Artificial Intelligence and Statistics},
+        pages={1595--1605},
+        year={2020}year={2020},
     }
     Args:
         time_series: pd.DataFrame or List of pd.DataFrame instances.
@@ -434,13 +434,13 @@ def from_numpy_dynamic(  # pylint: disable=too-many-arguments
 
     Based on "DYNOTEARS: Structure Learning from Time-Series Data".
     https://arxiv.org/abs/2002.00498
-    @misc{pamfil2020dynotears,
+    @inproceedings{pamfil2020dynotears,
         title={DYNOTEARS: Structure Learning from Time-Series Data},
-        author={Roxana Pamfil et. al},
-        year={2020},
-        eprint={2002.00498},
-        archivePrefix={arXiv},
-        primaryClass={stat.ML}
+        author={Pamfil, Roxana and Sriwattanaworachai, Nisara and Desai, Shaan and Pilgerstorfer,
+        Philip and Georgatzis, Konstantinos and Beaumont, Paul and Aragam, Bryon},
+        booktitle={International Conference on Artificial Intelligence and Statistics},
+        pages={1595--1605},
+        year={2020}year={2020},
     }
 
     Args:
@@ -601,13 +601,13 @@ def _learn_dynamic_structure(
 
     Based on "DYNOTEARS: Structure Learning from Time-Series Data".
     https://arxiv.org/abs/2002.00498
-    @misc{pamfil2020dynotears,
+    @inproceedings{pamfil2020dynotears,
         title={DYNOTEARS: Structure Learning from Time-Series Data},
-        author={Roxana Pamfil et. al},
-        year={2020},
-        eprint={2002.00498},
-        archivePrefix={arXiv},
-        primaryClass={stat.ML}
+        author={Pamfil, Roxana and Sriwattanaworachai, Nisara and Desai, Shaan and Pilgerstorfer,
+        Philip and Georgatzis, Konstantinos and Beaumont, Paul and Aragam, Bryon},
+        booktitle={International Conference on Artificial Intelligence and Statistics},
+        pages={1595--1605},
+        year={2020}year={2020},
     }
 
     Args:
@@ -639,7 +639,6 @@ def _learn_dynamic_structure(
             "Number of columns of Xlags must be a multiple of number of columns of X"
         )
 
-    # n = #time series*(#time points+1-p), d variables, p lags
     n, d_vars = X.shape
     p_orders = Xlags.shape[1] // d_vars
 
