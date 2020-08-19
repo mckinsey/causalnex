@@ -619,17 +619,20 @@ class TestFromPandasDynotears:
         df.loc[-2, :] = data_dynotears_p2["Y"][0, 5:10]
 
         df = df.sort_index()
-
+        df_ = df.copy()
+        df_.index = range(100, 152)
+        df = pd.concat([df, df_])
         sm = from_pandas_dynamic(df, p=2, w_threshold=0.05)
         sm_1 = from_pandas_dynamic([df], p=2, w_threshold=0.05)
         sm_2 = from_pandas_dynamic([df, df], p=2, w_threshold=0.05)
 
-        assert [(u, v, np.round(w, 2)) for u, v, w in sm_1.edges(data="weight")] == [
-            (u, v, np.round(w, 2)) for u, v, w in sm.edges(data="weight")
-        ]
-        assert [(u, v, np.round(w, 2)) for u, v, w in sm_2.edges(data="weight")] == [
-            (u, v, np.round(w, 2)) for u, v, w in sm_1.edges(data="weight")
-        ]
+        assert list(sm_2.edges) == list(sm_1.edges)
+        assert list(sm.edges) == list(sm_1.edges)
+        weights = np.array([w for _, _, w in sm.edges(data="weight")])
+        weights_1 = np.array([w for _, _, w in sm_1.edges(data="weight")])
+        weights_2 = np.array([w for _, _, w in sm_2.edges(data="weight")])
+        assert np.max(np.abs(weights - weights_1)) < 0.001
+        assert np.max(np.abs(weights - weights_2)) < 0.001
 
     def test_discondinuity(self):
         """
