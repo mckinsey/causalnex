@@ -44,6 +44,17 @@ from causalnex.structure.categorical_variable_mapper import (
     validate_schema,
 )
 
+# dict mapping distributions names to their functions
+__distribution_mapper = {
+    "gaussian": np.random.normal,
+    "normal": np.random.normal,
+    "student-t": np.random.standard_t,
+    "gumbel": np.random.gumbel,
+    "exponential": np.random.exponential,
+    "probit": np.random.normal,
+    "logit": np.random.logistic,
+}
+
 
 def generate_structure(
     num_nodes: int,
@@ -121,18 +132,6 @@ def generate_structure(
     adj_matrix = (edge_flags != 0).astype(float) * edge_weights
     graph = StructureModel(adj_matrix)
     return graph
-
-
-# dict mapping distributions names to their functions
-__distribution_mapper = {
-    "gaussian": np.random.normal,
-    "normal": np.random.normal,
-    "student-t": np.random.standard_t,
-    "gumbel": np.random.gumbel,
-    "exponential": np.random.exponential,
-    "probit": np.random.normal,
-    "logit": np.random.logistic,
-}
 
 
 def sem_generator(
