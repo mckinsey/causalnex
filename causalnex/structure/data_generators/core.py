@@ -155,9 +155,11 @@ def sem_generator(
     Supported variable types: `'binary', 'categorical', 'continuous'`. The number
     of categories can be determined using a colon, e.g. `'categorical:5'`
     specifies a categorical feature with 5 categories.
+
     Notation: For binary and continuous variables, a ``variable'' refers to a
     ``node'', a ``feature'' refers to the one-hot column for categorical
     variables and is equivalent to a binary or continuous variable.
+
     Args:
         graph: A DAG in form of a networkx or StructureModel.
         schema: Dictionary with schema for a node/variable, if a node is missing
@@ -189,9 +191,11 @@ def sem_generator(
             is sampled once and held constant for all rows. For binary or
             categorical the intercept determines the class imbalance.
         seed: Random State
+
     Returns:
         DataFrame with generated features, uses a one-hot coding for
         categorical features.
+
     Raises:
         ValueError: if the graph is not a DAG.
         ValueError: if schema variable type is not in `'binary', 'categorical',
