@@ -624,11 +624,11 @@ class TestFromPandasDynotears:
         sm_1 = from_pandas_dynamic([df], p=2, w_threshold=0.05)
         sm_2 = from_pandas_dynamic([df, df], p=2, w_threshold=0.05)
 
-        assert [(u, v, round(w, 2)) for u, v, w in sm_1.edges(data="weight")] == [
-            (u, v, round(w, 2)) for u, v, w in sm.edges(data="weight")
+        assert [(u, v, np.round(w, 2)) for u, v, w in sm_1.edges(data="weight")] == [
+            (u, v, np.round(w, 2)) for u, v, w in sm.edges(data="weight")
         ]
-        assert [(u, v, round(w, 2)) for u, v, w in sm_2.edges(data="weight")] == [
-            (u, v, round(w, 2)) for u, v, w in sm_1.edges(data="weight")
+        assert [(u, v, np.round(w, 2)) for u, v, w in sm_2.edges(data="weight")] == [
+            (u, v, np.round(w, 2)) for u, v, w in sm_1.edges(data="weight")
         ]
 
     def test_discondinuity(self):
