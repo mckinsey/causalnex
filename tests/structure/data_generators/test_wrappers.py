@@ -26,7 +26,6 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import re
 import string
 from itertools import product
@@ -683,6 +682,7 @@ class TestGenerateCountData:
             intercept=intercept,
             kernel=kernel,
         )
+
         assert np.array_equal(data, df[list(graph.nodes())].values)
 
 

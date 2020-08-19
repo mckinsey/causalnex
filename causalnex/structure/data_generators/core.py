@@ -28,6 +28,7 @@
 
 """
 Module of methods to generate random StructureModel and datasets with various properties, for example, continuous data.
+
 Structure generator based on implementation found in: from https://github.com/xunzheng/notears
 git hash: 31923cb22517f7bb6420dd0b6ef23ca550702b97
 """
@@ -210,10 +211,14 @@ def sem_generator(
 
     Example:
         sm = StructureModel()
+
         sm.add_edges_from([('A', 'C'), ('D', 'C'), ('E', 'D')])
+
         sm.add_nodes_from(['B', 'F'])
+
         schema = {'B': 'binary', 'C': 'categorical:5',
                   'E': 'binary', 'F': 'continuous'}
+
         df = sem_generator(sm, schema, noise_scale=1,
                           n_samples=10000,
                           intercept=True,
@@ -456,6 +461,7 @@ def _sample_poisson(expected_count: np.ndarray, max_count: int = 5000) -> np.nda
 def _sample_categories_from_latent(
     latent_mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
 ) -> np.ndarray:
+
     one_hot = np.empty_like(latent_mean)
     n_samples, n_cardinality = latent_mean.shape
 
