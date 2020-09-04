@@ -507,8 +507,7 @@ def _generate_inter_structure(
             "{var}_lag{l_val}".format(var=var, l_val=0) for var in range(num_nodes)
         ],
     )
-    idxs = list(df.index)
-    cols = list(df.columns)
+    idxs, cols = list(df.index), list(df.columns)
     for i in idxs:
         df[i] = 0
     for i in cols:
