@@ -118,8 +118,8 @@ def generate_structure(
 
     else:
         raise ValueError(
-            "unknown graph type {t}. ".format(t=graph_type)
-            + "Available types are ['erdos-renyi', 'barabasi-albert', 'full']"
+            "Unknown graph type {t}. "
+            "Available types are ['erdos-renyi', 'barabasi-albert', 'full']".format(t=graph_type)
         )
 
     # randomly permute edges - required because we limited ourselves to lower diagonal previously
