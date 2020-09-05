@@ -732,7 +732,7 @@ class TestGenerateStructureDynamic:
         """if the graph_type chosen is not among the options available, raise error"""
         with pytest.raises(
             ValueError,
-            match=r"unknown graph type some_type\. "
+            match=r"Unknown graph type some_type\. "
             r"Available types are \['erdos-renyi', 'barabasi-albert', 'full'\]",
         ):
             generate_structure_dynamic(10, 10, 10, 10, graph_type_intra="some_type")

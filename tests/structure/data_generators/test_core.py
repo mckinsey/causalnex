@@ -86,7 +86,11 @@ class TestGenerateStructure:
         """ Test that a value other than "erdos-renyi", "barabasi-albert", "full" throws ValueError """
         graph_type = "invalid"
         degree, d_nodes = 4, 10
-        with pytest.raises(ValueError, match="unknown graph type"):
+        with pytest.raises(
+            ValueError,
+            match="Unknown graph type invalid. Available types"
+            r" are \['erdos-renyi', 'barabasi-albert', 'full'\]",
+        ):
             generate_structure(d_nodes, degree, graph_type)
 
     @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
