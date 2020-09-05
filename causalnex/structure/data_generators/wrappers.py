@@ -447,6 +447,7 @@ def _generate_inter_structure(
     w_min: float,
     w_max: float,
     w_decay: float = 1.0,
+    neg: float = 0.5,
 ) -> StructureModel:
     """Simulate random DAG between two time slices.
 
@@ -458,6 +459,8 @@ def _generate_inter_structure(
         w_min: minimum weight for inter-slice nodes
         w_max: maximum weight for inter-slice nodes
         w_decay: exponent of weights decay for slices that are farther apart. Default is 1.0, which implies no decay
+        neg: the proportion of edge weights expected to be negative. By default, 50% of the edges are expected
+            to be negative weight (`neg == 0.5`).
 
     Returns:
         G_inter: weighted, bipartite DAG for inter-slice connections
@@ -487,7 +490,7 @@ def _generate_inter_structure(
         u_i = np.random.uniform(low=w_min, high=w_max, size=[num_nodes, num_nodes]) / (
             w_decay ** i
         )
-        u_i[np.random.rand(num_nodes, num_nodes) < 0.5] *= -1
+        u_i[np.random.rand(num_nodes, num_nodes) < neg] *= -1
         u.append(u_i)
     if u:
         u = np.concatenate(u, axis=0)
