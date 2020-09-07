@@ -292,3 +292,12 @@ class StructureModel(nx.DiGraph):
                     return subgraph
 
         raise NodeNotFound("Node {node} not found in the graph.".format(node=node))
+
+    def threshold_till_dag(self):
+        """
+        Remove edges with smallest weight until the graph is a DAG.
+        Not recommended if the weights have different units.
+        """
+        while not nx.algorithms.is_directed_acyclic_graph(self):
+            i, j, _ = min(self.edges(data="weight"), key=lambda x: abs(x[2]))
+            self.remove_edge(i, j)

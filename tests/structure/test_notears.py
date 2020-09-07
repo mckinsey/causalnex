@@ -701,7 +701,7 @@ class TestFromNumpyLasso:
         )
         train_model = StructureModel(df.values)
         X = generate_continuous_dataframe(
-            StructureModel(df), 50, noise_scale=1, seed=20
+            StructureModel(df), 100, noise_scale=1, seed=20
         )
         g = from_numpy_lasso(X[["a", "b", "c", "d", "e"]].values, 0.1, w_threshold=0.1)
         right_edges = train_model.edges

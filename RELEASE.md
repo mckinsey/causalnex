@@ -1,7 +1,12 @@
 # Upcoming release
 
+* Add a count data type to the data generator using a zero-inflated Poisson
+* Set bounds/max class imbalance for binary features for the data generators
+* Add non-linear data generators for multiple data types
 * Added Pytorch implementation for NOTEARS MLP which is much faster (Only supporting linear structure learning for now)
 * Bugfix to resolve issue when applying notears on data containing NaN
+* Added StructureRegressor sklearn interface using the Pytorch NOTEARS implementation.
+* Hotfix for data_gen system. Fixes issues with root node initialization.
 
 # Release 0.7.0
 
@@ -44,6 +49,6 @@ The initial release of CausalNex.
 
 ## Thanks for supporting contributions
 CausalNex was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and [Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in inferencing causality in their project work. This work was later turned into a product thanks to the following contributors:
-[Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/) and [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/).
+[Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/), [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/), and [Angel Droth](https://www.linkedin.com/in/angeldroth/).
 
 CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered questions or simply be part of inspiring discussions.

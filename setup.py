@@ -59,7 +59,7 @@ extras_require = {
         "pygraphviz>=1.5, <2.0",
     ],
     "pytorch": [
-        "torch>=1.4.0, <2.0"
+        "torch>=1.4.0, <1.6"
     ]
 }
 

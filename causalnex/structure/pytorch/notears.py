@@ -108,7 +108,14 @@ def from_numpy(
 
     model.fit(X, max_iter=max_iter)
 
-    return StructureModel(model.get_adj(w_threshold))
+    sm = StructureModel(model.get_adj(w_threshold))
+
+    # set bias as node attribute
+    bias = model.bias
+    for node in sm.nodes():
+        sm.nodes[node]["bias"] = bias[node]
+
+    return sm
 
 
 def from_pandas(
@@ -195,9 +202,15 @@ def from_pandas(
 
     sm = StructureModel()
     sm.add_nodes_from(data.columns)
-    sm.add_weighted_edges_from(
-        [(idx_col[u], idx_col[v], w) for u, v, w in g.edges.data("weight")],
-        origin="learned",
-    )
+
+    # recover the edge weights from g
+    for u, v, edge_dict in g.edges.data(True):
+        sm.add_edge(
+            idx_col[u], idx_col[v], origin="learned", weight=edge_dict["weight"]
+        )
+    # recover the node biases from g
+    for node in g.nodes(data=True):
+        node_name = idx_col[node[0]]
+        sm.nodes[node_name]["bias"] = node[1]["bias"]
 
     return sm

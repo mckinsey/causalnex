@@ -25,11 +25,3 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""
-``causalnex.structure`` provides functionality to define or learn structure.
-"""
-
-__all__ = ["StructureModel", "notears", "data_generators"]
-
-from .structuremodel import StructureModel

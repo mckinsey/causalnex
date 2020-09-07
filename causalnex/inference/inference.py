@@ -284,9 +284,7 @@ class InferenceEngine:
             # initially there are none present, but caller will add appropriate arguments to the function
             # getargvalues was "inadvertently marked as deprecated in Python 3.5"
             # https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
-            arg_spec = inspect.getargvalues(  # pylint: disable=deprecated-method
-                inspect.currentframe()
-            )
+            arg_spec = inspect.getargvalues(inspect.currentframe())
 
             return self._cpds[arg_spec.args[0]][  # target name
                 arg_spec.locals[arg_spec.args[0]]
