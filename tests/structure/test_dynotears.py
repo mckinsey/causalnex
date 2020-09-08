@@ -183,7 +183,9 @@ class TestFromNumpyDynotears:
         """
 
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], tabu_parent_nodes=[1],
+            data_dynotears_p2["X"],
+            data_dynotears_p2["Y"],
+            tabu_parent_nodes=[1],
         )
         assert not [el for el in sm.edges if "1_lag" in el[0]]
 
@@ -192,12 +194,16 @@ class TestFromNumpyDynotears:
         If tabu relationships are set, the corresponding edges must not exist
         """
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], tabu_child_nodes=[4],
+            data_dynotears_p2["X"],
+            data_dynotears_p2["Y"],
+            tabu_child_nodes=[4],
         )
         assert not ([el for el in sm.edges if "4_lag" in el[1]])
 
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], tabu_child_nodes=[1],
+            data_dynotears_p2["X"],
+            data_dynotears_p2["Y"],
+            tabu_child_nodes=[1],
         )
         assert not ([el for el in sm.edges if "1_lag" in el[1]])
 
@@ -238,7 +244,10 @@ class TestFromNumpyDynotears:
 
     def test_all_columns_in_structure(self, data_dynotears_p2):
         """Every columns that is in the data should become a node in the learned structure"""
-        sm = from_numpy_dynamic(data_dynotears_p2["X"], data_dynotears_p2["Y"],)
+        sm = from_numpy_dynamic(
+            data_dynotears_p2["X"],
+            data_dynotears_p2["Y"],
+        )
         assert sorted(sm.nodes) == [
             "{var}_lag{l_val}".format(var=var, l_val=l_val)
             for var in range(5)
@@ -386,7 +395,11 @@ class TestFromPandasDynotears:
         df.loc[-1, :] = data_dynotears_p1["Y"][0, :]
         df = df.sort_index()
 
-        sm = from_pandas_dynamic(df, p=1, w_threshold=0.2,)
+        sm = from_pandas_dynamic(
+            df,
+            p=1,
+            w_threshold=0.2,
+        )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
             ("{i}_lag0".format(i=map_[i]), "{j}_lag0".format(j=map_[j]))
@@ -421,7 +434,11 @@ class TestFromPandasDynotears:
 
         df = df.sort_index()
 
-        sm = from_pandas_dynamic(df, p=2, w_threshold=0.25,)
+        sm = from_pandas_dynamic(
+            df,
+            p=2,
+            w_threshold=0.25,
+        )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
             ("{i}_lag0".format(i=map_[i]), "{j}_lag0".format(j=map_[j]))
@@ -600,7 +617,11 @@ class TestFromPandasDynotears:
         df.loc[-2, :] = data_dynotears_p2["Y"][0, 5:10]
         df = df.sort_index()
 
-        sm = from_pandas_dynamic(df, p=2, w_threshold=0.2,)
+        sm = from_pandas_dynamic(
+            df,
+            p=2,
+            w_threshold=0.2,
+        )
         sm_2 = from_pandas_dynamic(
             df,
             p=2,
@@ -673,7 +694,8 @@ class TestFromPandasDynotears:
             from_pandas_dynamic(pd.DataFrame([["1"]], columns=["a"]), 1)
 
         with pytest.raises(
-            TypeError, match="Time series entries must be instances of `pd.DataFrame`",
+            TypeError,
+            match="Time series entries must be instances of `pd.DataFrame`",
         ):
             from_pandas_dynamic([np.array([1, 2])], 1)
 
@@ -685,30 +707,37 @@ class TestFromPandasDynotears:
             from_pandas_dynamic(df, 1)
 
         with pytest.raises(
-            ValueError, match="All inputs must have the same columns and same types",
+            ValueError,
+            match="All inputs must have the same columns and same types",
         ):
             df = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "e"],
             )
             df_2 = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "f"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "f"],
             )
             from_pandas_dynamic([df, df_2], 1)
 
         with pytest.raises(
-            ValueError, match="All inputs must have the same columns and same types",
+            ValueError,
+            match="All inputs must have the same columns and same types",
         ):
             df = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "e"],
             )
             df_2 = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "e"],
             )
             df_2["a"] = df_2["a"].astype(int)
             from_pandas_dynamic([df, df_2], 1)
 
         with pytest.raises(
-            TypeError, match="Index must be integers",
+            TypeError,
+            match="Index must be integers",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
             from_pandas_dynamic(df, 1)
@@ -757,7 +786,8 @@ class TestDynamicDataTransformer:
             )
 
         with pytest.raises(
-            TypeError, match="Time series entries must be instances of `pd.DataFrame`",
+            TypeError,
+            match="Time series entries must be instances of `pd.DataFrame`",
         ):
             DynamicDataTransformer(p=1).fit_transform([np.array([1, 2])])
 
@@ -769,18 +799,22 @@ class TestDynamicDataTransformer:
             DynamicDataTransformer(p=1).fit_transform(df)
 
         with pytest.raises(
-            ValueError, match="All inputs must have the same columns and same types",
+            ValueError,
+            match="All inputs must have the same columns and same types",
         ):
             df = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "e"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "e"],
             )
             df_2 = pd.DataFrame(
-                np.random.random([5, 5]), columns=["a", "b", "c", "d", "f"],
+                np.random.random([5, 5]),
+                columns=["a", "b", "c", "d", "f"],
             )
             DynamicDataTransformer(p=1).fit_transform([df, df_2])
 
         with pytest.raises(
-            ValueError, match="All inputs must have the same columns and same types",
+            ValueError,
+            match="All inputs must have the same columns and same types",
         ):
             cols = ["a", "b", "c", "d", "e"]
             df = pd.DataFrame(np.random.random([5, 5]), columns=cols)
@@ -789,7 +823,8 @@ class TestDynamicDataTransformer:
             DynamicDataTransformer(p=1).fit_transform([df, df_2])
 
         with pytest.raises(
-            TypeError, match="Index must be integers",
+            TypeError,
+            match="Index must be integers",
         ):
             df = pd.DataFrame(np.random.random([5, 5]), index=[0, 1, 2, 3.0, 4])
             DynamicDataTransformer(p=1).fit_transform(df)
@@ -817,7 +852,7 @@ class TestDynamicDataTransformer:
 
     def test_return_df_true_equivalent_to_false(self):
         """Check that the df from `return_df=true` is
-         equivalent the result if `return_df=false`"""
+        equivalent the result if `return_df=false`"""
         df = pd.DataFrame(np.random.random([50, 10]))
         df_dyno = DynamicDataTransformer(p=3).fit_transform(df, return_df=True)
         X, Xlags = DynamicDataTransformer(p=3).fit_transform(df, return_df=False)
