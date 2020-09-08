@@ -5,6 +5,7 @@
 * Set bounds/max class imbalance for binary features for the data generators
 * Add non-linear data generators for multiple data types
 * Added Pytorch implementation for NOTEARS MLP which is much faster (Only supporting linear structure learning for now)
+* Bugfix to resolve issue when applying notears on data containing NaN
 * Added StructureRegressor sklearn interface using the Pytorch NOTEARS implementation.
 * Hotfix for data_gen system. Fixes issues with root node initialization.
 
