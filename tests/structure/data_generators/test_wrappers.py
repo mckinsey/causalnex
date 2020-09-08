@@ -87,8 +87,8 @@ class TestGenerateContinuousData:
         assert isinstance(ndarray, np.ndarray)
 
     def test_bad_distribution_type(self):
-        """ Test that invalid sem-type other than "gaussian", "normal", "student-t",
-        "exponential", "gumbel" is not accepted """
+        """Test that invalid sem-type other than "gaussian", "normal", "student-t",
+        "exponential", "gumbel" is not accepted"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         with pytest.raises(ValueError, match="Unknown continuous distribution"):
@@ -520,7 +520,13 @@ class TestGenerateCategoricalData:
     @pytest.mark.parametrize("intercept", [True, False])
     @pytest.mark.parametrize("seed", [10, 42])
     @pytest.mark.parametrize("kernel", [None, RBF(1)])
-    @pytest.mark.parametrize("n_categories", (2, 10,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            10,
+        ),
+    )
     def test_dataframe(
         self, graph, distribution, noise_std, intercept, seed, kernel, n_categories
     ):
@@ -573,7 +579,13 @@ class TestGenerateCategoricalData:
         )
         assert not np.allclose(data.mean(axis=0), 1 / n_categories, atol=0.01, rtol=0)
 
-    @pytest.mark.parametrize("n_categories", (2, 10,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            10,
+        ),
+    )
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
     @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
     def test_intercept(self, distribution, n_categories, noise_scale):
@@ -608,7 +620,13 @@ class TestGenerateCategoricalData:
 
     @pytest.mark.parametrize("num_nodes", (3, 6))
     @pytest.mark.parametrize("seed", (10, 20))
-    @pytest.mark.parametrize("n_categories", (2, 6,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            6,
+        ),
+    )
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
     def test_independence(self, graph_gen, seed, num_nodes, n_categories, distribution):
         """

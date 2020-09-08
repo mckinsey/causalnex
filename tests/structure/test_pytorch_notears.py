@@ -370,7 +370,8 @@ class TestFromNumpy:
         """
         # using `wraps` to **spy** on the function
         with patch(
-            "causalnex.structure.pytorch.core.sopt.minimize", wraps=sopt.minimize,
+            "causalnex.structure.pytorch.core.sopt.minimize",
+            wraps=sopt.minimize,
         ) as mocked:
             from_numpy(train_data_idx.values, beta=0.1, w_threshold=0.25)
             # We iterate over each time `sopt.minimize` was called

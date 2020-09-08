@@ -77,8 +77,7 @@ class TestGenerateStructure:
 
     @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
     def test_is_dag_nodes_degrees(self, num_nodes, degree):
-        """ Tests that generated graph is dag for different numbers of nodes and degrees
-        """
+        """Tests that generated graph is dag for different numbers of nodes and degrees"""
         sm = generate_structure(num_nodes, degree)
         assert nx.is_directed_acyclic_graph(sm)
 
@@ -279,7 +278,13 @@ class TestMixedDataGen:
     # Seed 20 is an unlucky seed and fails the assertion. All other seeds tested
     # pass the assertion. Similar issue to the categorical intercept test?
     @pytest.mark.parametrize("seed", (10, 17))
-    @pytest.mark.parametrize("n_categories", (2, 5,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            5,
+        ),
+    )
     @pytest.mark.parametrize("weight_distribution", ["uniform", "gaussian"])
     @pytest.mark.parametrize("intercept_distribution", ["uniform", "gaussian"])
     def test_mixed_type_independence(

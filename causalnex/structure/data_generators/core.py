@@ -324,7 +324,10 @@ def _handle_distribution_sampling(
 
 
 def _add_continuous_noise(
-    mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
+    mean: np.ndarray,
+    distribution: str,
+    noise_std: float,
+    root_node: bool,
 ) -> np.ndarray:
     n_samples = mean.shape[0]
 
@@ -383,7 +386,9 @@ def _sample_binary_from_latent(
 
 
 def _sample_count_from_latent(
-    eta: np.ndarray, root_node: bool, zero_inflation_pct: float = 0.05,
+    eta: np.ndarray,
+    root_node: bool,
+    zero_inflation_pct: float = 0.05,
 ) -> np.ndarray:
     """
     Samples a zero-inflated poisson distribution.
@@ -456,7 +461,10 @@ def _sample_poisson(expected_count: np.ndarray, max_count: int = 5000) -> np.nda
 
 
 def _sample_categories_from_latent(
-    latent_mean: np.ndarray, distribution: str, noise_std: float, root_node: bool,
+    latent_mean: np.ndarray,
+    distribution: str,
+    noise_std: float,
+    root_node: bool,
 ) -> np.ndarray:
 
     one_hot = np.empty_like(latent_mean)
@@ -771,7 +779,11 @@ def _conditional_sample(
     return y_new, cov_mat_new
 
 
-def _gp_index(x: np.ndarray, kernel: Kernel, max_chunk_size: int = 100,) -> np.ndarray:
+def _gp_index(
+    x: np.ndarray,
+    kernel: Kernel,
+    max_chunk_size: int = 100,
+) -> np.ndarray:
     """
     Sample a Gaussian process using input data.
     ``f(x) ~ GP(0, K)``
