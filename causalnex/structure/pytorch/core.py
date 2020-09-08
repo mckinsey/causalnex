@@ -316,7 +316,11 @@ class NotearsMLP(nn.Module, BaseEstimator):
         while rho < rho_max:
             # Magic
             sol = sopt.minimize(
-                _func, flat_params, method="L-BFGS-B", jac=True, bounds=bounds,
+                _func,
+                flat_params,
+                method="L-BFGS-B",
+                jac=True,
+                bounds=bounds,
             )
 
             _update_params_from_flat(params, sol.x)
