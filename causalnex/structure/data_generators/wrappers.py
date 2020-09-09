@@ -493,11 +493,8 @@ def _generate_inter_structure(
         )
         u_i[np.random.rand(num_nodes, num_nodes) < neg] *= -1
         u.append(u_i)
-    if u:
-        u = np.concatenate(u, axis=0)
-    else:
-        u = np.array([]).reshape(b.shape)
 
+    u = np.concatenate(u, axis=0) if u else np.empty(b.shape)
     a = (b != 0).astype(float) * u
 
     df = pd.DataFrame(
