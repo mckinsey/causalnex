@@ -551,7 +551,7 @@ def generate_dataframe_dynamic(  # pylint: disable=R0914
     inter_nodes = sorted(el for el in g.nodes if "_lag0" not in el)
     w_mat = nx.to_numpy_array(g, nodelist=intra_nodes)
     a_mat = nx.to_numpy_array(g, nodelist=intra_nodes + inter_nodes)[
-        len(intra_nodes):, : len(intra_nodes)
+        len(intra_nodes) :, : len(intra_nodes)
     ]
     g_intra = nx.DiGraph(w_mat)
     g_inter = nx.bipartite.from_biadjacency_matrix(
