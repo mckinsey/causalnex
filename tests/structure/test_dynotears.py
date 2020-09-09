@@ -31,7 +31,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.exceptions import NotFittedError
 
 from causalnex.structure.dynotears import from_numpy_dynamic, from_pandas_dynamic
 

@@ -268,8 +268,8 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Given a list of realisations of a time series, convert it to the format received by the dynotears algorithm.
-        Each realisation on `realisations` is a realisation of the time series, where the time dimension is represented by
-        the rows.
+        Each realisation on `realisations` is a realisation of the time series,
+        where the time dimension is represented by the rows.
             - The higher the row, the higher the time index
             - The data is complete, meaning that the difference between two time stamps is equal one
         Args:
@@ -282,7 +282,7 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
         """
         X = np.concatenate([realisation[p:] for realisation in realisations], axis=0)
         y_lag_list = [
-            np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
+            np.concatenate([realisation[p - i - 1: -i - 1] for i in range(p)], axis=1)
             for realisation in realisations
         ]
         y_lag = np.concatenate(y_lag_list, axis=0)
