@@ -405,10 +405,11 @@ def generate_structure_dynamic(  # pylint: disable=too-many-arguments
         w_max_inter: maximum weight for inter-slice nodes
         w_decay: exponent of weights decay for slices that are farther apart. Default is 1.0, which implies no decay
 
-    Returns:
-        StructureModel containing all simulated nodes and edges (intra- and inter-slice)
     Raises:
         ValueError: if graph type unknown or `num_nodes < 2`
+
+    Returns:
+        StructureModel containing all simulated nodes and edges (intra- and inter-slice)
     """
     sm_intra = generate_structure(
         num_nodes=num_nodes,
@@ -553,7 +554,7 @@ def generate_dataframe_dynamic(  # pylint: disable=R0914
     inter_nodes = sorted(el for el in g.nodes if "_lag0" not in el)
     w_mat = nx.to_numpy_array(g, nodelist=intra_nodes)
     a_mat = nx.to_numpy_array(g, nodelist=intra_nodes + inter_nodes)[
-        len(intra_nodes) :, : len(intra_nodes)
+        len(intra_nodes):, : len(intra_nodes)
     ]
     g_intra = nx.DiGraph(w_mat)
     g_inter = nx.bipartite.from_biadjacency_matrix(
