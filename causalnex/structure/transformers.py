@@ -282,7 +282,7 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
         """
         X = np.concatenate([realisation[p:] for realisation in realisations], axis=0)
         y_lag_list = [
-            np.concatenate([realisation[p - i - 1: -i - 1] for i in range(p)], axis=1)
+            np.concatenate([realisation[p - i - 1 : -i - 1] for i in range(p)], axis=1)
             for realisation in realisations
         ]
         y_lag = np.concatenate(y_lag_list, axis=0)
