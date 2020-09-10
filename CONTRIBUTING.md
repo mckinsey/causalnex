@@ -16,7 +16,7 @@ The CausalNex team pledges to foster and maintain a welcoming and friendly commu
 
 We use [GitHub Issues](https://github.com/quantumblacklabs/causalnex/issues) to keep track of known bugs. We keep a close eye on them and try to make it clear when we have an internal fix in progress. Before reporting a new issue, please do your best to ensure your problem hasn't already been reported. If so, it's often better to just leave a comment on an existing issue, rather than create a new one. Old issues also can often include helpful tips and solutions to common problems.
 
-If you are looking for help with your code in our documentation haven't helped you, please consider posting a question on [Stack Overflow](https://stackoverflow.com/questions/tagged/causalnex). If you tag it `causalnex` and `python`, more people will see it and may be able to help. We are unable to provide individual support via email. In the interest of community engagement we also believe that help is much more valuable if it's shared publicly, so that more people can benefit from it.
+If you are looking for help with your code and our documentation hasn't helped you, please consider posting a question on [Stack Overflow](https://stackoverflow.com/questions/tagged/causalnex). If you tag it `causalnex` and `python`, more people will see it and may be able to help. We are unable to provide individual support via email. In the interest of community engagement we also believe that help is much more valuable if it's shared publicly, so that more people can benefit from it.
 
 If you're over on Stack Overflow and want to boost your points, take a look at the `causalnex` tag and see if you can help others out by sharing your knowledge. It's another great way to contribute.
 

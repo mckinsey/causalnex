@@ -25,11 +25,3 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
-"""
-
-__version__ = "0.8.0"
-
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]

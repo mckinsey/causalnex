@@ -27,9 +27,33 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+Data generators using DAGs for benchmarking and synthetic data generation.
 """
 
-__version__ = "0.8.0"
+__all__ = [
+    "generate_structure",
+    "nonlinear_sem_generator",
+    "sem_generator",
+    "generate_binary_data",
+    "generate_binary_dataframe",
+    "generate_categorical_dataframe",
+    "generate_continuous_data",
+    "generate_continuous_dataframe",
+    "generate_count_dataframe",
+    "gen_stationary_dyn_net_and_df",
+    "generate_dataframe_dynamic",
+    "generate_structure_dynamic",
+]
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from .core import generate_structure, nonlinear_sem_generator, sem_generator
+from .wrappers import (
+    gen_stationary_dyn_net_and_df,
+    generate_binary_data,
+    generate_binary_dataframe,
+    generate_categorical_dataframe,
+    generate_continuous_data,
+    generate_continuous_dataframe,
+    generate_count_dataframe,
+    generate_dataframe_dynamic,
+    generate_structure_dynamic,
+)

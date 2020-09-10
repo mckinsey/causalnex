@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 # Copyright 2019-2020 QuantumBlack Visual Analytics Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,28 +26,30 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import operator
+import re
 import string
 from itertools import product
-from typing import Hashable, Tuple, Union
 
-import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
-from networkx.algorithms.dag import is_directed_acyclic_graph
 from scipy.stats import anderson, stats
+from sklearn.gaussian_process.kernels import RBF
 
+from causalnex.structure import StructureModel
 from causalnex.structure.data_generators import (
+    gen_stationary_dyn_net_and_df,
     generate_binary_data,
     generate_binary_dataframe,
     generate_categorical_dataframe,
     generate_continuous_data,
     generate_continuous_dataframe,
+    generate_count_dataframe,
+    generate_dataframe_dynamic,
     generate_structure,
-    sem_generator,
+    generate_structure_dynamic,
 )
-from causalnex.structure.structuremodel import StructureModel
+from tests.structure.data_generators.test_core import calculate_proba
 
 
 @pytest.fixture
@@ -58,19 +61,6 @@ def graph():
 
 
 @pytest.fixture
-def schema():
-    # use the default schema for 3
-    schema = {
-        0: "binary",
-        1: "categorical:3",
-        2: "binary",
-        4: "continuous",
-        5: "categorical:5",
-    }
-    return schema
-
-
-@pytest.fixture()
 def graph_gen():
     def generator(num_nodes, seed, weight=None):
         np.random.seed(seed)
@@ -89,102 +79,6 @@ def graph_gen():
     return generator
 
 
-class TestGenerateStructure:
-    @pytest.mark.parametrize("graph_type", ["erdos-renyi", "barabasi-albert", "full"])
-    def test_is_dag_graph_type(self, graph_type):
-        """ Tests that the generated graph is a dag for all graph types. """
-        degree, d_nodes = 4, 10
-        sm = generate_structure(d_nodes, degree, graph_type)
-        assert is_directed_acyclic_graph(sm)
-
-    @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
-    def test_is_dag_nodes_degrees(self, num_nodes, degree):
-        """ Tests that generated graph is dag for different numbers of nodes and degrees
-        """
-        sm = generate_structure(num_nodes, degree)
-        assert nx.is_directed_acyclic_graph(sm)
-
-    def test_bad_graph_type(self):
-        """ Test that a value other than "erdos-renyi", "barabasi-albert", "full" throws ValueError """
-        graph_type = "invalid"
-        degree, d_nodes = 4, 10
-        with pytest.raises(ValueError, match="unknown graph type"):
-            generate_structure(d_nodes, degree, graph_type)
-
-    @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
-    def test_expected_num_nodes(self, num_nodes, degree):
-        """ Test that generated structure has expected number of nodes = num_nodes """
-        sm = generate_structure(num_nodes, degree)
-        assert len(sm.nodes) == num_nodes
-
-    @pytest.mark.parametrize(
-        "num_nodes,degree,w_range",
-        [(5, 2, (1, 2)), (10, 3, (100, 200)), (15, 5, (1.0, 1.0))],
-    )
-    def test_weight_range(self, num_nodes, degree, w_range):
-        """ Test that w_range is respected in output """
-        w_min = w_range[0]
-        w_max = w_range[1]
-        sm = generate_structure(num_nodes, degree, w_min=w_min, w_max=w_max)
-        assert all(abs(sm[u][v]["weight"]) >= w_min for u, v in sm.edges)
-        assert all(abs(sm[u][v]["weight"]) <= w_max for u, v in sm.edges)
-
-    @pytest.mark.parametrize("num_nodes", [-1, 0, 1])
-    def test_num_nodes_exception(self, num_nodes):
-        """ Check a single node graph can't be generated """
-        with pytest.raises(ValueError, match="DAG must have at least 2 nodes"):
-            generate_structure(num_nodes, 1)
-
-    def test_min_max_weights_exception(self):
-        """ Check that w_range is valid """
-        with pytest.raises(
-            ValueError,
-            match="Absolute minimum weight must be less than or equal to maximum weight",
-        ):
-            generate_structure(4, 1, w_min=0.5, w_max=0)
-
-    def test_min_max_weights_equal(self):
-        """ If w_range (w, w) has w=w, check abs value of all weights respect this """
-        w = 1
-        sm = generate_structure(4, 1, w_min=w, w_max=w)
-        w_mat = nx.to_numpy_array(sm)
-        assert np.all((w_mat == 0) | (w_mat == w) | (w_mat == -w))
-
-    def test_erdos_renyi_degree_increases_edges(self):
-        """ Erdos-Renyi degree increases edges """
-        edge_counts = [
-            max(
-                [
-                    len(generate_structure(100, degree, "erdos-renyi").edges)
-                    for _ in range(10)
-                ]
-            )
-            for degree in [10, 90]
-        ]
-
-        assert edge_counts == sorted(edge_counts)
-
-    def test_barabasi_albert_degree_increases_edges(self):
-        """ Barabasi-Albert degree increases edges """
-        edge_counts = [
-            max(
-                [
-                    len(generate_structure(100, degree, "barabasi-albert").edges)
-                    for _ in range(10)
-                ]
-            )
-            for degree in [10, 90]
-        ]
-
-        assert edge_counts == sorted(edge_counts)
-
-    def test_full_network(self):
-        """ Fully connected network has expected edge counts """
-        sm = generate_structure(40, degree=0, graph_type="full")
-
-        assert len(sm.edges) == (40 * 39) / 2
-
-
 class TestGenerateContinuousData:
     @pytest.mark.parametrize(
         "distribution", ["gaussian", "normal", "student-t", "exponential", "gumbel"]
@@ -197,8 +91,8 @@ class TestGenerateContinuousData:
         assert isinstance(ndarray, np.ndarray)
 
     def test_bad_distribution_type(self):
-        """ Test that invalid sem-type other than "gaussian", "normal", "student-t",
-        "exponential", "gumbel" is not accepted """
+        """Test that invalid sem-type other than "gaussian", "normal", "student-t",
+        "exponential", "gumbel" is not accepted"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         with pytest.raises(ValueError, match="Unknown continuous distribution"):
@@ -271,7 +165,8 @@ class TestGenerateContinuousData:
     @pytest.mark.parametrize(
         "distribution", ["gaussian", "normal", "student-t", "exponential", "gumbel"]
     )
-    def test_intercept(self, distribution):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, noise_scale):
         graph = StructureModel()
         graph.add_node("123")
 
@@ -279,7 +174,7 @@ class TestGenerateContinuousData:
             graph,
             n_samples=100000,
             distribution=distribution,
-            noise_scale=0,
+            noise_scale=noise_scale,
             seed=10,
             intercept=False,
         )
@@ -287,12 +182,12 @@ class TestGenerateContinuousData:
             graph,
             n_samples=100000,
             distribution=distribution,
-            noise_scale=0,
+            noise_scale=noise_scale,
             seed=10,
             intercept=True,
         )
         assert not np.isclose(data_noint[:, 0].mean(), data_intercept[:, 0].mean())
-        assert np.isclose(data_noint[:, 0].std(), data_intercept[:, 0].std())
+        assert np.isclose(data_noint[:, 0].std(), data_intercept[:, 0].std(), rtol=0.01)
 
     @pytest.mark.parametrize("num_nodes", (10, 20, 30))
     @pytest.mark.parametrize("seed", (10, 20, 30))
@@ -344,7 +239,8 @@ class TestGenerateContinuousData:
     @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
     @pytest.mark.parametrize("intercept", [True, False])
     @pytest.mark.parametrize("seed", [10, 12])
-    def test_dataframe(self, graph, distribution, noise_std, intercept, seed):
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    def test_dataframe(self, graph, distribution, noise_std, intercept, seed, kernel):
         """
         Tests equivalence of dataframe wrapper
         """
@@ -355,6 +251,7 @@ class TestGenerateContinuousData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
         df = generate_continuous_dataframe(
             graph,
@@ -363,6 +260,7 @@ class TestGenerateContinuousData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
 
         assert np.array_equal(data, df[list(graph.nodes())].values)
@@ -432,15 +330,26 @@ class TestGenerateBinaryData:
         assert not np.isclose(mean_prob, 0.5, atol=0.05)
 
     @pytest.mark.parametrize("distribution", ["logit", "probit", "normal"])
-    def test_intercept(self, distribution):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, noise_scale):
         graph = StructureModel()
         graph.add_node("123")
 
         data_noint = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0, seed=10, intercept=False
+            graph,
+            100000,
+            distribution,
+            noise_scale=noise_scale,
+            seed=10,
+            intercept=False,
         )
         data_intercept = generate_binary_data(
-            graph, 100000, distribution, noise_scale=0, seed=10, intercept=True
+            graph,
+            100000,
+            distribution,
+            noise_scale=noise_scale,
+            seed=10,
+            intercept=True,
         )
         assert not np.isclose(data_noint[:, 0].mean(), data_intercept[:, 0].mean())
 
@@ -489,7 +398,8 @@ class TestGenerateBinaryData:
     @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
     @pytest.mark.parametrize("intercept", [True, False])
     @pytest.mark.parametrize("seed", [10, 12])
-    def test_dataframe(self, graph, distribution, noise_std, intercept, seed):
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    def test_dataframe(self, graph, distribution, noise_std, intercept, seed, kernel):
         """
         Tests equivalence of dataframe wrapper
         """
@@ -500,6 +410,7 @@ class TestGenerateBinaryData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
         df = generate_binary_dataframe(
             graph,
@@ -508,6 +419,7 @@ class TestGenerateBinaryData:
             noise_scale=noise_std,
             seed=seed,
             intercept=intercept,
+            kernel=kernel,
         )
 
         assert np.array_equal(data, df[list(graph.nodes())].values)
@@ -607,6 +519,51 @@ class TestGenerateCategoricalData:
         # without intercept, the probabilities should be fairly uniform
         assert np.allclose(data.mean(axis=0), 1 / n_categories, atol=0.01, rtol=0)
 
+    @pytest.mark.parametrize("distribution", ["logit", "probit", "normal", "gumbel"])
+    @pytest.mark.parametrize("noise_std", [0.1, 1, 2])
+    @pytest.mark.parametrize("intercept", [True, False])
+    @pytest.mark.parametrize("seed", [10, 42])
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            10,
+        ),
+    )
+    def test_dataframe(
+        self, graph, distribution, noise_std, intercept, seed, kernel, n_categories
+    ):
+        """
+        Tests equivalence of dataframe wrapper
+        """
+        data = generate_categorical_dataframe(
+            graph,
+            100,
+            distribution,
+            noise_scale=noise_std,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+            n_categories=n_categories,
+        )
+        df = generate_categorical_dataframe(
+            graph,
+            100,
+            distribution,
+            noise_scale=noise_std,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+            n_categories=n_categories,
+        )
+
+        cols = []
+        for node in graph.nodes():
+            for cat in range(n_categories):
+                cols.append("{}_{}".format(node, cat))
+        assert np.array_equal(data, df[cols].values)
+
     @pytest.mark.parametrize(
         "distribution,n_categories",
         list(product(["logit", "probit", "normal", "gumbel"], [3, 5, 7])),
@@ -626,9 +583,16 @@ class TestGenerateCategoricalData:
         )
         assert not np.allclose(data.mean(axis=0), 1 / n_categories, atol=0.01, rtol=0)
 
-    @pytest.mark.parametrize("n_categories", (2, 10,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            10,
+        ),
+    )
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
-    def test_intercept(self, distribution, n_categories):
+    @pytest.mark.parametrize("noise_scale", [0.0, 0.1])
+    def test_intercept(self, distribution, n_categories, noise_scale):
         graph = StructureModel()
         graph.add_node("A")
 
@@ -636,7 +600,7 @@ class TestGenerateCategoricalData:
             graph,
             100000,
             distribution,
-            noise_scale=0.1,
+            noise_scale=noise_scale,
             n_categories=n_categories,
             seed=10,
             intercept=False,
@@ -645,21 +609,28 @@ class TestGenerateCategoricalData:
             graph,
             100000,
             distribution,
-            noise_scale=0.1,
+            noise_scale=noise_scale,
             n_categories=n_categories,
             seed=10,
             intercept=True,
         )
 
-        assert np.all(
-            ~np.isclose(
-                data_intercept.mean(axis=0), data_noint.mean(axis=0), atol=0.05, rtol=0
-            )
-        )
+        # NOTE: as n_categories increases, the probability that at least one category with
+        # intercept=True will be the same as intercept=False -> 1.0
+        num_similar = np.isclose(
+            data_intercept.mean(axis=0), data_noint.mean(axis=0), atol=0.05, rtol=0
+        ).sum()
+        assert num_similar < n_categories / 2
 
     @pytest.mark.parametrize("num_nodes", (3, 6))
     @pytest.mark.parametrize("seed", (10, 20))
-    @pytest.mark.parametrize("n_categories", (2, 6,))
+    @pytest.mark.parametrize(
+        "n_categories",
+        (
+            2,
+            6,
+        ),
+    )
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
     def test_independence(self, graph_gen, seed, num_nodes, n_categories, distribution):
         """
@@ -692,235 +663,212 @@ class TestGenerateCategoricalData:
                 assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
 
-class TestMixedDataGen:
-    def test_run(self, graph, schema):
-        df = sem_generator(
-            graph=graph,
-            schema=schema,
-            default_type="continuous",
-            noise_std=1.0,
-            n_samples=1000,
-            intercept=False,
-            seed=12,
-        )
-
-        # test binary:
-        assert df[0].nunique() == 2
-        assert df[0].nunique() == 2
-
-        # test categorical:
-        for col in ["1_{}".format(i) for i in range(3)]:
-            assert df[col].nunique() == 2
-        assert len([x for x in df.columns if isinstance(x, str) and "1_" in x]) == 3
-
-        for col in ["5_{}".format(i) for i in range(5)]:
-            assert df[col].nunique() == 2
-        assert len([x for x in df.columns if isinstance(x, str) and "5_" in x]) == 5
-
-        # test continuous
-        assert df[3].nunique() == 1000
-        assert df[4].nunique() == 1000
-
-    def test_graph_not_a_dag(self):
+class TestGenerateCountData:
+    def test_zero_lambda(self):
+        """
+        A wrong initialisation could lead to counts always being zero if they dont
+        have parents.
+        """
         graph = StructureModel()
-        graph.add_edges_from([(0, 1), (1, 2), (2, 0)])
+        graph.add_nodes_from(list(range(20)))
+        df = generate_count_dataframe(graph, 10000)
+        assert not np.any(df.mean() == 0)
 
-        with pytest.raises(ValueError, match="Provided graph is not a DAG"):
-            _ = sem_generator(graph=graph)
-
-    def test_not_permissible_type(self, graph):
-        schema = {
-            0: "unknown data type",
-        }
-        with pytest.raises(ValueError, match="Unknown data type"):
-            _ = sem_generator(
-                graph=graph,
-                schema=schema,
-                default_type="continuous",
-                noise_std=1.0,
-                n_samples=1000,
-                intercept=False,
-                seed=12,
-            )
-
-    def test_missing_cardinality(self, graph):
-        schema = {
-            0: "categorical",
-            1: "categorical:3",
-            5: "categorical:5",
-        }
-        with pytest.raises(ValueError, match="Missing cardinality for categorical"):
-            _ = sem_generator(
-                graph=graph,
-                schema=schema,
-                default_type="continuous",
-                noise_std=1.0,
-                n_samples=1000,
-                intercept=False,
-                seed=12,
-            )
-
-    def test_missing_default_type(self, graph):
-        with pytest.raises(ValueError, match="Unknown default data type"):
-            _ = sem_generator(
-                graph=graph,
-                schema=schema,
-                default_type="unknown",
-                noise_std=1.0,
-                n_samples=1000,
-                intercept=False,
-                seed=12,
-            )
-
-    def test_incorrect_weight_dist(self):
-        sm = StructureModel()
-        nodes = list(str(x) for x in range(6))
-        np.random.shuffle(nodes)
-        sm.add_nodes_from(nodes)
-
-        sm.add_weighted_edges_from([("0", "1", None), ("2", "4", None)])
-
-        with pytest.raises(ValueError, match="Unknown weight distribution"):
-            _ = sem_generator(
-                graph=sm,
-                schema=None,
-                default_type="continuous",
-                distributions={"weight": "unknown"},
-                noise_std=2.0,
-                n_samples=1000,
-                intercept=False,
-                seed=10,
-            )
-
-    def test_incorrect_intercept_dist(self, graph):
-        with pytest.raises(ValueError, match="Unknown intercept distribution"):
-            _ = sem_generator(
-                graph=graph,
-                schema=None,
-                default_type="continuous",
-                distributions={"intercept": "unknown"},
-                noise_std=2.0,
-                n_samples=10,
-                intercept=True,
-                seed=10,
-            )
-
-    # def test_mixed_type_independence(self):
-    @pytest.mark.parametrize("seed", (10, 20))
-    @pytest.mark.parametrize("n_categories", (2, 5,))
-    @pytest.mark.parametrize("weight_distribution", ["uniform", "gaussian"])
-    @pytest.mark.parametrize("intercept_distribution", ["uniform", "gaussian"])
-    def test_mixed_type_independence(
-        self, seed, n_categories, weight_distribution, intercept_distribution
-    ):
+    @pytest.mark.parametrize("intercept", [True, False])
+    @pytest.mark.parametrize("seed", [10, 12])
+    @pytest.mark.parametrize("kernel", [None, RBF(1)])
+    @pytest.mark.parametrize(
+        "zero_inflation_factor", [int(0), 0.0, 0.01, 0.1, 0.5, 1.0, int(1)]
+    )
+    def test_dataframe(self, graph, intercept, seed, kernel, zero_inflation_factor):
         """
-        Test whether the relation is accurate, implicitly tests sequence of
-        nodes.
+        Tests equivalence of dataframe wrapper
         """
-        np.random.seed(seed)
-
-        sm = StructureModel()
-        nodes = list(str(x) for x in range(6))
-        np.random.shuffle(nodes)
-        sm.add_nodes_from(nodes)
-        # binary -> categorical
-        sm.add_weighted_edges_from([("0", "1", 10)])
-        # binary -> continuous
-        sm.add_weighted_edges_from([("2", "4", None)])
-
-        schema = {
-            "0": "binary",
-            "1": "categorical:{}".format(n_categories),
-            "2": "binary",
-            "4": "continuous",
-            "5": "categorical:{}".format(n_categories),
-        }
-
-        df = sem_generator(
-            graph=sm,
-            schema=schema,
-            default_type="continuous",
-            distributions={
-                "weight": weight_distribution,
-                "intercept": intercept_distribution,
-            },
-            noise_std=2,
-            n_samples=100000,
-            intercept=True,
+        data = generate_count_dataframe(
+            graph,
+            100,
+            zero_inflation_factor=zero_inflation_factor,
             seed=seed,
+            intercept=intercept,
+            kernel=kernel,
+        )
+        df = generate_count_dataframe(
+            graph,
+            100,
+            zero_inflation_factor=zero_inflation_factor,
+            seed=seed,
+            intercept=intercept,
+            kernel=kernel,
         )
 
-        atol = 0.05  # 5% difference bewteen joint & factored!
-        # 1. dependent links
-        # 0 -> 1 (we look at the class with the highest deviation from uniform
-        # to avoid small values)
-        c, _ = max(
+        assert np.array_equal(data, df[list(graph.nodes())].values)
+
+
+class TestGenerateStructureDynamic:
+    @pytest.mark.parametrize("num_nodes", (10, 20))
+    @pytest.mark.parametrize("p", [1, 10])
+    @pytest.mark.parametrize("degree_intra, degree_inter", [(3, 0), (0, 3), (1, 1)])
+    def test_all_nodes_in_structure(self, num_nodes, p, degree_intra, degree_inter):
+        """both intra- and iter-slice nodes should be in the structure"""
+        g = generate_structure_dynamic(num_nodes, p, degree_intra, degree_inter)
+        assert np.all(
             [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
-            ],
-            key=operator.itemgetter(1),
-        )
-        joint_proba, factored_proba = calculate_proba(df, "0", "1_{}".format(c))
-        assert not np.isclose(joint_proba, factored_proba, rtol=0, atol=atol)
-        # 2 -> 4
-        assert not np.isclose(
-            df["4"].mean(), df["4"][df["2"] == 1].mean(), rtol=0, atol=atol
+                "{var}_lag{l_val}".format(var=var, l_val=l_val) in g.nodes
+                for l_val in range(p + 1)
+                for var in range(num_nodes)
+            ]
         )
 
-        tol = 0.15  # relative tolerance of +- 15% of the
-        # 2. independent links
-        # categorical
-        c, _ = max(
-            [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
-            ],
-            key=operator.itemgetter(1),
+    def test_naming_nodes(self):
+        """Nodes should have the format {var}_lag{l}"""
+        g = generate_structure_dynamic(5, 3, 3, 4)
+        pattern = re.compile(r"[0-5]_lag[0-3]")
+        for node in g.nodes:
+            match = pattern.match(node)
+            assert match and (match.group() == node)
+
+    def test_degree_zero_implies_no_edges(self):
+        """If the degree is zero, zero edges are generated.
+        We test this is true for intra edges (ending in 'lag0') and inter edges
+        """
+        g = generate_structure_dynamic(15, 3, 0, 4)  # No intra edges
+        lags = [(u.split("_lag")[1], v.split("_lag")[1]) for u, v in g.edges]
+        assert np.all([el[0] != "0" for el in lags])
+        g = generate_structure_dynamic(15, 3, 4, 0)
+        lags = [(u.split("_lag")[1], v.split("_lag")[1]) for u, v in g.edges]
+        assert np.all([el == ("0", "0") for el in lags])  # only Intra edges
+        g = generate_structure_dynamic(15, 3, 0, 0)  # no edges
+        assert len(g.edges) == 0
+
+    def test_edges_have_weights(self):
+        """all edges must have weight values as floats or int"""
+        g = generate_structure_dynamic(10, 3, 4, 4)  # No intra edges
+        ws = [w for _, _, w in g.edges(data="weight")]
+        assert np.all([isinstance(w, (float, int)) for w in ws])
+
+    def test_raise_error_if_wrong_graph_type(self):
+        """if the graph_type chosen is not among the options available, raise error"""
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown graph type some_type\. "
+            r"Available types are \['erdos-renyi', 'barabasi-albert', 'full'\]",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, graph_type_intra="some_type")
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown inter-slice graph type `some_type`\. "
+            "Valid types are 'erdos-renyi' and 'full'",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, graph_type_inter="some_type")
+
+    def test_raise_error_if_min_greater_than_max(self):
+        """if min > max,raise error"""
+        with pytest.raises(
+            ValueError,
+            match="Absolute minimum weight must be "
+            r"less than or equal to maximum weight\: 3 \> 2",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, w_min_inter=3, w_max_inter=2)
+
+    @pytest.mark.parametrize("num_nodes", (10, 20))
+    @pytest.mark.parametrize("p", [1, 10])
+    def test_full_graph_type(self, num_nodes, p):
+        """all the connections from past variables to current variables should be there if using `full` graph_type"""
+        g = generate_structure_dynamic(num_nodes, p, 4, 4, graph_type_inter="full")
+        lagged_edges = sorted((u, v) for u, v in g.edges if int(u.split("_lag")[1]) > 0)
+        assert lagged_edges == sorted(
+            ("{v}_lag{l_}".format(v=v_f, l_=l_), "{v}_lag0".format(v=v_t))
+            for l_ in range(1, p + 1)
+            for v_f in range(num_nodes)  # var from
+            for v_t in range(num_nodes)  # var to
         )
-        joint_proba, factored_proba = calculate_proba(df, "0", "5_{}".format(c))
-        assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
-        # binary
-        joint_proba, factored_proba = calculate_proba(df, "0", "2")
-        assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
-        # categorical
-        c, _ = max(
-            [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
-            ],
-            key=operator.itemgetter(1),
+class TestGenerateDataframeDynamic:
+    @pytest.mark.parametrize(
+        "sem_type", ["linear-gauss", "linear-exp", "linear-gumbel"]
+    )
+    def test_returns_dateframe(self, sem_type):
+        """ Return value is an ndarray - test over all sem_types """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type=sem_type, n_samples=10)
+        assert isinstance(data, pd.DataFrame)
+
+    def test_bad_sem_type(self):
+        """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        with pytest.raises(
+            ValueError,
+            match="unknown sem type invalid. Available types are:"
+            r" \('linear-gauss', 'linear-exp', 'linear-gumbel'\)",
+        ):
+            generate_dataframe_dynamic(sm, sem_type="invalid", n_samples=10)
+
+    @pytest.mark.parametrize("p", [0, 1, 2])
+    def test_labels_correct(self, p):
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, p, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type="linear-gauss", n_samples=10)
+        intra_nodes = sorted([el for el in sm.nodes if "_lag0" in el])
+        inter_nodes = sorted([el for el in sm.nodes if "_lag0" not in el])
+        assert sorted(data.columns) == sorted(list(inter_nodes) + list(intra_nodes))
+
+
+class TestGenerateStationaryDynamicStructureAndSamples:
+    def test_wta(self):
+        with pytest.warns(
+            UserWarning, match="Could not simulate data, returning constant dataframe"
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=1, w_max_inter=2, max_data_gen_trials=2
+            )
+
+    @pytest.mark.parametrize("seed", [2, 3, 5])
+    def test_seems_stationary(self, seed):
+        np.random.seed(seed)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            w_min_inter=0.1, w_max_inter=0.2, max_data_gen_trials=2
         )
-        d, _ = max(
-            [
-                (d, np.abs(df["5_{}".format(d)].mean() - 1 / n_categories))
-                for d in range(n_categories)
-            ],
-            key=operator.itemgetter(1),
+        assert np.all(df.max() - df.min() < 10)
+
+    def test_error_if_wmin_less_wmax(self):
+        with pytest.raises(
+            ValueError,
+            match="Absolute minimum weight must be less than or equal to maximum weight: 2 > 1",
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=2, w_max_inter=1, max_data_gen_trials=2
+            )
+
+    def test_dense_networks(self):
+        """dense network are more likely to be non stationary. we check that the simulator is still able to provide a
+        stationary time-deries in that case.
+
+        If df contain only ones it means that the generator failed to obtain a stationary structure"""
+        np.random.seed(4)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.2,
+            w_max_inter=0.5,
+            max_data_gen_trials=10,
+            degree_intra=4,
+            degree_inter=7,
         )
-        joint_proba, factored_proba = calculate_proba(
-            df, "1_{}".format(d), "5_{}".format(c)
+        assert np.any(np.ones(df.shape) != df)
+
+    def test_fail_to_find_stationary_network(self):
+        """if fails to find suitable network, returns dataset of ones"""
+        np.random.seed(5)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.6,
+            w_max_inter=0.6,
+            max_data_gen_trials=20,
+            degree_intra=4,
+            degree_inter=7,
         )
-        assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
-
-        # continuous
-        # for gaussian distributions, zero variance is equivalent to independence
-        assert np.isclose(df[["3", "4"]].corr().values[0, 1], 0, atol=tol)
-
-
-def calculate_proba(
-    df: Union[pd.DataFrame, np.ndarray], col_0: Hashable, col_1: Hashable
-) -> Tuple[float, float]:
-    if isinstance(df, pd.DataFrame):
-        marginal_0 = df[col_0].mean()
-        marginal_1 = df[col_1].mean()
-        joint_proba = (df[col_0] * df[col_1]).mean()
-    else:
-        marginal_0 = df[:, col_0].mean()
-        marginal_1 = df[:, col_1].mean()
-        joint_proba = (df[:, col_0] * df[:, col_1]).mean()
-
-    factored_proba = marginal_0 * marginal_1
-    return joint_proba, factored_proba
+        assert np.any(np.ones(df.shape) == df)
