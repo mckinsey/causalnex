@@ -30,6 +30,6 @@
 ``causalnex.structure`` provides functionality to define or learn structure.
 """
 
-__all__ = ["StructureModel", "notears", "data_generators"]
+__all__ = ["StructureModel", "notears", "dynotears", "data_generators"]
 
 from .structuremodel import StructureModel

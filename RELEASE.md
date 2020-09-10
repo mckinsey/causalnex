@@ -1,5 +1,6 @@
 # Upcoming release
 
+* Add dynotears (`from_numpy_dynamic`, an algorithm for structure learning on Dynamic Bayesian Networks)
 * Add a count data type to the data generator using a zero-inflated Poisson
 * Set bounds/max class imbalance for binary features for the data generators
 * Add non-linear data generators for multiple data types

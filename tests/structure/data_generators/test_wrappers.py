@@ -26,6 +26,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 import string
 from itertools import product
 
@@ -37,13 +38,16 @@ from sklearn.gaussian_process.kernels import RBF
 
 from causalnex.structure import StructureModel
 from causalnex.structure.data_generators import (
+    gen_stationary_dyn_net_and_df,
     generate_binary_data,
     generate_binary_dataframe,
     generate_categorical_dataframe,
     generate_continuous_data,
     generate_continuous_dataframe,
     generate_count_dataframe,
+    generate_dataframe_dynamic,
     generate_structure,
+    generate_structure_dynamic,
 )
 from tests.structure.data_generators.test_core import calculate_proba
 
@@ -698,3 +702,173 @@ class TestGenerateCountData:
         )
 
         assert np.array_equal(data, df[list(graph.nodes())].values)
+
+
+class TestGenerateStructureDynamic:
+    @pytest.mark.parametrize("num_nodes", (10, 20))
+    @pytest.mark.parametrize("p", [1, 10])
+    @pytest.mark.parametrize("degree_intra, degree_inter", [(3, 0), (0, 3), (1, 1)])
+    def test_all_nodes_in_structure(self, num_nodes, p, degree_intra, degree_inter):
+        """both intra- and iter-slice nodes should be in the structure"""
+        g = generate_structure_dynamic(num_nodes, p, degree_intra, degree_inter)
+        assert np.all(
+            [
+                "{var}_lag{l_val}".format(var=var, l_val=l_val) in g.nodes
+                for l_val in range(p + 1)
+                for var in range(num_nodes)
+            ]
+        )
+
+    def test_naming_nodes(self):
+        """Nodes should have the format {var}_lag{l}"""
+        g = generate_structure_dynamic(5, 3, 3, 4)
+        pattern = re.compile(r"[0-5]_lag[0-3]")
+        for node in g.nodes:
+            match = pattern.match(node)
+            assert match and (match.group() == node)
+
+    def test_degree_zero_implies_no_edges(self):
+        """If the degree is zero, zero edges are generated.
+        We test this is true for intra edges (ending in 'lag0') and inter edges
+        """
+        g = generate_structure_dynamic(15, 3, 0, 4)  # No intra edges
+        lags = [(u.split("_lag")[1], v.split("_lag")[1]) for u, v in g.edges]
+        assert np.all([el[0] != "0" for el in lags])
+        g = generate_structure_dynamic(15, 3, 4, 0)
+        lags = [(u.split("_lag")[1], v.split("_lag")[1]) for u, v in g.edges]
+        assert np.all([el == ("0", "0") for el in lags])  # only Intra edges
+        g = generate_structure_dynamic(15, 3, 0, 0)  # no edges
+        assert len(g.edges) == 0
+
+    def test_edges_have_weights(self):
+        """all edges must have weight values as floats or int"""
+        g = generate_structure_dynamic(10, 3, 4, 4)  # No intra edges
+        ws = [w for _, _, w in g.edges(data="weight")]
+        assert np.all([isinstance(w, (float, int)) for w in ws])
+
+    def test_raise_error_if_wrong_graph_type(self):
+        """if the graph_type chosen is not among the options available, raise error"""
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown graph type some_type\. "
+            r"Available types are \['erdos-renyi', 'barabasi-albert', 'full'\]",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, graph_type_intra="some_type")
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown inter-slice graph type `some_type`\. "
+            "Valid types are 'erdos-renyi' and 'full'",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, graph_type_inter="some_type")
+
+    def test_raise_error_if_min_greater_than_max(self):
+        """if min > max,raise error"""
+        with pytest.raises(
+            ValueError,
+            match="Absolute minimum weight must be "
+            r"less than or equal to maximum weight\: 3 \> 2",
+        ):
+            generate_structure_dynamic(10, 10, 10, 10, w_min_inter=3, w_max_inter=2)
+
+    @pytest.mark.parametrize("num_nodes", (10, 20))
+    @pytest.mark.parametrize("p", [1, 10])
+    def test_full_graph_type(self, num_nodes, p):
+        """all the connections from past variables to current variables should be there if using `full` graph_type"""
+        g = generate_structure_dynamic(num_nodes, p, 4, 4, graph_type_inter="full")
+        lagged_edges = sorted((u, v) for u, v in g.edges if int(u.split("_lag")[1]) > 0)
+        assert lagged_edges == sorted(
+            ("{v}_lag{l_}".format(v=v_f, l_=l_), "{v}_lag0".format(v=v_t))
+            for l_ in range(1, p + 1)
+            for v_f in range(num_nodes)  # var from
+            for v_t in range(num_nodes)  # var to
+        )
+
+
+class TestGenerateDataframeDynamic:
+    @pytest.mark.parametrize(
+        "sem_type", ["linear-gauss", "linear-exp", "linear-gumbel"]
+    )
+    def test_returns_dateframe(self, sem_type):
+        """ Return value is an ndarray - test over all sem_types """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type=sem_type, n_samples=10)
+        assert isinstance(data, pd.DataFrame)
+
+    def test_bad_sem_type(self):
+        """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
+        with pytest.raises(
+            ValueError,
+            match="unknown sem type invalid. Available types are:"
+            r" \('linear-gauss', 'linear-exp', 'linear-gumbel'\)",
+        ):
+            generate_dataframe_dynamic(sm, sem_type="invalid", n_samples=10)
+
+    @pytest.mark.parametrize("p", [0, 1, 2])
+    def test_labels_correct(self, p):
+        graph_type, degree, d_nodes = "erdos-renyi", 4, 10
+        sm = generate_structure_dynamic(d_nodes, p, degree, degree, graph_type)
+        data = generate_dataframe_dynamic(sm, sem_type="linear-gauss", n_samples=10)
+        intra_nodes = sorted([el for el in sm.nodes if "_lag0" in el])
+        inter_nodes = sorted([el for el in sm.nodes if "_lag0" not in el])
+        assert sorted(data.columns) == sorted(list(inter_nodes) + list(intra_nodes))
+
+
+class TestGenerateStationaryDynamicStructureAndSamples:
+    def test_wta(self):
+        with pytest.warns(
+            UserWarning, match="Could not simulate data, returning constant dataframe"
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=1, w_max_inter=2, max_data_gen_trials=2
+            )
+
+    @pytest.mark.parametrize("seed", [2, 3, 5])
+    def test_seems_stationary(self, seed):
+        np.random.seed(seed)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            w_min_inter=0.1, w_max_inter=0.2, max_data_gen_trials=2
+        )
+        assert np.all(df.max() - df.min() < 10)
+
+    def test_error_if_wmin_less_wmax(self):
+        with pytest.raises(
+            ValueError,
+            match="Absolute minimum weight must be less than or equal to maximum weight: 2 > 1",
+        ):
+            gen_stationary_dyn_net_and_df(
+                w_min_inter=2, w_max_inter=1, max_data_gen_trials=2
+            )
+
+    def test_dense_networks(self):
+        """dense network are more likely to be non stationary. we check that the simulator is still able to provide a
+        stationary time-deries in that case.
+
+        If df contain only ones it means that the generator failed to obtain a stationary structure"""
+        np.random.seed(4)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.2,
+            w_max_inter=0.5,
+            max_data_gen_trials=10,
+            degree_intra=4,
+            degree_inter=7,
+        )
+        assert np.any(np.ones(df.shape) != df)
+
+    def test_fail_to_find_stationary_network(self):
+        """if fails to find suitable network, returns dataset of ones"""
+        np.random.seed(5)
+        _, df, _, _ = gen_stationary_dyn_net_and_df(
+            n_samples=1000,
+            p=1,
+            w_min_inter=0.6,
+            w_max_inter=0.6,
+            max_data_gen_trials=20,
+            degree_intra=4,
+            degree_inter=7,
+        )
+        assert np.any(np.ones(df.shape) == df)

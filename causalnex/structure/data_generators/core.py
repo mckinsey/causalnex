@@ -39,11 +39,11 @@ import numpy as np
 import pandas as pd
 from sklearn.gaussian_process.kernels import RBF, Kernel
 
+from causalnex.structure import StructureModel
 from causalnex.structure.categorical_variable_mapper import (
     VariableFeatureMapper,
     validate_schema,
 )
-from causalnex.structure.structuremodel import StructureModel
 
 # dict mapping distributions names to their functions
 __distribution_mapper = {
@@ -117,7 +117,10 @@ def generate_structure(
         edge_flags = np.tril(np.ones([num_nodes, num_nodes]), k=-1)
 
     else:
-        raise ValueError("unknown graph type")
+        raise ValueError(
+            "Unknown graph type {t}. ".format(t=graph_type)
+            + "Available types are ['erdos-renyi', 'barabasi-albert', 'full']"
+        )
 
     # randomly permute edges - required because we limited ourselves to lower diagonal previously
     perms = np.random.permutation(np.eye(num_nodes, num_nodes))

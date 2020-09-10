@@ -40,14 +40,20 @@ __all__ = [
     "generate_continuous_data",
     "generate_continuous_dataframe",
     "generate_count_dataframe",
+    "gen_stationary_dyn_net_and_df",
+    "generate_dataframe_dynamic",
+    "generate_structure_dynamic",
 ]
 
 from .core import generate_structure, nonlinear_sem_generator, sem_generator
 from .wrappers import (
+    gen_stationary_dyn_net_and_df,
     generate_binary_data,
     generate_binary_dataframe,
     generate_categorical_dataframe,
     generate_continuous_data,
     generate_continuous_dataframe,
     generate_count_dataframe,
+    generate_dataframe_dynamic,
+    generate_structure_dynamic,
 )
