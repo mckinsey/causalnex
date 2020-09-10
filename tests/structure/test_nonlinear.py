@@ -26,11 +26,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-``causalnex.structure`` provides functionality to define or learn structure.
-"""
+import torch.nn as nn
 
-__all__ = ["StructureModel", "notears", "dynotears", "data_generators", "DAGRegressor"]
+from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
-from .sklearn import DAGRegressor
-from .structuremodel import StructureModel
+
+class TestLocallyConnected:
+    def test_bias_true(self):
+        lc = LocallyConnected(1, 1, 1, bias=True)
+        assert isinstance(lc.bias, nn.Parameter)
+
+    def test_bias_false(self):
+        lc = LocallyConnected(1, 1, 1, bias=False)
+        assert lc.bias is None

@@ -31,10 +31,11 @@ Tools to learn a ``StructureModel`` which describes the conditional dependencies
 
 import logging
 from copy import deepcopy
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_array
 
 from causalnex.structure.pytorch.core import NotearsMLP
 from causalnex.structure.structuremodel import StructureModel
@@ -42,9 +43,14 @@ from causalnex.structure.structuremodel import StructureModel
 __all__ = ["from_numpy", "from_pandas"]
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-arguments
 def from_numpy(
     X: np.ndarray,
-    beta: float = 0.0,
+    lasso_beta: float = 0.0,
+    ridge_beta: float = 0.0,
+    use_bias: bool = False,
+    hidden_layer_units: Iterable[int] = None,
     w_threshold: float = None,
     max_iter: int = 100,
     tabu_edges: List[Tuple[int, int]] = None,
@@ -67,13 +73,28 @@ def from_numpy(
 
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
-        beta: Constant that multiplies the lasso term (l1 regularisation)
+
+        lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
+        NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
+
+        use_bias: Whether to fit a bias parameter in the NOTEARS algorithm.
+
+        ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
+        When using nonlinear layers use of this parameter is recommended.
+
+        hidden_layer_units: An iterable where its length determine the number of layers used,
+        and the numbers determine the number of nodes used for the layer in order.
+
         w_threshold: fixed threshold for absolute edge weights.
-        and the numbers determine the number of nodes used for the layer in order.e.g. [10, 10]
+
         max_iter: max number of dual ascent steps during optimisation.
+
         tabu_edges: list of edges(from, to) not to be included in the graph.
+
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+
         **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
@@ -86,8 +107,19 @@ def from_numpy(
     if not X.size:
         raise ValueError("Input data X is empty, cannot learn any structure")
     logging.info("Learning structure using 'NOTEARS' optimisation.")
+    # Check array for NaN or inf values
+    check_array(X)
 
     _, d = X.shape
+
+    # if None or empty, convert into a list with single item
+    if hidden_layer_units is None:
+        hidden_layer_units = [0]
+    elif isinstance(hidden_layer_units, list) and not hidden_layer_units:
+        hidden_layer_units = [0]
+
+    # if no hidden layer units, still take 1 iteration step with bounds
+    hidden_layer_bnds = hidden_layer_units[0] if hidden_layer_units[0] else 1
 
     # Flip i and j because Pytorch flattens the vector in another direction
     bnds = [
@@ -99,33 +131,65 @@ def from_numpy(
         if tabu_parent_nodes is not None and i in tabu_parent_nodes
         else (0, 0)
         if tabu_child_nodes is not None and j in tabu_child_nodes
-        else (0, None)
+        else (None, None)
         for j in range(d)
+        for _ in range(hidden_layer_bnds)
         for i in range(d)
     ]
 
-    model = NotearsMLP(n_features=d, lasso_beta=beta, bounds=bnds, **kwargs)
+    model = NotearsMLP(
+        n_features=d,
+        hidden_layer_units=hidden_layer_units,
+        lasso_beta=lasso_beta,
+        ridge_beta=ridge_beta,
+        bounds=bnds,
+        use_bias=use_bias,
+        **kwargs
+    )
 
     model.fit(X, max_iter=max_iter)
+    sm = StructureModel(model.adj)
+    if w_threshold:
+        sm.remove_edges_below_threshold(w_threshold)
 
-    sm = StructureModel(model.get_adj(w_threshold))
+    mean_effect = model.adj_mean_effect
+    # extract the mean effect and add as edge attribute
+    for u, v, edge_dict in sm.edges.data(True):
+        sm.add_edge(
+            u,
+            v,
+            origin="learned",
+            weight=edge_dict["weight"],
+            mean_effect=mean_effect[u, v],
+        )
 
     # set bias as node attribute
     bias = model.bias
     for node in sm.nodes():
-        sm.nodes[node]["bias"] = bias[node]
+        value = None
+        if bias is not None:
+            value = bias[node]
+        sm.nodes[node]["bias"] = value
+
+    # preserve the structure_learner as a graph attribute
+    sm.graph["structure_learner"] = model
 
     return sm
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-arguments
 def from_pandas(
     X: pd.DataFrame,
-    beta: float = 0.0,
+    lasso_beta: float = 0.0,
+    ridge_beta: float = 0.0,
+    hidden_layer_units: Iterable[int] = None,
     max_iter: int = 100,
     w_threshold: float = None,
     tabu_edges: List[Tuple[str, str]] = None,
     tabu_parent_nodes: List[str] = None,
     tabu_child_nodes: List[str] = None,
+    use_bias: bool = False,
     **kwargs
 ) -> StructureModel:
     """
@@ -149,16 +213,30 @@ def from_pandas(
     }
 
     Args:
-        X: input pandas dataframe
-        beta: Constant that multiplies the lasso term (l1 regularisation)
+        X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
+
+        lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
+        NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
+
+        use_bias: Whether to fit a bias parameter in the NOTEARS algorithm.
+
+        ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
+        When using nonlinear layers use of this parameter is recommended.
+
+        hidden_layer_units: An iterable where its length determine the number of layers used,
+        and the numbers determine the number of nodes used for the layer in order.
+
         w_threshold: fixed threshold for absolute edge weights.
-        and the numbers determine the number of nodes used for the layer in order.e.g. [10, 10]
+
         max_iter: max number of dual ascent steps during optimisation.
-        w_threshold: fixed threshold for absolute edge weights.
+
         tabu_edges: list of edges(from, to) not to be included in the graph.
+
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
-        **kwargs: additional arrguments for NOYEARS MLP
+
+        **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
          StructureModel: graph of conditional dependencies between data variables.
@@ -190,13 +268,16 @@ def from_pandas(
         tabu_child_nodes = [col_idx[n] for n in tabu_child_nodes]
 
     g = from_numpy(
-        data.values,
-        beta,
-        w_threshold,
-        max_iter,
-        tabu_edges,
-        tabu_parent_nodes,
-        tabu_child_nodes,
+        X=data.values,
+        lasso_beta=lasso_beta,
+        ridge_beta=ridge_beta,
+        use_bias=use_bias,
+        hidden_layer_units=hidden_layer_units,
+        w_threshold=w_threshold,
+        max_iter=max_iter,
+        tabu_edges=tabu_edges,
+        tabu_parent_nodes=tabu_parent_nodes,
+        tabu_child_nodes=tabu_child_nodes,
         **kwargs
     )
 
@@ -206,8 +287,17 @@ def from_pandas(
     # recover the edge weights from g
     for u, v, edge_dict in g.edges.data(True):
         sm.add_edge(
-            idx_col[u], idx_col[v], origin="learned", weight=edge_dict["weight"]
+            idx_col[u],
+            idx_col[v],
+            origin="learned",
+            weight=edge_dict["weight"],
+            mean_effect=edge_dict["mean_effect"],
         )
+
+    # retrieve dtype information from graph attribute
+    for key, val in g.graph.items():
+        sm.graph[key] = val
+
     # recover the node biases from g
     for node in g.nodes(data=True):
         node_name = idx_col[node[0]]

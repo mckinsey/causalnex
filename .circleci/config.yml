@@ -36,6 +36,7 @@ utils:
       echo "Python version: $(python --version 2>&1)"
       pip install -r requirements.txt -U
       pip install -r test_requirements.txt -U
+      pip install ".[pytorch]"
       conda install -y virtualenv
   setup_pre_commit: &setup_pre_commit
     name: Install pre-commit hooks
