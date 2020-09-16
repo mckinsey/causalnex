@@ -45,7 +45,8 @@ import torch
 import torch.nn as nn
 from sklearn.base import BaseEstimator
 
-from .nonlinear import LocallyConnected
+from causalnex.structure.pytorch.dist_type._base import DistTypeBase
+from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
 
 class NotearsMLP(nn.Module, BaseEstimator):
@@ -56,9 +57,11 @@ class NotearsMLP(nn.Module, BaseEstimator):
     loc_lin_layer weights are the weight of hidden layers after the first fully connected layer
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         n_features: int,
+        dist_types: List[DistTypeBase],
         use_bias: bool = False,
         hidden_layer_units: Iterable[int] = (0,),
         bounds: List[Tuple[int, int]] = None,
@@ -70,7 +73,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
         Constructor for NOTEARS MLP class.
 
         Args:
-            n_features: number of input features
+            n_features: number of input features.
+            dist_types: list of data type objects used to fit the NOTEARS algorithm.
             use_bias: True to add the intercept to the model
             hidden_layer_units: An iterable where its length determine the number of layers used,
             and the numbers determine the number of nodes used for the layer in order.
@@ -116,6 +120,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         # set the bounds as an attribute on the weights object
         self.dag_layer.weight.bounds = bounds
+        # set the dist types
+        self.dist_types = dist_types
         # type the adjacency matrix
         self.adj = None
         self.adj_mean_effect = None
@@ -334,7 +340,12 @@ class NotearsMLP(nn.Module, BaseEstimator):
             X_hat = self(X)
             h_val = self._h_func()
 
-            loss = (0.5 / X.shape[0]) * torch.sum((X_hat - X) ** 2)
+            # preallocate loss tensor
+            loss = torch.tensor(0, device=X.device)  # pylint: disable=not-callable
+            # sum the losses across all dist types
+            for dist_type in self.dist_types:
+                loss = loss + dist_type.loss(X, X_hat)
+
             lagrange_penalty = 0.5 * rho * h_val * h_val + alpha * h_val
             # NOTE: both the l2 and l1 regularization are NOT applied to the bias parameters
             l2_reg = 0.5 * self.ridge_beta * self._l2_reg(n_features)

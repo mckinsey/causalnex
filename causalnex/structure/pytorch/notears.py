@@ -31,13 +31,14 @@ Tools to learn a ``StructureModel`` which describes the conditional dependencies
 
 import logging
 from copy import deepcopy
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
 from causalnex.structure.pytorch.core import NotearsMLP
+from causalnex.structure.pytorch.dist_type import DistTypeContinuous, dist_type_aliases
 from causalnex.structure.structuremodel import StructureModel
 
 __all__ = ["from_numpy", "from_pandas"]
@@ -47,6 +48,7 @@ __all__ = ["from_numpy", "from_pandas"]
 # pylint: disable=too-many-arguments
 def from_numpy(
     X: np.ndarray,
+    dist_type_schema: Dict[int, str] = None,
     lasso_beta: float = 0.0,
     ridge_beta: float = 0.0,
     use_bias: bool = False,
@@ -73,6 +75,11 @@ def from_numpy(
 
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
+
+        dist_type_schema: The dist type schema corresponding to the passed in data X.
+        It maps the positional column in X to the string alias of a dist type.
+        A list of alias names can be found in ``dist_type/__init__.py``.
+        If None, assumes that all data in X is continuous.
 
         lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
         NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
@@ -102,6 +109,7 @@ def from_numpy(
 
     Raises:
         ValueError: If X does not contain data.
+        ValueError: If schema does not correspond to columns.
     """
     # n examples, d properties
     if not X.size:
@@ -109,6 +117,25 @@ def from_numpy(
     logging.info("Learning structure using 'NOTEARS' optimisation.")
     # Check array for NaN or inf values
     check_array(X)
+
+    if dist_type_schema is not None:
+
+        # make sure that there is one provided key per column
+        if set(range(X.shape[1])).symmetric_difference(set(dist_type_schema.keys())):
+            raise ValueError(
+                "Difference indices and expected indices. Got {} schema".format(
+                    dist_type_schema
+                )
+            )
+
+    # if dist_type_schema is None, assume all columns are continuous, else ini
+    dist_types = (
+        [DistTypeContinuous(idx=idx) for idx in np.arange(X.shape[1])]
+        if dist_type_schema is None
+        else [
+            dist_type_aliases[alias](idx=idx) for idx, alias in dist_type_schema.items()
+        ]
+    )
 
     _, d = X.shape
 
@@ -139,6 +166,7 @@ def from_numpy(
 
     model = NotearsMLP(
         n_features=d,
+        dist_types=dist_types,
         hidden_layer_units=hidden_layer_units,
         lasso_beta=lasso_beta,
         ridge_beta=ridge_beta,
@@ -171,6 +199,10 @@ def from_numpy(
             value = bias[node]
         sm.nodes[node]["bias"] = value
 
+    for dist_type in dist_types:
+        # attach each dist_type object to corresponding node
+        sm.nodes[dist_type.idx]["dist_type"] = dist_type
+
     # preserve the structure_learner as a graph attribute
     sm.graph["structure_learner"] = model
 
@@ -181,15 +213,16 @@ def from_numpy(
 # pylint: disable=too-many-arguments
 def from_pandas(
     X: pd.DataFrame,
+    dist_type_schema: Dict[Union[str, int], str] = None,
     lasso_beta: float = 0.0,
     ridge_beta: float = 0.0,
+    use_bias: bool = False,
     hidden_layer_units: Iterable[int] = None,
     max_iter: int = 100,
     w_threshold: float = None,
     tabu_edges: List[Tuple[str, str]] = None,
     tabu_parent_nodes: List[str] = None,
     tabu_child_nodes: List[str] = None,
-    use_bias: bool = False,
     **kwargs
 ) -> StructureModel:
     """
@@ -214,6 +247,11 @@ def from_pandas(
 
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
+
+        dist_type_schema: The dist type schema corresponding to the passed in data X.
+        It maps the pandas column name in X to the string alias of a dist type.
+        A list of alias names can be found in ``dist_type/__init__.py``.
+        If None, assumes that all data in X is continuous.
 
         lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
         NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
@@ -247,6 +285,13 @@ def from_pandas(
 
     data = deepcopy(X)
 
+    # if dist_type_schema is not None, convert dist_type_schema from cols to idx
+    dist_type_schema = (
+        dist_type_schema
+        if dist_type_schema is None
+        else {X.columns.get_loc(col): alias for col, alias in dist_type_schema.items()}
+    )
+
     non_numeric_cols = data.select_dtypes(exclude="number").columns
 
     if len(non_numeric_cols) > 0:
@@ -269,6 +314,7 @@ def from_pandas(
 
     g = from_numpy(
         X=data.values,
+        dist_type_schema=dist_type_schema,
         lasso_beta=lasso_beta,
         ridge_beta=ridge_beta,
         use_bias=use_bias,
@@ -294,7 +340,7 @@ def from_pandas(
             mean_effect=edge_dict["mean_effect"],
         )
 
-    # retrieve dtype information from graph attribute
+    # retrieve all graphs attrs
     for key, val in g.graph.items():
         sm.graph[key] = val
 
@@ -302,5 +348,10 @@ def from_pandas(
     for node in g.nodes(data=True):
         node_name = idx_col[node[0]]
         sm.nodes[node_name]["bias"] = node[1]["bias"]
+
+    # recover and preseve the node dist_types
+    for node in g.nodes(data=True):
+        node_name = idx_col[node[0]]
+        sm.nodes[node_name]["dist_type"] = node[1]["dist_type"]
 
     return sm
