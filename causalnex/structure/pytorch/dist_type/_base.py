@@ -27,9 +27,37 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.pytorch.data_type._base`` defines the distribution type class interface and default behavior.
 """
 
-__version__ = "0.8.0"
+from abc import ABCMeta, abstractmethod
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+import torch
+
+
+class DistTypeBase(metaclass=ABCMeta):
+    """ Base class defining the distribution default behavior and interface """
+
+    def __init__(self, idx: int):
+        """
+        Default constructor for the DistTypeBase class.
+        Unless overridden, provides default behavior to all subclasses.
+
+        Args:
+            idx: Positional index in data passed to the NOTEARS algorithm
+            which correspond to this datatype.
+        """
+        self.idx = idx
+
+    @abstractmethod
+    def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            X: The original data passed into NOTEARS (i.e. the reconstruction target).
+
+            X_hat: The reconstructed data.
+
+        Returns:
+            Scalar pytorch tensor of the reconstruction loss between X and X_hat.
+        """
+        raise NotImplementedError("Must implement the loss() method")

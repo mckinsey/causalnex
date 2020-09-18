@@ -27,9 +27,37 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.pytorch.data_type.continuous`` defines the binary distribution type.
 """
 
-__version__ = "0.8.0"
+import torch
+import torch.nn as nn
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from causalnex.structure.pytorch.dist_type._base import DistTypeBase
+
+
+class DistTypeBinary(DistTypeBase):
+    """ Class defining binary distribution type functionality """
+
+    def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        https://pytorch.org/docs/stable/nn.html#torch.nn.BCEWithLogitsLoss
+        Uses the functional implementation of the BCEWithLogitsLoss class.
+
+        The average logit binary cross entropy loss.
+        Averages across sample dimension (dim=0).
+
+        Args:
+            X: The original data passed into NOTEARS (i.e. the reconstruction target).
+
+            X_hat: The reconstructed data.
+
+        Returns:
+            Scalar pytorch tensor of the reconstruction loss between X and X_hat.
+        """
+        return nn.functional.binary_cross_entropy_with_logits(
+            input=X_hat[:, self.idx],
+            target=X[:, self.idx],
+            reduce=True,
+            reduction="mean",
+        )

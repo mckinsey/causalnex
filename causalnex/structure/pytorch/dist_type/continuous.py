@@ -27,9 +27,30 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.pytorch.data_type.continuous`` defines the continuous distribution type.
 """
 
-__version__ = "0.8.0"
+import torch
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from causalnex.structure.pytorch.dist_type._base import DistTypeBase
+
+
+class DistTypeContinuous(DistTypeBase):
+    """ Class defining continuous distribution type functionality """
+
+    def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        The average gaussian loss.
+
+        Args:
+            X: The original data passed into NOTEARS (i.e. the reconstruction target).
+
+            X_hat: The reconstructed data.
+
+        Returns:
+            Scalar pytorch tensor of the reconstruction loss between X and X_hat.
+        """
+
+        return (0.5 / X.shape[0]) * torch.sum(
+            (X_hat[:, self.idx] - X[:, self.idx]) ** 2
+        )

@@ -46,67 +46,67 @@ from causalnex.structure import StructureModel
 
 class BayesianNetwork:
     """
-        Base class for Bayesian Network (BN), a probabilistic weighted DAG where nodes represent variables,
-        edges represent the causal relationships between variables.
+    Base class for Bayesian Network (BN), a probabilistic weighted DAG where nodes represent variables,
+    edges represent the causal relationships between variables.
 
-        ``BayesianNetwork`` stores nodes with their possible states, edges and
-        conditional probability distributions (CPDs) of each node.
+    ``BayesianNetwork`` stores nodes with their possible states, edges and
+    conditional probability distributions (CPDs) of each node.
 
-        ``BayesianNetwork`` is built on top of the ``StructureModel``, which is an extension of ``networkx.DiGraph``
-        (see :func:`causalnex.structure.structuremodel.StructureModel`).
+    ``BayesianNetwork`` is built on top of the ``StructureModel``, which is an extension of ``networkx.DiGraph``
+    (see :func:`causalnex.structure.structuremodel.StructureModel`).
 
-        In order to define the ``BayesianNetwork``, users should provide a relevant ``StructureModel``.
-        Once ``BayesianNetwork`` is initialised, no changes to the ``StructureModel`` can be made
-        and CPDs can be learned from the data.
+    In order to define the ``BayesianNetwork``, users should provide a relevant ``StructureModel``.
+    Once ``BayesianNetwork`` is initialised, no changes to the ``StructureModel`` can be made
+    and CPDs can be learned from the data.
 
-        The learned CPDs can be then used for likelihood estimation and predictions.
+    The learned CPDs can be then used for likelihood estimation and predictions.
 
-        Example:
-        ::
-            >>> # Create a Bayesian Network with a manually defined DAG.
-            >>> from causalnex.structure import StructureModel
-            >>> from causalnex.network import BayesianNetwork
-            >>>
-            >>> sm = StructureModel()
-            >>> sm.add_edges_from([
-            >>>                    ('rush_hour', 'traffic'),
-            >>>                    ('weather', 'traffic')
-            >>>                    ])
-            >>> bn = BayesianNetwork(sm)
-            >>> # A created ``BayesianNetwork`` stores nodes and edges defined by the ``StructureModel``
-            >>> bn.nodes
-            ['rush_hour', 'traffic', 'weather']
-            >>>
-            >>> bn.edges
-            [('rush_hour', 'traffic'), ('weather', 'traffic')]
-            >>> # A ``BayesianNetwork`` doesn't store any CPDs yet
-            >>> bn.cpds
-            >>> {}
-            >>>
-            >>> # Learn the nodes' states from the data
-            >>> import pandas as pd
-            >>> data = pd.DataFrame({
-            >>>                      'rush_hour': [True, False, False, False, True, False, True],
-            >>>                      'weather': ['Terrible', 'Good', 'Bad', 'Good', 'Bad', 'Bad', 'Good'],
-            >>>                      'traffic': ['heavy', 'light', 'heavy', 'light', 'heavy', 'heavy', 'heavy']
-            >>>                      })
-            >>> bn = bn.fit_node_states(data)
-            >>> bn.node_states
-            {'rush_hour': {False, True}, 'weather': {'Bad', 'Good', 'Terrible'}, 'traffic': {'heavy', 'light'}}
-            >>> # Learn the CPDs from the data
-            >>> bn = bn.fit_cpds(data)
-            >>> # Use the learned CPDs to make predictions on the unseen data
-            >>> test_data = pd.DataFrame({
-            >>>                           'rush_hour': [False, False, True, True],
-            >>>                           'weather': ['Good', 'Bad', 'Good', 'Bad']
-            >>>                           })
-            >>> bn.predict(test_data, "traffic").to_dict()
-            >>> {'traffic_prediction': {0: 'light', 1: 'heavy', 2: 'heavy', 3: 'heavy'}}
-            >>> bn.predict_probability(test_data, "traffic").to_dict()
-            {'traffic_prediction': {0: 'light', 1: 'heavy', 2: 'heavy', 3: 'heavy'}}
-            {'traffic_light': {0: 0.75, 1: 0.25, 2: 0.3333333333333333, 3: 0.3333333333333333},
-             'traffic_heavy': {0: 0.25, 1: 0.75, 2: 0.6666666666666666, 3: 0.6666666666666666}}
-        """
+    Example:
+    ::
+        >>> # Create a Bayesian Network with a manually defined DAG.
+        >>> from causalnex.structure import StructureModel
+        >>> from causalnex.network import BayesianNetwork
+        >>>
+        >>> sm = StructureModel()
+        >>> sm.add_edges_from([
+        >>>                    ('rush_hour', 'traffic'),
+        >>>                    ('weather', 'traffic')
+        >>>                    ])
+        >>> bn = BayesianNetwork(sm)
+        >>> # A created ``BayesianNetwork`` stores nodes and edges defined by the ``StructureModel``
+        >>> bn.nodes
+        ['rush_hour', 'traffic', 'weather']
+        >>>
+        >>> bn.edges
+        [('rush_hour', 'traffic'), ('weather', 'traffic')]
+        >>> # A ``BayesianNetwork`` doesn't store any CPDs yet
+        >>> bn.cpds
+        >>> {}
+        >>>
+        >>> # Learn the nodes' states from the data
+        >>> import pandas as pd
+        >>> data = pd.DataFrame({
+        >>>                      'rush_hour': [True, False, False, False, True, False, True],
+        >>>                      'weather': ['Terrible', 'Good', 'Bad', 'Good', 'Bad', 'Bad', 'Good'],
+        >>>                      'traffic': ['heavy', 'light', 'heavy', 'light', 'heavy', 'heavy', 'heavy']
+        >>>                      })
+        >>> bn = bn.fit_node_states(data)
+        >>> bn.node_states
+        {'rush_hour': {False, True}, 'weather': {'Bad', 'Good', 'Terrible'}, 'traffic': {'heavy', 'light'}}
+        >>> # Learn the CPDs from the data
+        >>> bn = bn.fit_cpds(data)
+        >>> # Use the learned CPDs to make predictions on the unseen data
+        >>> test_data = pd.DataFrame({
+        >>>                           'rush_hour': [False, False, True, True],
+        >>>                           'weather': ['Good', 'Bad', 'Good', 'Bad']
+        >>>                           })
+        >>> bn.predict(test_data, "traffic").to_dict()
+        >>> {'traffic_prediction': {0: 'light', 1: 'heavy', 2: 'heavy', 3: 'heavy'}}
+        >>> bn.predict_probability(test_data, "traffic").to_dict()
+        {'traffic_prediction': {0: 'light', 1: 'heavy', 2: 'heavy', 3: 'heavy'}}
+        {'traffic_light': {0: 0.75, 1: 0.25, 2: 0.3333333333333333, 3: 0.3333333333333333},
+         'traffic_heavy': {0: 0.25, 1: 0.75, 2: 0.6666666666666666, 3: 0.6666666666666666}}
+    """
 
     def __init__(self, structure: StructureModel):
         """
@@ -573,7 +573,7 @@ class BayesianNetwork:
         cols = []
         pattern = re.compile("^{node}_[0-9]+$".format(node=node))
         # disabled open pylint issue (https://github.com/PyCQA/pylint/issues/2962)
-        for col in probability.columns:  # pylint: disable=E1133
+        for col in probability.columns:
             if pattern.match(col):
                 cols.append(col)
         probability = probability[cols]
