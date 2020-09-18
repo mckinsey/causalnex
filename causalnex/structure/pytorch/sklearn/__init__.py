@@ -25,19 +25,11 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-``causalnex.structure`` provides functionality to define or learn structure.
+``causalnex.structure.pytorch.sklearn`` provides sklearn style functionality to NOTEARS.
 """
 
-__all__ = [
-    "StructureModel",
-    "notears",
-    "dynotears",
-    "data_generators",
-    "DAGRegressor",
-    "DAGClassifier",
-]
+__all__ = ["DAGRegressor", "DAGClassifier"]
 
-from .pytorch import DAGClassifier, DAGRegressor
-from .structuremodel import StructureModel
+from .clf import DAGClassifier
+from .reg import DAGRegressor

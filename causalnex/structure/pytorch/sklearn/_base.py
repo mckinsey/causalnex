@@ -26,19 +26,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module contains the implementation of ``DAGRegressor``.
+This module contains the implementation of ``DAGBase``.
 
-``DAGRegressor`` is a class which wraps the StructureModel in an sklearn interface for regression.
+``DAGBase`` is a class which provides an interface and common function for sklearn style NOTEARS functions.
 """
-
 import copy
 import warnings
-from typing import Iterable, List, Union
+from abc import ABCMeta, abstractmethod
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import pandas as pd
-import torch
-from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
@@ -46,37 +45,18 @@ from causalnex.plots import EDGE_STYLE, NODE_STYLE, plot_structure
 from causalnex.structure.pytorch import notears
 
 
-class DAGRegressor(
-    BaseEstimator, RegressorMixin
+class DAGBase(
+    BaseEstimator, metaclass=ABCMeta
 ):  # pylint: disable=too-many-instance-attributes
     """
-    Regressor wrapper of the StructureModel.
+    Base class for all sklearn wrappers of the StructureModel.
     Implements the sklearn .fit and .predict interface.
-    Currently only supports linear NOTEARS fitting by the DAG.
-
-    Example:
-    ::
-        >>> from causalnex.sklearn import DAGRegressor
-        >>>
-        >>> smr = DAGRegressor(threshold=0.1)
-        >>> smr.fit(X_train, y_train)
-        >>>
-        >>> y_preds = smr.predict(X_test)
-        >>> type(y_preds)
-        np.ndarray
-        >>>
-        >>> type(smr.feature_importances_)
-        np.ndarray
-    ::
-
-    Attributes:
-        feature_importances_ (np.ndarray): An array of edge weights corresponding
-                                         positionally to the feature X.
     """
 
     # pylint: disable=too-many-arguments
     def __init__(
         self,
+        dist_type_schema: Dict[Union[str, int], str] = None,
         alpha: float = 0.0,
         beta: float = 0.0,
         fit_intercept: bool = True,
@@ -92,6 +72,12 @@ class DAGRegressor(
     ):
         """
         Args:
+            dist_type_schema: The dist type schema corresponding to the X data passed to fit or predict.
+            It maps the pandas column name in X to the string alias of a dist type.
+            If X is a np.ndarray, it maps the positional index to the string alias of a dist type.
+            A list of alias names can be found in ``dist_type/__init__.py``.
+            If None, assumes that all data in X is continuous.
+
             alpha: l1 loss weighting. When using nonlinear layers this is only applied
             to the first layer.
 
@@ -140,6 +126,7 @@ class DAGRegressor(
         self.beta = beta
         self.fit_intercept = fit_intercept
         self.hidden_layer_units = hidden_layer_units
+        self.dist_type_schema = dist_type_schema
         self.threshold = threshold
         self.tabu_edges = tabu_edges
         self.tabu_parent_nodes = tabu_parent_nodes
@@ -160,9 +147,15 @@ class DAGRegressor(
         self.enforce_dag = enforce_dag
         self.standardize = standardize
 
-    def fit(
-        self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
-    ) -> "DAGRegressor":
+    @abstractmethod
+    def _target_dist_type(self) -> str:
+        """
+        NOTE:
+        When extending this class override this method to return a dist_type alias
+        """
+        raise NotImplementedError("Must implement _target_dist_type()")
+
+    def fit(self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]):
         """
         Fits the sm model using the concat of X and y.
         """
@@ -170,20 +163,39 @@ class DAGRegressor(
         # defensive X, y checks
         check_X_y(X, y, y_numeric=True)
 
-        # force as DataFrame and Series (for later calculations)
+        # force X, y to DataFrame, Series for later calculations
         X = pd.DataFrame(X)
         y = pd.Series(y)
         # force name so that name != None (causes errors in notears)
         y.name = y.name or "__target"
 
+        # if self.dist_type_schema is None, assume all columns are continuous
+        dist_type_schema = self.dist_type_schema or {col: "cont" for col in X.columns}
+
         if self.standardize:
-            self.ss_X = StandardScaler()
-            self.ss_y = StandardScaler()
-            X = pd.DataFrame(self.ss_X.fit_transform(X), columns=X.columns)
-            y = pd.Series(
-                self.ss_y.fit_transform(y.values.reshape(-1, 1)).reshape(-1),
-                name=y.name,
+            # only standardize the continuous dist type columns.
+            self.continuous_col_idxs = [
+                X.columns.get_loc(col)
+                for col, alias in dist_type_schema.items()
+                if alias == "cont"
+            ]
+
+            # copy X to prevet changes to underlying array data
+            X = X.copy()
+            self._ss_X = StandardScaler()
+            X.iloc[:, self.continuous_col_idxs] = self._ss_X.fit_transform(
+                X.iloc[:, self.continuous_col_idxs]
             )
+
+            # if its a continuous target also standardize
+            if self._target_dist_type() == "cont":
+                y = y.copy()
+                self._ss_y = StandardScaler()
+                y[:] = self._ss_y.fit_transform(y.values.reshape(-1, 1)).reshape(-1)
+
+        # add the target to the dist_type_schema
+        # NOTE: this must be done AFTER standardize
+        dist_type_schema[y.name] = self._target_dist_type()
 
         # preserve the feature and target colnames
         self._features = tuple(X.columns)
@@ -203,6 +215,7 @@ class DAGRegressor(
         # fit the structured model
         self.graph_ = notears.from_pandas(
             X,
+            dist_type_schema=dist_type_schema,
             lasso_beta=self.alpha,
             ridge_beta=self.beta,
             hidden_layer_units=self.hidden_layer_units,
@@ -220,42 +233,39 @@ class DAGRegressor(
 
         return self
 
-    def _predict_from_parents(self, X: Union[pd.DataFrame, np.ndarray]):
-
-        # extract the base solver
-        structure_learner = self.graph_.graph["structure_learner"]
-
-        # convert the predict data to pytorch tensor
-        X = torch.from_numpy(X).float().to(structure_learner.device)
-        # need to concat y onto X so that the dimensions are the same
-        y = torch.zeros(X.shape[0], 1).float().to(structure_learner.device)
-        X = torch.cat([X, y], dim=1)
-
-        # perform forward reconstruction
-        X_hat = structure_learner(X)
-
-        # FUTURE NOTE: with dtypes the projection from latent -> dtype goes here
-
-        # extract the desired y column, return as array
-        y_pred = X_hat[:, -1]
-        return y_pred.cpu().detach().numpy()
-
     def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
-        Get the predictions of the structured model.
-        This is done by multiplying the edge weights with the feature i.e. X @ W
+        Uses the fitted NOTEARS algorithm to reconstruct y from known X data.
+
+        Returns:
+            Predicted y values for each row of X.
         """
         # force convert to ndarray
         X = np.asarray(X)
         if self.standardize:
-            X = self.ss_X.transform(X)
+            X = X.copy()
+            X[:, self.continuous_col_idxs] = self._ss_X.transform(
+                X[:, self.continuous_col_idxs]
+            )
+
+        # insert dummy y column
+        y_fill = np.zeros(shape=(X.shape[0], 1))
+        X = np.hstack([X, y_fill])
 
         # check that the model has been fit
         check_is_fitted(self, "graph_")
 
-        y_pred = np.asarray(self._predict_from_parents(X))
-        if self.standardize:
-            y_pred = self.ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
+        # extract the base solver
+        structure_learner = self.graph_.graph["structure_learner"]
+        # use base solver to reconstruct data
+        X_hat = structure_learner.reconstruct_data(X)
+        # pull off reconstructed y column
+        y_pred = X_hat[:, -1]
+
+        # inverse-standardize
+        if self.standardize and self._target_dist_type() == "cont":
+            y_pred = self._ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
+
         return y_pred
 
     def get_edges_to_node(self, name: str, data: str = "weight") -> pd.Series:
@@ -321,9 +331,7 @@ class DAGRegressor(
             # pylint: disable=import-outside-toplevel
             from IPython.display import Image
         except ImportError as e:
-            raise ImportError(
-                "DAGRegressor.plot_dag method requires IPython installed."
-            ) from e
+            raise ImportError("plot_dag method requires IPython installed.") from e
 
         check_is_fitted(self, "graph_")
 

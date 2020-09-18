@@ -58,6 +58,20 @@ class DistTypeBinary(DistTypeBase):
         return nn.functional.binary_cross_entropy_with_logits(
             input=X_hat[:, self.idx],
             target=X[:, self.idx],
-            reduce=True,
             reduction="mean",
         )
+
+    def inverse_link_function(self, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        Inverse-logit (sigmoid) inverse link function for binary data.
+
+        Args:
+            X_hat: Reconstructed data in the latent space.
+
+        Returns:
+            Modified X_hat.
+            MUST be same shape as passed in data.
+            Projects the self.idx column from the latent space to the dist_type space.
+        """
+        X_hat[:, self.idx] = torch.sigmoid(X_hat[:, self.idx])
+        return X_hat

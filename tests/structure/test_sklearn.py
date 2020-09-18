@@ -36,11 +36,14 @@ from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
 
+from causalnex.structure import DAGClassifier, DAGRegressor
 from causalnex.structure import data_generators as dg
-from causalnex.structure.sklearn import DAGRegressor
 
 
-class TestStructureModel:
+class TestDAGSklearn:
+    """ Tests aspects common to both DAGRegressor and DAGClassifier """
+
+    @pytest.mark.parametrize("model", [DAGRegressor, DAGClassifier])
     @pytest.mark.parametrize(
         "val, msg, error",
         [
@@ -50,38 +53,162 @@ class TestStructureModel:
             ({"threshold": "0.0"}, "threshold should be numeric", TypeError),
         ],
     )
-    def test_input_type_assertion(self, val, msg, error):
+    def test_input_type_assertion(self, val, msg, error, model):
         with pytest.raises(error, match=msg):
-            DAGRegressor(**val)
+            model(**val)
 
-    def test_pandas_fit(self):
-        reg = DAGRegressor()
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        X, y = pd.DataFrame(X), pd.Series(y)
-        reg.fit(X, y)
-
-    def test_numpy_fit(self):
-        reg = DAGRegressor()
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        reg.fit(X, y)
-
-    def test_predict_type(self):
-        reg = DAGRegressor()
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        reg.fit(X, y)
-        assert isinstance(reg.predict(X), np.ndarray)
-        reg = DAGRegressor()
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        X, y = pd.DataFrame(X), pd.Series(y)
-        reg.fit(X, y)
-        assert isinstance(reg.predict(X), np.ndarray)
-
-    def test_notfitted_error(self):
-        reg = DAGRegressor()
+    @pytest.mark.parametrize("model", [DAGRegressor, DAGClassifier])
+    def test_notfitted_error(self, model):
+        m = model()
         X = np.random.normal(size=(100, 2))
         with pytest.raises(NotFittedError):
-            reg.predict(X)
+            m.predict(X)
 
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_tabu_parent_nodes(self, model, y):
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y, name="test")
+
+        m = model(dependent_target=True, tabu_parent_nodes=["test"])
+        assert "test" in m.tabu_parent_nodes
+
+        m = model(dependent_target=True, tabu_parent_nodes=[])
+        m.fit(X, y)
+        assert "test" not in m.tabu_parent_nodes
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_numpy_fit(self, model, y):
+        m = model()
+        X = np.random.normal(size=(100, 2))
+        m.fit(X, y)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_pandas_fit(self, model, y):
+        m = model()
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "fit_intercept, equals_zero", [(True, False), (False, True)]
+    )
+    def test_intercept(self, fit_intercept, equals_zero, model, y):
+        m = model(fit_intercept=fit_intercept)
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        # intercept should return zero when fit_intercept == False
+        assert (m.intercept_ == 0) is equals_zero
+        assert isinstance(m.intercept_, float)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    @pytest.mark.parametrize("enforce_dag", [True, False])
+    def test_plot_dag(self, enforce_dag, model, y):
+        m = model()
+        X = np.random.normal(size=(100, 2))
+        m.fit(X, y)
+        image = m.plot_dag(enforce_dag=enforce_dag)
+        assert isinstance(image, Image)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_plot_dag_importerror(self, model, y):
+        with patch.dict("sys.modules", {"IPython.display": None}):
+            m = model()
+            X = np.random.normal(size=(100, 2))
+            m.fit(X, y)
+
+            with pytest.raises(
+                ImportError,
+                match=r"plot_dag method requires IPython installed.",
+            ):
+                m.plot_dag()
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "hidden_layer_units", [None, [], [0], [1], (0,), (1,), [1, 1], (1, 1)]
+    )
+    def test_hidden_layer_units(self, hidden_layer_units, model, y):
+        m = model(hidden_layer_units=hidden_layer_units)
+        X = np.random.normal(size=(100, 2))
+        m.fit(X, y)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_enforce_dag(self, model, y):
+        m = model(enforce_dag=True)
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        assert nx.algorithms.is_directed_acyclic_graph(m.graph_)
+
+    @pytest.mark.parametrize(
+        "model, y",
+        [
+            (DAGRegressor, np.random.normal(size=(100,))),
+            (DAGClassifier, np.random.randint(2, size=(100,))),
+        ],
+    )
+    def test_container_predict_type(self, model, y):
+        m = model()
+        X = np.random.normal(size=(100, 2))
+        m.fit(X, y)
+        assert isinstance(m.predict(X), np.ndarray)
+        m = model()
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        assert isinstance(m.predict(X), np.ndarray)
+
+
+class TestDAGRegressor:
     @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
     def test_coef(self, hidden_layer_units):
         reg = DAGRegressor(hidden_layer_units=hidden_layer_units)
@@ -110,64 +237,6 @@ class TestStructureModel:
         # assert that the sign of the coefficient is positive for both nonlinear and linear cases
         assert coef_["true_feat"] > 0
 
-    def test_tabu_parent_nodes(self):
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        X, y = pd.DataFrame(X), pd.Series(y, name="test")
-
-        reg = DAGRegressor(dependent_target=True, tabu_parent_nodes=["test"])
-        assert "test" in reg.tabu_parent_nodes
-
-        reg = DAGRegressor(dependent_target=True, tabu_parent_nodes=[])
-        reg.fit(X, y)
-        assert "test" not in reg.tabu_parent_nodes
-
-    @pytest.mark.parametrize(
-        "fit_intercept, equals_zero", [(True, False), (False, True)]
-    )
-    def test_intercept(self, fit_intercept, equals_zero):
-        reg = DAGRegressor(fit_intercept=fit_intercept)
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        X, y = pd.DataFrame(X), pd.Series(y)
-        reg.fit(X, y)
-        # intercept should return zero when fit_intercept == False
-        assert (reg.intercept_ == 0) is equals_zero
-        assert isinstance(reg.intercept_, float)
-
-    @pytest.mark.parametrize("enforce_dag", [True, False])
-    def test_plot_dag(self, enforce_dag):
-        reg = DAGRegressor()
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        reg.fit(X, y)
-        image = reg.plot_dag(enforce_dag=enforce_dag)
-        assert isinstance(image, Image)
-
-    def test_plot_dag_importerror(self):
-        with patch.dict("sys.modules", {"IPython.display": None}):
-            reg = DAGRegressor()
-            X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-            reg.fit(X, y)
-
-            with pytest.raises(
-                ImportError,
-                match=r"DAGRegressor\.plot_dag method requires IPython installed\.",
-            ):
-                reg.plot_dag()
-
-    @pytest.mark.parametrize(
-        "hidden_layer_units", [None, [], [0], [1], (0,), (1,), [1, 1], (1, 1)]
-    )
-    def test_hidden_layer_units(self, hidden_layer_units):
-        reg = DAGRegressor(hidden_layer_units=hidden_layer_units)
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        reg.fit(X, y)
-
-    def test_enforce_dag(self):
-        reg = DAGRegressor(enforce_dag=True)
-        X, y = np.random.normal(size=(100, 2)), np.random.normal(size=(100,))
-        X, y = pd.DataFrame(X), pd.Series(y)
-        reg.fit(X, y)
-        assert nx.algorithms.is_directed_acyclic_graph(reg.graph_)
-
     @pytest.mark.parametrize("standardize", [True, False])
     def test_nonlinear_performance(self, standardize):
         np.random.seed(42)
@@ -182,10 +251,8 @@ class TestStructureModel:
 
         reg = DAGRegressor(
             alpha=0.0,
-            l1_ratio=0.0,
             fit_intercept=True,
             dependent_target=True,
-            enforce_dag=False,
             hidden_layer_units=[0],
             standardize=standardize,
         )
@@ -195,9 +262,7 @@ class TestStructureModel:
 
         reg = DAGRegressor(
             alpha=0.1,
-            l1_ratio=1.0,
             fit_intercept=True,
-            enforce_dag=False,
             hidden_layer_units=[2],
             standardize=standardize,
         )
@@ -207,9 +272,7 @@ class TestStructureModel:
 
         reg = DAGRegressor(
             alpha=0.1,
-            l1_ratio=1.0,
             fit_intercept=True,
-            enforce_dag=False,
             hidden_layer_units=[4],
             standardize=standardize,
         )
@@ -219,3 +282,59 @@ class TestStructureModel:
 
         assert small_nl_score > linear_score
         assert medium_nl_score > small_nl_score
+
+
+class TestDAGClassifier:
+    @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
+    def test_coef(self, hidden_layer_units):
+        clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=int)),
+        )
+        y[X[0] < 0] = 1
+        clf.fit(X, y)
+
+        assert isinstance(clf.coef_, np.ndarray)
+        coef_ = pd.Series(clf.coef_, index=X.columns)
+        # assert that the sign of the coefficient is correct for both nonlinear and linear cases
+        assert coef_[0] < 0
+
+    @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
+    def test_feature_importances(self, hidden_layer_units):
+        clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=int)),
+        )
+        y[X[0] < 0] = 1
+        clf.fit(X, y)
+
+        assert isinstance(clf.feature_importances_, np.ndarray)
+        coef_ = pd.Series(clf.feature_importances_, index=X.columns)
+        # assert that the sign of the coefficient is positive for both nonlinear and linear cases
+        assert coef_[0] > 0
+
+    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    def test_value_predict_type(self, y_type):
+        clf = DAGClassifier(alpha=0.1)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=y_type)),
+        )
+        y[X[0] < 0] = y_type(1)
+        clf.fit(X, y)
+
+        y_pred = clf.predict(X)
+        assert isinstance(y_pred[0], y_type)
+        y_pred_proba = clf.predict_proba(X)
+        assert isinstance(y_pred_proba[0], np.float64)
+
+    @pytest.mark.parametrize(
+        "y", [np.random.randint(1, size=(100,)), np.random.randint(3, size=(100,))]
+    )
+    def test_class_number_error(self, y):
+        clf = DAGClassifier(alpha=0.1)
+        X = (pd.DataFrame(np.random.normal(size=(100, 2))),)
+        with pytest.raises(ValueError):
+            clf.fit(X, y)
