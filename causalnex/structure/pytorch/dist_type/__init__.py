@@ -27,17 +27,19 @@
 # limitations under the License.
 
 """
-``causalnex.structure`` provides functionality to define or learn structure.
+``causalnex.pytorch.dist_type`` provides distribution type support classes for the pytorch NOTEARS algorithm.
 """
 
-__all__ = [
-    "StructureModel",
-    "notears",
-    "dynotears",
-    "data_generators",
-    "DAGRegressor",
-    "DAGClassifier",
-]
+from .binary import DistTypeBinary
+from .continuous import DistTypeContinuous
 
-from .pytorch import DAGClassifier, DAGRegressor
-from .structuremodel import StructureModel
+dist_type_aliases = {
+    "bin": DistTypeBinary,
+    "cont": DistTypeContinuous,
+}
+
+
+__all__ = [
+    "DistTypeBinary",
+    "DistTypeContinuous",
+]

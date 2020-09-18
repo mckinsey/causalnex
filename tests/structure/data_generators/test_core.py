@@ -335,7 +335,7 @@ class TestMixedDataGen:
             seed=seed,
         )
 
-        atol = 0.05  # 5% difference bewteen joint & factored!
+        atol = 0.02  # at least 2% difference bewteen joint & factored!
         # 1. dependent links
         # 0 -> 1 (we look at the class with the highest deviation from uniform
         # to avoid small values)
@@ -360,7 +360,7 @@ class TestMixedDataGen:
             atol=atol,
         )
 
-        tol = 0.15  # relative tolerance of +- 15% of the
+        tol = 0.20  # at most relative tolerance of +- 20% of the
         # 2. independent links
         # categorical
         c, _ = max(

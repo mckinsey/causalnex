@@ -61,7 +61,7 @@ Welcome to CausalNex's API docs and tutorials!
 
    03_tutorial/03_tutorial.md
    03_tutorial/plotting_tutorial.md
-   03_tutorial/regressor_tutorial.md
+   03_tutorial/sklearn_tutorial.md
 
 .. toctree::
    :maxdepth: 2
