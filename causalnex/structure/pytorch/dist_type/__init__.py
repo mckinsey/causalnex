@@ -27,7 +27,7 @@
 # limitations under the License.
 
 """
-``causalnex.pytorch.data_type`` provides distribution type support classes for the pytorch NOTEARS algorithm.
+``causalnex.pytorch.dist_type`` provides distribution type support classes for the pytorch NOTEARS algorithm.
 """
 
 from .binary import DistTypeBinary

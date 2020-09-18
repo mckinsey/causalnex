@@ -1,6 +1,13 @@
 # Upcoming release
 
+# Release 0.8.1
+
+* Added `DAGClassifier` sklearn interface using the Pytorch NOTEARS implementation. Supports binary classification.
+* Added binary distributed data support for pytorch NOTEARS.
+* Added a "distribution type" schema system for pytorch NOTEARS (`pytorch.dist_type`).
+* Rename "data type" to "distribution type" in internal language.
 * Fixed uniform discretiser (`Discretiser(method='uniform')`) where all bins have identical widths.
+* Fixed and updated sklearn tutorial in docs.
 
 # Release 0.8.0
 

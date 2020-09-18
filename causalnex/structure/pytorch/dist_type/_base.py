@@ -27,7 +27,7 @@
 # limitations under the License.
 
 """
-``causalnex.pytorch.data_type._base`` defines the distribution type class interface and default behavior.
+``causalnex.pytorch.dist_type._base`` defines the distribution type class interface and default behavior.
 """
 
 from abc import ABCMeta, abstractmethod
