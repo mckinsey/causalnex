@@ -54,3 +54,17 @@ class DistTypeContinuous(DistTypeBase):
         return (0.5 / X.shape[0]) * torch.sum(
             (X_hat[:, self.idx] - X[:, self.idx]) ** 2
         )
+
+    def inverse_link_function(self, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        Identity inverse link function for continuous data.
+
+        Args:
+            X_hat: Reconstructed data in the latent space.
+
+        Returns:
+            Modified X_hat.
+            MUST be same shape as passed in data.
+            Projects the self.idx column from the latent space to the dist_type space.
+        """
+        return X_hat

@@ -181,6 +181,31 @@ class NotearsMLP(nn.Module, BaseEstimator):
         x = x.squeeze(dim=2)  # [n, d]
         return x
 
+    def reconstruct_data(self, X: np.ndarray) -> np.ndarray:
+        """
+        Performs X_hat reconstruction,
+        then converts latent space to original data space via link function.
+
+        Args:
+            X: input data used to reconstruct
+
+        Returns:
+            reconstructed data
+        """
+
+        with torch.no_grad():
+            # convert the predict data to pytorch tensor
+            X = torch.from_numpy(X).float().to(self.device)
+
+            # perform forward reconstruction
+            X_hat = self(X)
+
+            # recover each one of the latent space projections
+            for dist_type in self.dist_types:
+                X_hat = dist_type.inverse_link_function(X_hat)
+
+            return np.asarray(X_hat.cpu().detach().numpy().astype(np.float64))
+
     @property
     def bias(self) -> Union[np.ndarray, None]:
         """

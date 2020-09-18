@@ -61,3 +61,19 @@ class DistTypeBase(metaclass=ABCMeta):
             Scalar pytorch tensor of the reconstruction loss between X and X_hat.
         """
         raise NotImplementedError("Must implement the loss() method")
+
+    @abstractmethod
+    def inverse_link_function(self, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        Convert the transformed data from the latent space to the original dtype
+        using the inverse link function.
+
+        Args:
+            X_hat: Reconstructed data in the latent space.
+
+        Returns:
+            Modified X_hat.
+            MUST be same shape as passed in data.
+            Projects the self.idx column from the latent space to the dist_type space.
+        """
+        raise NotImplementedError("Must implement the inverse_link_function() method")
