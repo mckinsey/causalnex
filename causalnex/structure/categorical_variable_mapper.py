@@ -49,7 +49,7 @@ class VariableFeatureMapper:
             attribute ``PERMISSIBLE_TYPES``.
     """
 
-    PERMISSIBLE_TYPES = {"binary", "categorical", "continuous"}
+    PERMISSIBLE_TYPES = {"binary", "categorical", "continuous", "count"}
     EXPANDABLE_TYPE = "categorical"
 
     def __init__(self, schema: Dict[Hashable, str]):
@@ -81,10 +81,11 @@ class VariableFeatureMapper:
         )
         cat_feature_list = list(self._cat_fte_var_dict.keys())
 
-        # we put them together with the cont + binayr in a feature list
+        # we put them together with the cont + binary in a feature list
         self.feature_list = (
             self.variable_type_dict["binary"]
             + self.variable_type_dict["continuous"]
+            + self.variable_type_dict["count"]
             + cat_feature_list
         )
 
@@ -98,6 +99,7 @@ class VariableFeatureMapper:
             var: [self._fte_index_dict[var]]
             for var in self.variable_type_dict["continuous"]
             + self.variable_type_dict["binary"]
+            + self.variable_type_dict["count"]
         }
         self.var_indices_dict.update(
             {

@@ -27,9 +27,19 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.pytorch.data_type`` provides distribution type support classes for the pytorch NOTEARS algorithm.
 """
 
-__version__ = "0.8.0"
+from .binary import DistTypeBinary
+from .continuous import DistTypeContinuous
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+dist_type_aliases = {
+    "bin": DistTypeBinary,
+    "cont": DistTypeContinuous,
+}
+
+
+__all__ = [
+    "DistTypeBinary",
+    "DistTypeContinuous",
+]

@@ -102,6 +102,8 @@ def from_numpy(
     # n examples, d properties
     _, d = X.shape
 
+    _assert_all_finite(X)
+
     bnds = [
         (0, 0)
         if i == j
@@ -161,6 +163,8 @@ def from_numpy_lasso(
 
     # n examples, d properties
     _, d = X.shape
+
+    _assert_all_finite(X)
 
     bnds = [
         (0, 0)
@@ -550,3 +554,32 @@ def _learn_structure_lasso(
     w_new = w_est[: d ** 2].reshape([d, d]) - w_est[d ** 2 :].reshape([d, d])
     w_new[np.abs(w_new) < w_threshold] = 0
     return StructureModel(w_new.reshape([d, d]))
+
+
+def _assert_all_finite(X: np.ndarray):
+    """Throw a ValueError if X contains NaN or Infinity.
+
+    Based on Sklearn method to handle NaN & Infinity.
+        @inproceedings{sklearn_api,
+        author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                    Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                    Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                    and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                    Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+        title     = {{API} design for machine learning software: experiences from the scikit-learn
+                    project},
+        booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+        year      = {2013},
+        pages = {108--122},
+        }
+
+    Args:
+        X: Array to validate
+
+    Raises:
+        ValueError: If X contains NaN or Infinity
+    """
+
+    msg_err = "Input contains NaN, infinity or a value too large for {!r}."
+    if not np.isfinite(X).all():
+        raise ValueError(msg_err.format(X.dtype))

@@ -36,26 +36,16 @@ from causalnex.discretiser import Discretiser
 
 class TestUniform:
     def test_fit_creates_exactly_uniform_splits_when_possible(self):
-        """splits should be exactly uniform if possible"""
+        """splits should be exactly uniform"""
 
-        arr = np.array(range(20))
+        arr = np.array(range(21))
         np.random.shuffle(arr)
-        d = Discretiser(method="uniform", num_buckets=4)
+        d = Discretiser(method="uniform", num_buckets=5)
         d.fit(arr)
         for n in range(2):
-            assert 4 < (d.numeric_split_points[n + 1] - d.numeric_split_points[n]) <= 5
-
-    def test_fit_creates_close_to_uniform_splits_when_uniform_not_possible(self):
-        """splits should be close to uniform if uniform is not possible"""
-
-        arr = np.array(range(9))
-        np.random.shuffle(arr)
-        d = Discretiser(method="uniform", num_buckets=4)
-        d.fit(arr)
-
-        assert len(d.numeric_split_points) == 3
-        for n in range(2):
-            assert 2 <= (d.numeric_split_points[n + 1] - d.numeric_split_points[n]) <= 3
+            assert (d.numeric_split_points[n + 1] - d.numeric_split_points[n]) == (
+                (d.numeric_split_points[n + 2] - d.numeric_split_points[n + 1])
+            )
 
     def test_fit_does_not_attempt_to_deal_with_identical_split_points(self):
         """if all data is identical, and num_buckets>1, then this is not possible.
@@ -69,20 +59,6 @@ class TestUniform:
             np.array([d.numeric_split_points[0] for _ in range(3)]),
             d.numeric_split_points,
         )
-
-    def test_transform_uneven_split(self):
-        """Data that cannot be split evenly between buckets should be transformed
-        into near-even buckets"""
-
-        arr = np.array([n + 1 for n in range(10)])
-        np.random.shuffle(arr)
-        d = Discretiser(method="uniform", num_buckets=4)
-        d.fit(arr)
-        unique, counts = np.unique(d.transform(arr), return_counts=True)
-        # check all 4 buckets are used
-        assert np.array_equal([0, 1, 2, 3], unique)
-        # check largest difference in distribution is 1 item
-        assert (np.max(counts) - np.min(counts)) <= 1
 
     def test_transform_larger_than_fit_range_goes_into_last_bucket(self):
         """If a value larger than the input is transformed, then it

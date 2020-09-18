@@ -26,10 +26,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
-"""
+import torch.nn as nn
 
-__version__ = "0.8.0"
+from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+
+class TestLocallyConnected:
+    def test_bias_true(self):
+        lc = LocallyConnected(1, 1, 1, bias=True)
+        assert isinstance(lc.bias, nn.Parameter)
+
+    def test_bias_false(self):
+        lc = LocallyConnected(1, 1, 1, bias=False)
+        assert lc.bias is None

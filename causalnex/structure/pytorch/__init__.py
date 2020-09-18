@@ -27,9 +27,11 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.structure.pytorch`` provides functionality to define or learn structure using pytorch.
 """
 
-__version__ = "0.8.0"
+__all__ = ["from_numpy", "from_pandas", "NotearsMLP", "DAGRegressor", "DAGClassifier"]
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from .core import NotearsMLP
+from .notears import from_numpy, from_pandas
+from .sklearn import DAGClassifier, DAGRegressor

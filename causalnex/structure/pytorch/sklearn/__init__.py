@@ -25,11 +25,11 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.structure.pytorch.sklearn`` provides sklearn style functionality to NOTEARS.
 """
 
-__version__ = "0.8.0"
+__all__ = ["DAGRegressor", "DAGClassifier"]
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from .clf import DAGClassifier
+from .reg import DAGRegressor
