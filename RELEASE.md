@@ -1,5 +1,7 @@
 # Upcoming release
 
+* Fixed uniform discretiser (`Discretiser(method='uniform')`) where all bins have identical widths.
+
 # Release 0.8.0
 
 * Add DYNOTEARS (`from_numpy_dynamic`, an algorithm for structure learning on Dynamic Bayesian Networks).
@@ -52,6 +54,6 @@ The initial release of CausalNex.
 
 ## Thanks for supporting contributions
 CausalNex was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and [Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in inferencing causality in their project work. This work was later turned into a product thanks to the following contributors:
-[Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/), [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/), [Angel Droth](https://www.linkedin.com/in/angeldroth/), and [Zain Patel](https://www.linkedin.com/in/zain-patel/).
+[Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/), [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/), [Angel Droth](https://www.linkedin.com/in/angeldroth/), [Zain Patel](https://www.linkedin.com/in/zain-patel/), and [Shuhei Ishida](https://www.linkedin.com/in/shuhei-i/).
 
 CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered questions or simply be part of inspiring discussions.
