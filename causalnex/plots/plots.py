@@ -26,6 +26,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Plot Methods."""
+import logging
 import re
 from collections import namedtuple
 from copy import deepcopy
@@ -105,7 +106,17 @@ def plot_structure(
     )
 
     # create plot
-    a_graph = nx.nx_agraph.to_agraph(_sm)
+    try:
+        a_graph = nx.nx_agraph.to_agraph(_sm)
+    except:
+        logging.warning("""Pygraphviz not installed. You can visualise your graph 
+                           using the networkx.draw functionality.
+                           >>> sm = StructureModel()
+                           >>> fig, ax = plt.subplots()
+                           >>> nx.draw_circular(sm, ax=ax)
+                           >>> fig.show()
+                           """)
+        return
 
     # apply graph attributes
     a_graph.graph_attr.update(GRAPH_STYLE)
