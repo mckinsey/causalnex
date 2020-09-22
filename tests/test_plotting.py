@@ -171,7 +171,7 @@ class TestToPygraphviz:
         sm = StructureModel()
         with pytest.raises(Warning, match="Pygraphviz not installed"):
             _ = plot_structure(sm)
-            mocked_to_agraph.assert_called_once()
+        mocked_to_agraph.assert_called_once()
 
 
 class TestColorGradientString:
