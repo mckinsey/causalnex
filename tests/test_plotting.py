@@ -172,10 +172,6 @@ class TestToPygraphviz:
         with pytest.raises(Warning, match="Pygraphviz not installed"):
             _ = plot_structure(sm)
 
-        mocked_to_agraph.side_effect = ModuleNotFoundError()
-        with pytest.raises(Warning, match="Pygraphviz not installed"):
-            _ = plot_structure(sm)
-
 
 class TestColorGradientString:
     def test_starts_with_color(self):
