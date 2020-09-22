@@ -110,7 +110,7 @@ def plot_structure(
     # create plot
     try:
         a_graph = nx.nx_agraph.to_agraph(_sm)
-    except (ImportError, ModuleNotFoundError) as error_msg:
+    except ImportError as error_msg:
         raise Warning(
             """
             Pygraphviz not installed. Also make sure you have the system-level
