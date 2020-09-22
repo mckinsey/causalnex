@@ -97,6 +97,9 @@ def plot_structure(
 
     Returns:
         a styled pygraphgiz graph that can be rendered as an image
+        
+    Raises:
+        Warning: Suggests mitigation strategies when ``pygraphviz`` is not installed.
     """
 
     # apply node and edge attributes
@@ -110,15 +113,17 @@ def plot_structure(
     except (ImportError, ModuleNotFoundError):
         raise Warning(
             """
-            Pygraphviz not installed. You can visualise your graph 
-            using the networkx.draw functionality.
+            Pygraphviz not installed. Also make sure you have the system-level
+            ``graphviz`` requirement installed.
+
+            Alternatively, you can visualise your graph using the networkx.draw
+            functionality:
             >>> sm = StructureModel()
             >>> fig, ax = plt.subplots()
             >>> nx.draw_circular(sm, ax=ax)
             >>> fig.show()
             """
         )
-        return
 
     # apply graph attributes
     a_graph.graph_attr.update(GRAPH_STYLE)
