@@ -167,10 +167,11 @@ class TestToPygraphviz:
         assert str(a) != str(c)
 
     @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
-    def test_install_warning(self):
+    def test_install_warning(self, mock_class):
         sm = StructureModel()
         with pytest.raises(Warning, match="Pygraphviz not installed"):
             _ = plot_structure(sm)
+            mock_class.assert_called_once()
 
 
 class TestColorGradientString:
