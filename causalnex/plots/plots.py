@@ -110,7 +110,7 @@ def plot_structure(
     # create plot
     try:
         a_graph = nx.nx_agraph.to_agraph(_sm)
-    except (ImportError, ModuleNotFoundError):
+    except (ImportError, ModuleNotFoundError) as error_msg:
         raise Warning(
             """
             Pygraphviz not installed. Also make sure you have the system-level
@@ -123,7 +123,7 @@ def plot_structure(
             >>> nx.draw_circular(sm, ax=ax)
             >>> fig.show()
             """
-        )
+        ) from error_msg
 
     # apply graph attributes
     a_graph.graph_attr.update(GRAPH_STYLE)
