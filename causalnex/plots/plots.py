@@ -97,7 +97,7 @@ def plot_structure(
 
     Returns:
         a styled pygraphgiz graph that can be rendered as an image
-        
+
     Raises:
         Warning: Suggests mitigation strategies when ``pygraphviz`` is not installed.
     """
@@ -193,7 +193,6 @@ def _add_attributes(
     node_attributes: Dict[str, Dict[str, str]] = None,
     edge_attributes: Dict[str, Dict[str, str]] = None,
 ) -> StructureModel:
-
     _sm = deepcopy(sm)
 
     # shift labels to be above nodes
@@ -235,7 +234,6 @@ GRAPH_STYLE = {
     "pad": "0.8,0.3",
     "dpi": 300,
 }
-
 
 _style = namedtuple("Style", ["WEAK", "NORMAL", "STRONG"])
 
