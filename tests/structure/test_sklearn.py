@@ -36,7 +36,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
 
-from causalnex.structure import DAGClassifier, DAGRegressor
+from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
 from causalnex.structure import data_generators as dg
 
 
