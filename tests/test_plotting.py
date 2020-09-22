@@ -167,7 +167,7 @@ class TestToPygraphviz:
         assert str(a) != str(c)
 
     @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
-    def test_install_warning(self, mocked_to_agraph):
+    def test_install_warning(self):
         sm = StructureModel()
         with pytest.raises(Warning, match="Pygraphviz not installed"):
             _ = plot_structure(sm)
