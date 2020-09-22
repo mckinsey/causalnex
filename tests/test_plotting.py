@@ -25,6 +25,8 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
+from mock import patch
 
 from causalnex.plots import color_gradient_string, plot_structure
 from causalnex.structure import StructureModel
@@ -163,7 +165,16 @@ class TestToPygraphviz:
 
         assert str(a) == str(b)
         assert str(a) != str(c)
+        
+    @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
+    def test_install_warning(self, mocked_to_agraph):
+        sm = StructureModel()
+        with pytest.raises(Warning, match="Pygraphviz not installed"):
+            _ = plot_structure(sm)
 
+        mocked_to_agraph.side_effect = ModuleNotFoundError()
+        with pytest.raises(Warning, match="Pygraphviz not installed"):
+            _ = plot_structure(sm)
 
 class TestColorGradientString:
     def test_starts_with_color(self):
