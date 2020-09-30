@@ -1,4 +1,5 @@
 # Upcoming release
+* Fixed import typos in sklearn tutorial.
 
 # Release 0.8.1
 
