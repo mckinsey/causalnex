@@ -71,7 +71,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/quantumblacklabs/causalnex",
-    python_requires=">=3.5, <3.8",
+    python_requires=">=3.6, <3.9",
     author="QuantumBlack Labs",
     author_email="causalnex@quantumblack.com",
     packages=find_packages(exclude=["docs*", "tests*", "tools*"]),
@@ -81,9 +81,9 @@ setup(
     keywords="Causal Reasoning, Bayesian Network, Inference, Structure Learning, Do-Calculus",
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     extras_require=extras_require,
 )

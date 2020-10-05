@@ -474,15 +474,14 @@ def _learn_dynamic_structure(
     rho, alpha, h_value, h_new = 1.0, 0.0, np.inf, np.inf
 
     for n_iter in range(max_iter):
-        while rho < 1e20:
+        while (rho < 1e20) and (h_new > 0.25 * h_value or h_new == np.inf):
             wa_new = sopt.minimize(
                 _func, wa_est, method="L-BFGS-B", jac=_grad, bounds=bnds
             ).x
             h_new = _h(wa_new)
             if h_new > 0.25 * h_value:
                 rho *= 10
-            else:
-                break
+
         wa_est = wa_new
         h_value = h_new
         alpha += rho * h_value
