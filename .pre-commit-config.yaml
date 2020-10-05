@@ -30,6 +30,11 @@ repos:
     -   id: isort
         exclude: ^causalnex/ebaybbn
 
+-   repo: https://github.com/psf/black
+    rev: stable
+    hooks:
+    -   id: black
+
 -   repo: local
     hooks:
     # It's impossible to specify per-directory configuration, so we just run it many times.
@@ -65,12 +70,6 @@ repos:
         pass_filenames: false
         stages: [manual]
         entry: pylint -j0 --disable=missing-docstring,redefined-outer-name,duplicate-code,no-self-use,invalid-name,cyclic-import tests
-    # We need to make some exceptions for 3.5, that's why it's a custom runner.
-    -   id: black
-        name: "Black"
-        language: system
-        pass_filenames: false
-        entry: python -m tools.min_version 3.6 "pip install black" "black causalnex tests"
     -   id: legal
         name: "Licence check"
         language: system

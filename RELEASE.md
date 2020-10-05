@@ -1,5 +1,7 @@
 # Upcoming release
 
+* Remove Python 3.5 support and add Python 3.8 support
+
 # Release 0.8.1
 
 * Added `DAGClassifier` sklearn interface using the Pytorch NOTEARS implementation. Supports binary classification.

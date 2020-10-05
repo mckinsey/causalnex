@@ -389,7 +389,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
         flat_params = _get_flat_params(params)
         bounds = _get_flat_bounds(params)
 
-        while rho < rho_max:
+        h_new = np.inf
+        while (rho < rho_max) and (h_new > 0.25 * h or h_new == np.inf):
             # Magic
             sol = sopt.minimize(
                 _func,
@@ -403,8 +404,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
             h_new = self._h_func().item()
             if h_new > 0.25 * h:
                 rho *= 10
-            else:
-                break
         alpha += rho * h_new
         return rho, alpha, h_new
 
