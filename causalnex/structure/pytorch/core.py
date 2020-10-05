@@ -49,6 +49,8 @@ from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
 
+# Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:
+# pylint: disable=abstract-method
 class NotearsMLP(nn.Module, BaseEstimator):
     """
     Class for NOTEARS MLP (Multi-layer Perceptron) model.
@@ -157,7 +159,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         return self._loc_lin_layer_weights
 
-    # pylint: disable=arguments-differ
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # [n, d] -> [n, d]
         """
         Feed forward calculation for the model.
@@ -252,7 +253,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
             self._calculate_adj(X_torch, mean_effect=True).cpu().detach().numpy()
         )
 
-    # pylint: disable=too-many-locals
     def _dual_ascent_step(
         self, X: torch.Tensor, rho: float, alpha: float, h: float, rho_max: float
     ) -> Tuple[float, float, float]:

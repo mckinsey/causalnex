@@ -1,6 +1,7 @@
 # Upcoming release
 
 * Remove Python 3.5 support and add Python 3.8 support
+* Update core dependencies, supporting pandas 1.1, networkx 2.5, pgmpy 0.1.12.
 
 # Release 0.8.1
 
