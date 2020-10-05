@@ -1,4 +1,5 @@
 # Upcoming release
+* Fixed import typos in sklearn tutorial.
 
 * Remove Python 3.5 support and add Python 3.8 support
 
