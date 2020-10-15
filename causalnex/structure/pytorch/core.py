@@ -37,7 +37,7 @@ This code is modified from this git repo: https://github.com/xunzheng/notears
 }
 """
 import logging
-from typing import List, Tuple
+from typing import Iterable, List, Tuple, Union
 
 import numpy as np
 import scipy.optimize as sopt
@@ -45,69 +45,120 @@ import torch
 import torch.nn as nn
 from sklearn.base import BaseEstimator
 
+from causalnex.structure.pytorch.dist_type._base import DistTypeBase
+from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
+
+# Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:
+# pylint: disable=abstract-method
 class NotearsMLP(nn.Module, BaseEstimator):
     """
-    Class for NOTEARS MLP (Multi-layer Perceptron) model. The model weights consist of fc1 and fc2 weights respectively.
-    fc1 weight is the weight of the first fully connected layer which determines the causal structure.
-    fc2 weights are the weight of hidden layers after the first fully connected layer
+    Class for NOTEARS MLP (Multi-layer Perceptron) model.
+    The model weights consist of dag_layer and loc_lin_layer weights respectively.
+    dag_layer weight is the weight of the first fully connected layer which determines the causal structure.
+    loc_lin_layer weights are the weight of hidden layers after the first fully connected layer
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         n_features: int,
-        bias: bool = False,
+        dist_types: List[DistTypeBase],
+        use_bias: bool = False,
+        hidden_layer_units: Iterable[int] = (0,),
         bounds: List[Tuple[int, int]] = None,
         lasso_beta: float = 0.0,
         ridge_beta: float = 0.0,
+        nonlinear_clamp: float = 1e-2,
     ):
         """
         Constructor for NOTEARS MLP class.
 
         Args:
-            n_features: number of input features
-            bias: True to add the intercept to the model
+            n_features: number of input features.
+            dist_types: list of data type objects used to fit the NOTEARS algorithm.
+            use_bias: True to add the intercept to the model
+            hidden_layer_units: An iterable where its length determine the number of layers used,
             and the numbers determine the number of nodes used for the layer in order.
             bounds: bound constraint for each parameter.
             lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
-            It only applies to adjacency weights (fc1 weights)
+            It only applies to dag_layer weight.
             ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
-            It applies to both adjacency (fc1) and fc2 weights.
+            It applies to both dag_layer and loc_lin_layer weights.
+            nonlinear_clamp: Value used to soft clamp the nonlinear layer normalisation.
+            Prevents the weights from being scaled above 1/nonlinear_clamp.
         """
         super().__init__()
         self.device = torch.device("cpu")
         self.lasso_beta = lasso_beta
         self.ridge_beta = ridge_beta
-        self.dims = [n_features, 1]
-        # fc1: variable splitting for l1
-        self.fc1_pos = nn.Linear(
-            self.dims[0], self.dims[0] * self.dims[1], bias=bias
+        self.nonlinear_clamp = nonlinear_clamp
+
+        # cast to list for later concat.
+        self.dims = (
+            [n_features] + list(hidden_layer_units) + [1]
+            if hidden_layer_units[0]
+            else [n_features, 1]
+        )
+
+        # dag_layer: initial linear layer
+        self.dag_layer = nn.Linear(
+            self.dims[0], self.dims[0] * self.dims[1], bias=use_bias
         ).float()
+        nn.init.zeros_(self.dag_layer.weight)
+        if use_bias:
+            nn.init.zeros_(self.dag_layer.bias)
 
-        nn.init.zeros_(self.fc1_pos.weight)
+        # loc_lin_layer: local linear layers
+        layers = [
+            LocallyConnected(
+                self.dims[0], input_features, output_features, bias=use_bias
+            ).float()
+            for input_features, output_features in zip(self.dims[1:-1], self.dims[2:])
+        ]
+        self._loc_lin_layer_weights = nn.ModuleList(layers)
+        for layer in layers:
+            layer.reset_parameters()
 
-        self.fc1_neg = nn.Linear(
-            self.dims[0], self.dims[0] * self.dims[1], bias=bias
-        ).float()
-
-        nn.init.zeros_(self.fc1_neg.weight)
-
-        self.bounds = bounds
+        # set the bounds as an attribute on the weights object
+        self.dag_layer.weight.bounds = bounds
+        # set the dist types
+        self.dist_types = dist_types
+        # type the adjacency matrix
+        self.adj = None
+        self.adj_mean_effect = None
 
     @property
     def _logger(self):
         return logging.getLogger(self.__class__.__name__)
 
     @property
-    def fc1_weight(self) -> torch.Tensor:
+    def dag_layer_bias(self) -> Union[torch.Tensor, None]:
         """
-        fc1 weight is the weight of the first fully connected layer which determines the causal structure.
+        dag_layer bias is the bias of the first fully connected layer which determines the causal structure.
         Returns:
-            fc1 weight
+            dag_layer bias if use_bias is True, otherwise None
         """
-        return self.fc1_pos.weight - self.fc1_neg.weight
+        return self.dag_layer.bias
 
-    # pylint: disable=arguments-differ
+    @property
+    def dag_layer_weight(self) -> torch.Tensor:
+        """
+        dag_layer weight is the weight of the first fully connected layer which determines the causal structure.
+        Returns:
+            dag_layer weight
+        """
+        return self.dag_layer.weight
+
+    @property
+    def loc_lin_layer_weights(self) -> torch.Tensor:
+        """
+        loc_lin_layer weights are the weight of hidden layers after the first fully connected layer.
+        Returns:
+            loc_lin_layer weights
+        """
+        return self._loc_lin_layer_weights
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # [n, d] -> [n, d]
         """
         Feed forward calculation for the model.
@@ -118,26 +169,54 @@ class NotearsMLP(nn.Module, BaseEstimator):
         Returns:
             output tensor from the model
         """
-        x = self.fc1_pos(x) - self.fc1_neg(x)  # [n, d * m1]
+        x = self.dag_layer(x)  # [n, d * m1]
         x = x.view(-1, self.dims[0], self.dims[1])  # [n, d, m1]
+        for layer in self.loc_lin_layer_weights:
+            x = torch.sigmoid(x)  # [n, d, m1]
+            # soft clamp the denominator to prevent divide by zero and prevent very large weight increases
+            x = (x - x.mean(dim=0).detach()) / torch.sqrt(
+                (self.nonlinear_clamp + x.var(dim=0).detach())
+            )
+
+            x = layer(x)  # [n, d, m2]
         x = x.squeeze(dim=2)  # [n, d]
         return x
 
-    def get_adj(self, w_threshold: float = None) -> np.ndarray:
+    def reconstruct_data(self, X: np.ndarray) -> np.ndarray:
         """
-        Get the adjacency matrix from NOTEARS MLP
+        Performs X_hat reconstruction,
+        then converts latent space to original data space via link function.
 
         Args:
-            w_threshold: fixed threshold for absolute edge weights.
-        Returns:
-            adjacency matrix
-        """
-        adj = self.fc1_weight  # [j * m1, i]
+            X: input data used to reconstruct
 
-        adj = adj.cpu().detach().numpy().T
-        if w_threshold is not None:
-            adj[np.abs(adj) < w_threshold] = 0
-        return adj
+        Returns:
+            reconstructed data
+        """
+
+        with torch.no_grad():
+            # convert the predict data to pytorch tensor
+            X = torch.from_numpy(X).float().to(self.device)
+
+            # perform forward reconstruction
+            X_hat = self(X)
+
+            # recover each one of the latent space projections
+            for dist_type in self.dist_types:
+                X_hat = dist_type.inverse_link_function(X_hat)
+
+            return np.asarray(X_hat.cpu().detach().numpy().astype(np.float64))
+
+    @property
+    def bias(self) -> Union[np.ndarray, None]:
+        """
+        Get the vector of feature biases
+
+        Returns:
+            bias vector if use_bias is True, otherwise None
+        """
+        bias = self.dag_layer_bias
+        return bias if bias is None else bias.cpu().detach().numpy()
 
     def fit(
         self,
@@ -165,6 +244,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 self._logger.warning(
                     "Failed to converge. Consider increasing max_iter."
                 )
+
+        # calculate the adjacency matrix after the fitting is finished
+        self.adj = (
+            self._calculate_adj(X_torch, mean_effect=False).cpu().detach().numpy()
+        )
+        self.adj_mean_effect = (
+            self._calculate_adj(X_torch, mean_effect=True).cpu().detach().numpy()
+        )
 
     def _dual_ascent_step(
         self, X: torch.Tensor, rho: float, alpha: float, h: float, rho_max: float
@@ -203,6 +290,27 @@ class NotearsMLP(nn.Module, BaseEstimator):
             ]
             return torch.cat(views, 0).cpu().detach().numpy()
 
+        def _get_flat_bounds(
+            params: List[torch.Tensor],
+        ) -> List[Tuple[Union[None, float]]]:
+            """
+            Get bound constraint for each parameter in flatten vector form from the parameters of the model
+
+            Args:
+                params: parameters of the model
+
+            Returns:
+                flatten vector of bound constraints for each parameter in numpy form
+            """
+            bounds = []
+            for p in params:
+                try:
+                    b = p.bounds
+                except AttributeError:
+                    b = [(None, None)] * p.numel()
+                bounds += b
+            return bounds
+
         def _get_flat_params(params: List[torch.Tensor]) -> np.ndarray:
             """
             Get parameters in flatten vector from the parameters of the model
@@ -223,7 +331,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             params: List[torch.Tensor], flat_params: np.ndarray
         ):
             """
-            Updata parameters of the model from the parameters in the form of flatten vector
+            Update parameters of the model from the parameters in the form of flatten vector
 
             Args:
                 params: parameters of the model
@@ -250,59 +358,72 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 Loss and gradient
             """
             _update_params_from_flat(params, flat_params)
-
             optimizer.zero_grad()
+
+            n_features = X.shape[1]
 
             X_hat = self(X)
             h_val = self._h_func()
 
-            loss = (0.5 / X.shape[0]) * torch.sum((X_hat - X) ** 2)
+            # preallocate loss tensor
+            loss = torch.tensor(0, device=X.device)  # pylint: disable=not-callable
+            # sum the losses across all dist types
+            for dist_type in self.dist_types:
+                loss = loss + dist_type.loss(X, X_hat)
+
             lagrange_penalty = 0.5 * rho * h_val * h_val + alpha * h_val
-            l2_reg = 0.5 * self.ridge_beta * self._l2_reg()
-            l1_reg = self.lasso_beta * torch.sum(params[0] + params[1])
+            # NOTE: both the l2 and l1 regularization are NOT applied to the bias parameters
+            l2_reg = 0.5 * self.ridge_beta * self._l2_reg(n_features)
+            l1_reg = self.lasso_beta * self._l1_reg(n_features)
 
             primal_obj = loss + lagrange_penalty + l2_reg + l1_reg
             primal_obj.backward()
             loss = primal_obj.item()
 
             flat_grad = _get_flat_grad(params)
-
             return loss, flat_grad.astype("float64")
 
         optimizer = torch.optim.Optimizer(self.parameters(), dict())
         params = optimizer.param_groups[0]["params"]
-        bounds = self.bounds * 2
 
         flat_params = _get_flat_params(params)
+        bounds = _get_flat_bounds(params)
 
-        while rho < rho_max:
+        h_new = np.inf
+        while (rho < rho_max) and (h_new > 0.25 * h or h_new == np.inf):
             # Magic
             sol = sopt.minimize(
-                _func, flat_params, method="L-BFGS-B", jac=True, bounds=bounds,
+                _func,
+                flat_params,
+                method="L-BFGS-B",
+                jac=True,
+                bounds=bounds,
             )
 
             _update_params_from_flat(params, sol.x)
-            with torch.no_grad():
-                h_new = self._h_func().item()
+            h_new = self._h_func().item()
             if h_new > 0.25 * h:
                 rho *= 10
-            else:
-                break
         alpha += rho * h_new
         return rho, alpha, h_new
 
     def _h_func(self) -> torch.Tensor:
         """
         Constraint function of the NOTEARS algorithm.
-        Constrain 2-norm-squared of fc1 weights of the model along m1 dim to be a DAG
+        Constrain 2-norm-squared of dag_layer weights of the model along m1 dim to be a DAG
 
         Returns:
             DAGness of the adjacency matrix
         """
         d = self.dims[0]
         d_torch = torch.tensor(d).to(self.device)  # pylint: disable=not-callable
-        fc1_weight = self.fc1_weight.view(d, -1, d)  # [j, m1, i]
-        square_weight_mat = torch.sum(fc1_weight * fc1_weight, dim=1).t()  # [i, j]
+
+        # only consider the dag_layer for h(W) for compute efficiency
+        dag_layer_weight = self.dag_layer_weight.view(d, -1, d)  # [j, m1, i]
+        square_weight_mat = torch.sum(
+            dag_layer_weight * dag_layer_weight, dim=1
+        ).t()  # [i, j]
+
         # h = trace_expm(a) - d  # (Zheng et al. 2018)
         characteristic_poly_mat = (
             torch.eye(d).to(self.device) + square_weight_mat / d_torch
@@ -311,13 +432,73 @@ class NotearsMLP(nn.Module, BaseEstimator):
         h = (polynomial_mat.t() * characteristic_poly_mat).sum() - d
         return h
 
-    def _l2_reg(self) -> torch.Tensor:
+    def _l1_reg(self, n_features: int) -> torch.Tensor:
         """
-        Take 2-norm-squared of all parameters of the model
+        Take average l1 of all weight parameters of the model.
+        NOTE: regularisation needs to be scaled up by the number of features
+        because the loss scales with feature number.
 
         Returns:
-            l2 regularisation term
+            l1 regularisation term.
+        """
+        return torch.mean(torch.abs(self.dag_layer_weight)) * n_features
+
+    def _l2_reg(self, n_features: int) -> torch.Tensor:
+        """
+        Take average 2-norm-squared of all weight parameters of the model.
+        NOTE: regularisation needs to be scaled up by the number of features
+        because the loss scales with feature number.
+
+        Returns:
+            l2 regularisation term.
         """
         reg = 0.0
-        reg += torch.sum(self.fc1_weight ** 2)
-        return reg
+        reg += torch.sum(self.dag_layer_weight ** 2)
+        for layer in self.loc_lin_layer_weights:
+            reg += torch.sum(layer.weight ** 2)
+
+        # calculate the total number of elements used in the above sums
+        n_elements = self.dag_layer_weight.numel()
+        for layer in self.loc_lin_layer_weights:
+            n_elements = n_elements + layer.weight.numel()
+        return reg / n_elements * n_features
+
+    def _calculate_adj(self, X: torch.Tensor, mean_effect: bool) -> torch.Tensor:
+        """
+        Calculate the adjacency matrix.
+
+        For the linear case, this is just dag_layer_weight.
+        For the nonlinear case, approximate the relationship using the gradient of X_hat wrt X.
+        """
+
+        # for the linear case, save compute by just returning the dag_layer weights
+        if len(self.dims) <= 2:
+            adj = (
+                self.dag_layer_weight.T
+                if mean_effect
+                else torch.abs(self.dag_layer_weight.T)
+            )
+            return adj
+
+        _, n_features = X.shape
+        # get the data X and reconstruction X_hat
+        X = X.clone().requires_grad_()
+        X_hat = self(X).sum(dim=0)  # shape = (n_features,)
+
+        adj = []
+        # iterate over sums of reconstructed features
+        for j in range(n_features):
+
+            # calculate the gradient of X_hat wrt X
+            ddx = torch.autograd.grad(X_hat[j], X, create_graph=True)[0]
+
+            if mean_effect:
+                # get the average effect
+                adj.append(ddx.mean(axis=0).unsqueeze(0))
+            else:
+                # otherwise, use the average L1 of the gradient as the W
+                adj.append(torch.abs(ddx).mean(dim=0).unsqueeze(0))
+        adj = torch.cat(adj, dim=0)
+
+        # transpose to get the adjacency matrix
+        return adj.T

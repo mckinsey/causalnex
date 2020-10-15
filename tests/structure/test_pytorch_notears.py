@@ -36,7 +36,12 @@ import scipy.optimize as sopt
 from mock import patch
 
 from causalnex.structure import StructureModel
-from causalnex.structure.data_generators import generate_continuous_dataframe
+from causalnex.structure.data_generators import (
+    generate_binary_data,
+    generate_binary_dataframe,
+    generate_continuous_dataframe,
+    generate_structure,
+)
 from causalnex.structure.pytorch.notears import from_numpy, from_pandas
 
 
@@ -58,7 +63,7 @@ class TestFromPandas:
     def test_expected_structure_learned(self, train_data_idx, train_model):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_pandas(train_data_idx, w_threshold=0.25)
+        g = from_pandas(train_data_idx, w_threshold=0.15)
         assert set(g.edges) == set(train_model.edges)
 
     def test_empty_data_raises_error(self):
@@ -106,7 +111,11 @@ class TestFromPandas:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_pandas(data)
         assert all(
-            [weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1]
+            [
+                weight < 0
+                for u, v, weight in g.edges(data="mean_effect")
+                if u == 0 and v == 1
+            ]
         )
 
     def test_no_cycles(self, train_data_idx):
@@ -157,20 +166,20 @@ class TestFromPandas:
     def test_sparsity(self, train_data_idx):
         """Structure learnt from larger lambda should be sparser than smaller lambda"""
 
-        g1 = from_pandas(train_data_idx, beta=0.1, w_threshold=0.25)
-        g2 = from_pandas(train_data_idx, beta=1e-6, w_threshold=0.25)
+        g1 = from_pandas(train_data_idx, lasso_beta=10.0, w_threshold=0.25)
+        g2 = from_pandas(train_data_idx, lasso_beta=1e-6, w_threshold=0.25)
         assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
-        g1 = from_pandas(train_data_idx, beta=0.1, w_threshold=0.25)
+        g1 = from_pandas(train_data_idx, lasso_beta=10.0, w_threshold=0.25)
         g2 = from_pandas(train_data_idx, w_threshold=0.25)
         assert len(g1.edges) < len(g2.edges)
 
     def test_f1_score_fixed(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
-        g = from_pandas(train_data_idx, beta=0.1, w_threshold=0.25)
+        g = from_pandas(train_data_idx, lasso_beta=0.01, w_threshold=0.25)
 
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(set(g.edges).intersection(set(train_model.edges)))
@@ -191,7 +200,7 @@ class TestFromPandas:
         )
         train_model = StructureModel(df)
         X = generate_continuous_dataframe(train_model, 50, noise_scale=1, seed=1)
-        g = from_pandas(X, beta=0.1, w_threshold=0.25)
+        g = from_pandas(X, lasso_beta=0.1, w_threshold=0.25)
         right_edges = train_model.edges
 
         n_predictions_made = len(g.edges)
@@ -203,6 +212,47 @@ class TestFromPandas:
         f1_score = 2 * (precision * recall) / (precision + recall)
 
         assert f1_score > 0.85
+
+    @pytest.mark.parametrize("data", [[np.nan, 0], [np.inf, 0]])
+    def test_check_array(self, data):
+        """
+        Providing a data set including nan or inf should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_pandas(pd.DataFrame(data=data, columns=["a"]))
+
+    def test_f1score_generated_binary(self):
+        """ Binary strucutre learned should have good f1 score """
+        np.random.seed(10)
+        sm = generate_structure(5, 2.0)
+        df = generate_binary_dataframe(
+            sm, 1000, intercept=False, noise_scale=0.1, seed=10
+        )
+
+        dist_type_schema = {i: "bin" for i in range(df.shape[1])}
+        sm_fitted = from_pandas(
+            df,
+            dist_type_schema=dist_type_schema,
+            lasso_beta=0.1,
+            ridge_beta=0.0,
+            w_threshold=0.1,
+            use_bias=False,
+        )
+
+        right_edges = sm.edges
+        n_predictions_made = len(sm_fitted.edges)
+        n_correct_predictions = len(set(sm_fitted.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.8
 
 
 class TestFromNumpy:
@@ -223,7 +273,7 @@ class TestFromNumpy:
     def test_expected_structure_learned(self, train_data_idx, train_model_idx):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_numpy(train_data_idx.values, w_threshold=0.25)
+        g = from_numpy(train_data_idx.values, w_threshold=0.15)
         assert set(g.edges) == set(train_model_idx.edges)
 
     def test_empty_data_raises_error(self):
@@ -259,7 +309,7 @@ class TestFromNumpy:
         data.append(pd.DataFrame([[-1, 2] for _ in range(10)], columns=["a", "b"]))
         g = from_numpy(data.values, w_threshold=0.25)
         assert set(g.edges) == {(0, 1)}
-        assert -2 <= g.get_edge_data(0, 1)["weight"] <= -1.9
+        assert -2 <= g.get_edge_data(0, 1)["mean_effect"] <= -1.9
 
     def test_no_cycles(self, train_data_idx):
         """
@@ -309,20 +359,20 @@ class TestFromNumpy:
     def test_sparsity(self, train_data_idx):
         """Structure learnt from larger lambda should be sparser than smaller lambda"""
 
-        g1 = from_numpy(train_data_idx.values, beta=0.1, w_threshold=0.25)
-        g2 = from_numpy(train_data_idx.values, beta=1e-6, w_threshold=0.25)
+        g1 = from_numpy(train_data_idx.values, lasso_beta=10.0, w_threshold=0.25)
+        g2 = from_numpy(train_data_idx.values, lasso_beta=1e-6, w_threshold=0.25)
         assert len(g1.edges) < len(g2.edges)
 
     def test_sparsity_against_without_reg(self, train_data_idx):
         """Structure learnt from regularisation should be sparser than the one without"""
 
-        g1 = from_numpy(train_data_idx.values, beta=0.1, w_threshold=0.25)
+        g1 = from_numpy(train_data_idx.values, lasso_beta=10.0, w_threshold=0.25)
         g2 = from_numpy(train_data_idx.values, w_threshold=0.25)
         assert len(g1.edges) < len(g2.edges)
 
     def test_f1_score_fixed(self, train_data_idx, train_model_idx):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
-        g = from_numpy(train_data_idx.values, beta=0.1, w_threshold=0.25)
+        g = from_numpy(train_data_idx.values, lasso_beta=0.01, w_threshold=0.25)
 
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(
@@ -345,7 +395,9 @@ class TestFromNumpy:
         )
         train_model = StructureModel(df.values)
         X = generate_continuous_dataframe(StructureModel(df), 50, noise_scale=1, seed=1)
-        g = from_numpy(X[["a", "b", "c", "d", "e"]].values, beta=0.1, w_threshold=0.25)
+        g = from_numpy(
+            X[["a", "b", "c", "d", "e"]].values, lasso_beta=0.1, w_threshold=0.25
+        )
         right_edges = train_model.edges
 
         n_predictions_made = len(g.edges)
@@ -370,9 +422,10 @@ class TestFromNumpy:
         """
         # using `wraps` to **spy** on the function
         with patch(
-            "causalnex.structure.pytorch.core.sopt.minimize", wraps=sopt.minimize,
+            "causalnex.structure.pytorch.core.sopt.minimize",
+            wraps=sopt.minimize,
         ) as mocked:
-            from_numpy(train_data_idx.values, beta=0.1, w_threshold=0.25)
+            from_numpy(train_data_idx.values, lasso_beta=0.1, w_threshold=0.25)
             # We iterate over each time `sopt.minimize` was called
             for called_arguments in list(mocked.call_args_list):
                 # These are the arguments with which the `sopt.minimize` was called
@@ -389,3 +442,42 @@ class TestFromNumpy:
                 # check 3
                 sol = sopt.minimize(func_, w_est, **keyword_args)
                 assert [el >= 0 for el in sol.x]
+
+    @pytest.mark.parametrize("data", [[np.nan, 0], [np.inf, 0]])
+    def test_check_array(self, data):
+        """
+        Providing a data set including nan or inf should result in a Value Error explaining that data contains nan.
+        This error is useful to catch and handle gracefully, because otherwise the user would have empty structures.
+        """
+        with pytest.raises(
+            ValueError,
+            match="Input contains NaN, infinity or a value too large for dtype*",
+        ):
+            from_numpy(np.array([data]))
+
+    def test_f1score_generated_binary(self):
+        """ Binary strucutre learned should have good f1 score """
+        np.random.seed(10)
+        sm = generate_structure(5, 2.0)
+        df = generate_binary_data(sm, 1000, intercept=False, noise_scale=0.1, seed=10)
+
+        dist_type_schema = {i: "bin" for i in range(df.shape[1])}
+        sm_fitted = from_numpy(
+            df,
+            dist_type_schema=dist_type_schema,
+            lasso_beta=0.1,
+            ridge_beta=0.0,
+            w_threshold=0.1,
+            use_bias=False,
+        )
+
+        right_edges = sm.edges
+        n_predictions_made = len(sm_fitted.edges)
+        n_correct_predictions = len(set(sm_fitted.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.8

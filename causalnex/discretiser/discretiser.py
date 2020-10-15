@@ -174,10 +174,9 @@ class Discretiser(BaseEstimator, TransformerMixin):
         x.sort()
 
         if self.method == "uniform":
-            bucket_width = len(x) / self.num_buckets
+            bucket_width = (np.max(x) - np.min(x)) / self.num_buckets
             self.numeric_split_points = [
-                x[int(np.floor((n + 1) * bucket_width))]
-                for n in range(self.num_buckets - 1)
+                np.min(x) + bucket_width * (n + 1) for n in range(self.num_buckets - 1)
             ]
 
         elif self.method == "quantile":

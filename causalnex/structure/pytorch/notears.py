@@ -31,20 +31,28 @@ Tools to learn a ``StructureModel`` which describes the conditional dependencies
 
 import logging
 from copy import deepcopy
-from typing import List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_array
 
 from causalnex.structure.pytorch.core import NotearsMLP
+from causalnex.structure.pytorch.dist_type import DistTypeContinuous, dist_type_aliases
 from causalnex.structure.structuremodel import StructureModel
 
 __all__ = ["from_numpy", "from_pandas"]
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-arguments
 def from_numpy(
     X: np.ndarray,
-    beta: float = 0.0,
+    dist_type_schema: Dict[int, str] = None,
+    lasso_beta: float = 0.0,
+    ridge_beta: float = 0.0,
+    use_bias: bool = False,
+    hidden_layer_units: Iterable[int] = None,
     w_threshold: float = None,
     max_iter: int = 100,
     tabu_edges: List[Tuple[int, int]] = None,
@@ -67,13 +75,33 @@ def from_numpy(
 
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
-        beta: Constant that multiplies the lasso term (l1 regularisation)
+
+        dist_type_schema: The dist type schema corresponding to the passed in data X.
+        It maps the positional column in X to the string alias of a dist type.
+        A list of alias names can be found in ``dist_type/__init__.py``.
+        If None, assumes that all data in X is continuous.
+
+        lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
+        NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
+
+        use_bias: Whether to fit a bias parameter in the NOTEARS algorithm.
+
+        ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
+        When using nonlinear layers use of this parameter is recommended.
+
+        hidden_layer_units: An iterable where its length determine the number of layers used,
+        and the numbers determine the number of nodes used for the layer in order.
+
         w_threshold: fixed threshold for absolute edge weights.
-        and the numbers determine the number of nodes used for the layer in order.e.g. [10, 10]
+
         max_iter: max number of dual ascent steps during optimisation.
+
         tabu_edges: list of edges(from, to) not to be included in the graph.
+
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
+
         **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
@@ -81,13 +109,44 @@ def from_numpy(
 
     Raises:
         ValueError: If X does not contain data.
+        ValueError: If schema does not correspond to columns.
     """
     # n examples, d properties
     if not X.size:
         raise ValueError("Input data X is empty, cannot learn any structure")
     logging.info("Learning structure using 'NOTEARS' optimisation.")
+    # Check array for NaN or inf values
+    check_array(X)
+
+    if dist_type_schema is not None:
+
+        # make sure that there is one provided key per column
+        if set(range(X.shape[1])).symmetric_difference(set(dist_type_schema.keys())):
+            raise ValueError(
+                "Difference indices and expected indices. Got {} schema".format(
+                    dist_type_schema
+                )
+            )
+
+    # if dist_type_schema is None, assume all columns are continuous, else ini
+    dist_types = (
+        [DistTypeContinuous(idx=idx) for idx in np.arange(X.shape[1])]
+        if dist_type_schema is None
+        else [
+            dist_type_aliases[alias](idx=idx) for idx, alias in dist_type_schema.items()
+        ]
+    )
 
     _, d = X.shape
+
+    # if None or empty, convert into a list with single item
+    if hidden_layer_units is None:
+        hidden_layer_units = [0]
+    elif isinstance(hidden_layer_units, list) and not hidden_layer_units:
+        hidden_layer_units = [0]
+
+    # if no hidden layer units, still take 1 iteration step with bounds
+    hidden_layer_bnds = hidden_layer_units[0] if hidden_layer_units[0] else 1
 
     # Flip i and j because Pytorch flattens the vector in another direction
     bnds = [
@@ -99,21 +158,66 @@ def from_numpy(
         if tabu_parent_nodes is not None and i in tabu_parent_nodes
         else (0, 0)
         if tabu_child_nodes is not None and j in tabu_child_nodes
-        else (0, None)
+        else (None, None)
         for j in range(d)
+        for _ in range(hidden_layer_bnds)
         for i in range(d)
     ]
 
-    model = NotearsMLP(n_features=d, lasso_beta=beta, bounds=bnds, **kwargs)
+    model = NotearsMLP(
+        n_features=d,
+        dist_types=dist_types,
+        hidden_layer_units=hidden_layer_units,
+        lasso_beta=lasso_beta,
+        ridge_beta=ridge_beta,
+        bounds=bnds,
+        use_bias=use_bias,
+        **kwargs
+    )
 
     model.fit(X, max_iter=max_iter)
+    sm = StructureModel(model.adj)
+    if w_threshold:
+        sm.remove_edges_below_threshold(w_threshold)
 
-    return StructureModel(model.get_adj(w_threshold))
+    mean_effect = model.adj_mean_effect
+    # extract the mean effect and add as edge attribute
+    for u, v, edge_dict in sm.edges.data(True):
+        sm.add_edge(
+            u,
+            v,
+            origin="learned",
+            weight=edge_dict["weight"],
+            mean_effect=mean_effect[u, v],
+        )
+
+    # set bias as node attribute
+    bias = model.bias
+    for node in sm.nodes():
+        value = None
+        if bias is not None:
+            value = bias[node]
+        sm.nodes[node]["bias"] = value
+
+    for dist_type in dist_types:
+        # attach each dist_type object to corresponding node
+        sm.nodes[dist_type.idx]["dist_type"] = dist_type
+
+    # preserve the structure_learner as a graph attribute
+    sm.graph["structure_learner"] = model
+
+    return sm
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-arguments
 def from_pandas(
     X: pd.DataFrame,
-    beta: float = 0.0,
+    dist_type_schema: Dict[Union[str, int], str] = None,
+    lasso_beta: float = 0.0,
+    ridge_beta: float = 0.0,
+    use_bias: bool = False,
+    hidden_layer_units: Iterable[int] = None,
     max_iter: int = 100,
     w_threshold: float = None,
     tabu_edges: List[Tuple[str, str]] = None,
@@ -142,16 +246,35 @@ def from_pandas(
     }
 
     Args:
-        X: input pandas dataframe
-        beta: Constant that multiplies the lasso term (l1 regularisation)
+        X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
+
+        dist_type_schema: The dist type schema corresponding to the passed in data X.
+        It maps the pandas column name in X to the string alias of a dist type.
+        A list of alias names can be found in ``dist_type/__init__.py``.
+        If None, assumes that all data in X is continuous.
+
+        lasso_beta: Constant that multiplies the lasso term (l1 regularisation).
+        NOTE when using nonlinearities, the l1 loss only applies to the dag_layer.
+
+        use_bias: Whether to fit a bias parameter in the NOTEARS algorithm.
+
+        ridge_beta: Constant that multiplies the ridge term (l2 regularisation).
+        When using nonlinear layers use of this parameter is recommended.
+
+        hidden_layer_units: An iterable where its length determine the number of layers used,
+        and the numbers determine the number of nodes used for the layer in order.
+
         w_threshold: fixed threshold for absolute edge weights.
-        and the numbers determine the number of nodes used for the layer in order.e.g. [10, 10]
+
         max_iter: max number of dual ascent steps during optimisation.
-        w_threshold: fixed threshold for absolute edge weights.
+
         tabu_edges: list of edges(from, to) not to be included in the graph.
+
         tabu_parent_nodes: list of nodes banned from being a parent of any other nodes.
+
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
-        **kwargs: additional arrguments for NOYEARS MLP
+
+        **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
          StructureModel: graph of conditional dependencies between data variables.
@@ -161,6 +284,13 @@ def from_pandas(
     """
 
     data = deepcopy(X)
+
+    # if dist_type_schema is not None, convert dist_type_schema from cols to idx
+    dist_type_schema = (
+        dist_type_schema
+        if dist_type_schema is None
+        else {X.columns.get_loc(col): alias for col, alias in dist_type_schema.items()}
+    )
 
     non_numeric_cols = data.select_dtypes(exclude="number").columns
 
@@ -183,21 +313,45 @@ def from_pandas(
         tabu_child_nodes = [col_idx[n] for n in tabu_child_nodes]
 
     g = from_numpy(
-        data.values,
-        beta,
-        w_threshold,
-        max_iter,
-        tabu_edges,
-        tabu_parent_nodes,
-        tabu_child_nodes,
+        X=data.values,
+        dist_type_schema=dist_type_schema,
+        lasso_beta=lasso_beta,
+        ridge_beta=ridge_beta,
+        use_bias=use_bias,
+        hidden_layer_units=hidden_layer_units,
+        w_threshold=w_threshold,
+        max_iter=max_iter,
+        tabu_edges=tabu_edges,
+        tabu_parent_nodes=tabu_parent_nodes,
+        tabu_child_nodes=tabu_child_nodes,
         **kwargs
     )
 
     sm = StructureModel()
     sm.add_nodes_from(data.columns)
-    sm.add_weighted_edges_from(
-        [(idx_col[u], idx_col[v], w) for u, v, w in g.edges.data("weight")],
-        origin="learned",
-    )
+
+    # recover the edge weights from g
+    for u, v, edge_dict in g.edges.data(True):
+        sm.add_edge(
+            idx_col[u],
+            idx_col[v],
+            origin="learned",
+            weight=edge_dict["weight"],
+            mean_effect=edge_dict["mean_effect"],
+        )
+
+    # retrieve all graphs attrs
+    for key, val in g.graph.items():
+        sm.graph[key] = val
+
+    # recover the node biases from g
+    for node in g.nodes(data=True):
+        node_name = idx_col[node[0]]
+        sm.nodes[node_name]["bias"] = node[1]["bias"]
+
+    # recover and preseve the node dist_types
+    for node in g.nodes(data=True):
+        node_name = idx_col[node[0]]
+        sm.nodes[node_name]["dist_type"] = node[1]["dist_type"]
 
     return sm

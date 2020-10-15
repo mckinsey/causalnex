@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2019-2020 QuantumBlack Visual Analytics Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,17 +26,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+"""
+``causalnex.pytorch.data_type.continuous`` defines the continuous distribution type.
+"""
 
-python -m ipykernel install --user --name=causalnex --display-name=causalnex
+import torch
 
-# Move some files around. We need a separate build directory, which would
-# have all the files, build scripts would shuffle the files,
-# we don't want that happening on the actual code locally.
-# When running on ReadTheDocs, sphinx-build would run directly on the original files,
-# but we don't care about the code state there.
-rm -rf docs/build
-mkdir docs/build/
-cp -r docs/_templates docs/conf.py docs/build/
+from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
-sphinx-build -v -c docs/ -Ea -j auto -D language=en docs/build/ docs/build/html
+
+class DistTypeContinuous(DistTypeBase):
+    """ Class defining continuous distribution type functionality """
+
+    def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        The average gaussian loss.
+
+        Args:
+            X: The original data passed into NOTEARS (i.e. the reconstruction target).
+
+            X_hat: The reconstructed data.
+
+        Returns:
+            Scalar pytorch tensor of the reconstruction loss between X and X_hat.
+        """
+
+        return (0.5 / X.shape[0]) * torch.sum(
+            (X_hat[:, self.idx] - X[:, self.idx]) ** 2
+        )
+
+    def inverse_link_function(self, X_hat: torch.Tensor) -> torch.Tensor:
+        """
+        Identity inverse link function for continuous data.
+
+        Args:
+            X_hat: Reconstructed data in the latent space.
+
+        Returns:
+            Modified X_hat.
+            MUST be same shape as passed in data.
+            Projects the self.idx column from the latent space to the dist_type space.
+        """
+        return X_hat

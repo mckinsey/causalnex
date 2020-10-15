@@ -26,24 +26,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import platform
-import shlex
-import subprocess
-import sys
+"""
+``causalnex.pytorch.dist_type`` provides distribution type support classes for the pytorch NOTEARS algorithm.
+"""
 
-if __name__ == "__main__":
-    required_version = tuple(int(x) for x in sys.argv[1].strip().split("."))
-    install_cmd = shlex.split(sys.argv[2])
-    run_cmd = shlex.split(sys.argv[3])
+from .binary import DistTypeBinary
+from .continuous import DistTypeContinuous
 
-    current_version = tuple(map(int, platform.python_version_tuple()[:2]))
+dist_type_aliases = {
+    "bin": DistTypeBinary,
+    "cont": DistTypeContinuous,
+}
 
-    if current_version < required_version:
-        print("Python version is too low, exiting")
-        sys.exit(0)
 
-    try:
-        subprocess.run(run_cmd, check=True)
-    except FileNotFoundError:
-        subprocess.run(install_cmd, check=True)
-        subprocess.run(run_cmd, check=True)
+__all__ = [
+    "DistTypeBinary",
+    "DistTypeContinuous",
+]

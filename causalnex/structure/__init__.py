@@ -30,6 +30,14 @@
 ``causalnex.structure`` provides functionality to define or learn structure.
 """
 
-__all__ = ["StructureModel", "notears"]
+__all__ = [
+    "StructureModel",
+    "notears",
+    "dynotears",
+    "data_generators",
+    "DAGRegressor",
+    "DAGClassifier",
+]
 
+from .pytorch import DAGClassifier, DAGRegressor
 from .structuremodel import StructureModel

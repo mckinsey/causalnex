@@ -30,7 +30,8 @@
 ``causalnex.structure.pytorch`` provides functionality to define or learn structure using pytorch.
 """
 
-__all__ = ["from_numpy", "from_pandas", "NotearsMLP"]
+__all__ = ["from_numpy", "from_pandas", "NotearsMLP", "DAGRegressor", "DAGClassifier"]
 
 from .core import NotearsMLP
 from .notears import from_numpy, from_pandas
+from .sklearn import DAGClassifier, DAGRegressor

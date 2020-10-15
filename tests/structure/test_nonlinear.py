@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2019-2020 QuantumBlack Visual Analytics Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,17 +26,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+import torch.nn as nn
 
-python -m ipykernel install --user --name=causalnex --display-name=causalnex
+from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
-# Move some files around. We need a separate build directory, which would
-# have all the files, build scripts would shuffle the files,
-# we don't want that happening on the actual code locally.
-# When running on ReadTheDocs, sphinx-build would run directly on the original files,
-# but we don't care about the code state there.
-rm -rf docs/build
-mkdir docs/build/
-cp -r docs/_templates docs/conf.py docs/build/
 
-sphinx-build -v -c docs/ -Ea -j auto -D language=en docs/build/ docs/build/html
+class TestLocallyConnected:
+    def test_bias_true(self):
+        lc = LocallyConnected(1, 1, 1, bias=True)
+        assert isinstance(lc.bias, nn.Parameter)
+
+    def test_bias_false(self):
+        lc = LocallyConnected(1, 1, 1, bias=False)
+        assert lc.bias is None
