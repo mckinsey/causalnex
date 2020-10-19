@@ -46,14 +46,14 @@ repos:
         types: [file, python]
         files: ^causalnex/
         exclude: ^causalnex/ebaybbn
-        entry: pylint -j0 --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn
+        entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn
         stages: [commit]
     -   id: pylint-quick-tests
         name: "Quick PyLint on tests/*"
         language: system
         types: [file, python]
         files: ^tests/
-        entry: pylint -j0 --disable=missing-docstring,redefined-outer-name,duplicate-code,no-self-use,invalid-name,cyclic-import
+        entry: pylint --disable=missing-docstring,redefined-outer-name,duplicate-code,no-self-use,invalid-name,cyclic-import
         stages: [commit]
 
     # The same pylint checks, but running on all files. It's for manual run with `make lint`
@@ -62,14 +62,14 @@ repos:
         language: system
         pass_filenames: false
         stages: [manual]
-        entry: pylint -j0 --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn causalnex
+        entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn causalnex
         exclude: ^causalnex/ebaybbn
     -   id: pylint-tests
         name: "PyLint on tests/*"
         language: system
         pass_filenames: false
         stages: [manual]
-        entry: pylint -j0 --disable=missing-docstring,redefined-outer-name,duplicate-code,no-self-use,invalid-name,cyclic-import tests
+        entry: pylint --disable=missing-docstring,redefined-outer-name,duplicate-code,no-self-use,invalid-name,cyclic-import tests
     -   id: legal
         name: "Licence check"
         language: system
