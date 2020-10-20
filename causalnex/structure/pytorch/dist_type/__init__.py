@@ -32,14 +32,17 @@
 
 from .binary import DistTypeBinary
 from .continuous import DistTypeContinuous
+from .poisson import DistTypePoisson
 
 dist_type_aliases = {
     "bin": DistTypeBinary,
     "cont": DistTypeContinuous,
+    "poiss": DistTypePoisson,
 }
 
 
 __all__ = [
     "DistTypeBinary",
     "DistTypeContinuous",
+    "DistTypePoisson",
 ]
