@@ -31,7 +31,11 @@ import pandas as pd
 import pytest
 import torch
 
-from causalnex.structure.pytorch.dist_type import DistTypeBinary, DistTypeContinuous
+from causalnex.structure.pytorch.dist_type import (
+    DistTypeBinary,
+    DistTypeContinuous,
+    DistTypePoisson,
+)
 from causalnex.structure.pytorch.notears import from_numpy, from_pandas
 
 
@@ -56,6 +60,11 @@ class TestDistTypeClasses:
                 torch.from_numpy(np.random.randint(2, size=(5, 2))).float(),
                 torch.from_numpy(np.random.randint(2, size=(5, 2))).float(),
             ),
+            (
+                DistTypePoisson,
+                torch.from_numpy(np.random.randint(2, size=(5, 2))).float(),
+                torch.from_numpy(np.random.randint(2, size=(5, 2))).float(),
+            ),
         ],
     )
     def test_loss(self, dist_type, X, X_hat):
@@ -67,6 +76,36 @@ class TestDistTypeClasses:
 
         assert isinstance(loss, torch.Tensor)
         assert loss.shape == torch.Size([])
+
+    @pytest.mark.parametrize(
+        "dist_type, X, X_hat",
+        [
+            (
+                DistTypeContinuous,
+                np.random.normal(size=(5, 2)),
+                np.random.normal(size=(5, 2)),
+            ),
+            (
+                DistTypeBinary,
+                np.random.randint(2, size=(5, 2)),
+                np.random.normal(size=(5, 2)),
+            ),
+            (
+                DistTypePoisson,
+                np.random.randint(3, size=(5, 1)),
+                np.random.normal(size=(5, 3)),
+            ),
+        ],
+    )
+    def test_inverse_link_functions(self, dist_type, X, X_hat):
+        dist_types = [dist_type(idx=idx) for idx in np.arange(X.shape[1])]
+        X = torch.from_numpy(X).float()
+        X_hat = torch.from_numpy(X_hat)
+
+        with torch.no_grad():
+            for dt in dist_types:
+                pred = dt.inverse_link_function(X_hat)
+                assert isinstance(pred, torch.Tensor)
 
 
 class TestDistTypeNotears:
