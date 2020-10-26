@@ -46,26 +46,25 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
 
     # index group of categorical columns
     idx_group = None
+    # column expander for later preprocessing
+    encoder = None
 
-    @staticmethod
-    def to_one_hot(X_col: np.array) -> np.array:
+    def get_columns(
+        self,
+        X: np.ndarray,
+    ) -> np.ndarray:
         """
-        Expands a single numerically encoded categorical column to one-hot.
+        Gets the column(s) associated with the instantiated DistType.
 
         Args:
-            X_col: The single X column. Shape (n, 1)
+            X: Full dataset to be selected from.
 
         Returns:
-            The expanded columns.
+            1d or 2d np.ndarray of columns.
         """
-        return OneHotEncoder(sparse=False, categories="auto", drop=None).fit_transform(
-            X_col
-        )
+        return X[:, self.idx_group]
 
-    def preprocess_X(
-        self,
-        X: np.array,
-    ) -> np.ndarray:
+    def preprocess_X(self, X: np.ndarray, fit_transform: bool = True) -> np.ndarray:
         """
         Expands the feature dimension for each categorical column by:
         - One hot encode each of the categorical features
@@ -79,27 +78,39 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
         Args:
             X: The original passed-in data.
 
+            fit_transform: Whether the class first fits
+            then transforms the data, or just transforms.
+            Just transforming is used to preprocess new data after the
+            initial NOTEARS fit.
+
         Returns:
             Preprocessed X
         """
         # deepcopy to prevent overwrite errors
         X = deepcopy(X)
-        self.idx_group = []
+
+        # fit the OneHotEncoder
+        if fit_transform:
+            self.encoder = OneHotEncoder(sparse=False, categories="auto", drop=None)
+            self.encoder.fit(X[:, [self.idx]])
 
         # expand columns for this feature
-        expanded_columns = self.to_one_hot(X[:, [self.idx]])
+        expanded_columns = self.encoder.transform(X[:, [self.idx]])
         # update the original column with the first expanded column
         X[:, self.idx] = expanded_columns[:, 0]
         # append the remainder cols to X
         X = self._expand_columns(X, expanded_columns[:, 1:])
 
-        # preserve the first column location
-        self.idx_group.append(self.idx)
-        # the new cols are appended to the end of X contiguously
-        n_new_cols = expanded_columns.shape[1] - 1
-        idx_start = X.shape[1] - n_new_cols
-        # preserve location of expanded columns
-        self.idx_group += list(range(idx_start, X.shape[1]))
+        # update the idx_group with expanded columns
+        if fit_transform:
+            self.idx_group = []
+            # preserve the first column location
+            self.idx_group.append(self.idx)
+            # the new cols are appended to the end of X contiguously
+            n_new_cols = expanded_columns.shape[1] - 1
+            idx_start = X.shape[1] - n_new_cols
+            # preserve location of expanded columns
+            self.idx_group += list(range(idx_start, X.shape[1]))
 
         return X
 

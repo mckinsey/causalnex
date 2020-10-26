@@ -194,6 +194,10 @@ class NotearsMLP(nn.Module, BaseEstimator):
             reconstructed data
         """
 
+        # perform preprocessing and column expansions, do NOT refit
+        for dist_type in self.dist_types:
+            X = dist_type.preprocess_X(X, fit_transform=False)
+
         with torch.no_grad():
             # convert the predict data to pytorch tensor
             X = torch.from_numpy(X).float().to(self.device)
@@ -365,8 +369,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             X_hat = self(X)
             h_val = self._h_func()
 
-            # preallocate loss tensor
-            loss = torch.tensor(0, device=X.device)  # pylint: disable=not-callable
+            loss = 0.0
             # sum the losses across all dist types
             for dist_type in self.dist_types:
                 loss = loss + dist_type.loss(X, X_hat)

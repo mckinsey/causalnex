@@ -259,8 +259,11 @@ class DAGBase(
         structure_learner = self.graph_.graph["structure_learner"]
         # use base solver to reconstruct data
         X_hat = structure_learner.reconstruct_data(X)
-        # pull off reconstructed y column
-        y_pred = X_hat[:, -1]
+
+        # get the target dist_type
+        target_dist_type = self.graph_.nodes(data=True)[self._target]["dist_type"]
+        # pull off reconstructed y columns
+        y_pred = target_dist_type.get_columns(X_hat)
 
         # inverse-standardize
         if self.standardize and self._target_dist_type() == "cont":
@@ -306,7 +309,7 @@ class DAGBase(
         Returns:
             the L2 relationship between nodes.
         """
-        return self.get_edges_to_node(self._target).values
+        return np.asarray(self.get_edges_to_node(self._target))
 
     @property
     def coef_(self) -> np.ndarray:
@@ -316,7 +319,7 @@ class DAGBase(
         Returns:
             the mean effect relationship between nodes.
         """
-        return self.get_edges_to_node(self._target, data="mean_effect").values
+        return np.asarray(self.get_edges_to_node(self._target, data="mean_effect"))
 
     @property
     def intercept_(self) -> float:

@@ -335,9 +335,12 @@ def from_pandas(
         **kwargs
     )
 
+    # set comprehension to ensure only unique dist types are extraced
+    # NOTE: this prevents double-renaming caused by the same dist type used on expanded columns
+    unique_dist_types = {node[1]["dist_type"] for node in g.nodes(data=True)}
     # use the dist types to update the idx_col mapping
-    for node in g.nodes(data=True):
-        idx_col = node[1]["dist_type"].update_idx_col(idx_col)
+    for dist_type in unique_dist_types:
+        idx_col = dist_type.update_idx_col(idx_col)
     # update the col_idx dict with updated idx_col
     col_idx = {c: i for i, c in idx_col.items()}
 

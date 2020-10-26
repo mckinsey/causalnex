@@ -55,11 +55,24 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         self.idx = idx
 
-    # pylint: disable=no-self-use
-    def preprocess_X(
+    def get_columns(
         self,
-        X: np.array,
+        X: np.ndarray,
     ) -> np.ndarray:
+        """
+        Gets the column(s) associated with the instantiated DistType.
+
+        Args:
+            X: Full dataset to be selected from.
+
+        Returns:
+            1d or 2d np.ndarray of columns.
+        """
+        return X[:, self.idx]
+
+    # pylint: disable=no-self-use
+    # pylint: disable=unused-argument
+    def preprocess_X(self, X: np.ndarray, fit_transform: bool = True) -> np.ndarray:
         """
         Overload this method to perform any required preprocessing of the data
         matrix. This can include data conversion, column expansion etc.
@@ -69,6 +82,11 @@ class DistTypeBase(metaclass=ABCMeta):
 
         Args:
             X: The original passed-in data.
+
+            fit_transform: Whether the class first fits
+            then transforms the data, or just transforms.
+            Just transforming is used to preprocess new data after the
+            initial NOTEARS fit.
 
         Returns:
             Preprocessed X
@@ -179,7 +197,7 @@ class ExpandColumnsMixin:
     """
 
     @staticmethod
-    def _expand_columns(X: np.array, new_columns: np.array) -> np.ndarray:
+    def _expand_columns(X: np.ndarray, new_columns: np.ndarray) -> np.ndarray:
         """
         Expands the data matrix columns without reordering the indices.
 

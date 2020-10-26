@@ -150,6 +150,13 @@ class TestDistTypeClasses:
         # check that the correct indecies are pulled out
         assert dist_types[0].idx_group == [0, 2, 3]
         assert dist_types[1].idx_group == [1, 4, 5]
+        # test that the expanded get_columns works
+        assert np.array_equal(
+            dist_types[0].get_columns(X), X[:, dist_types[0].idx_group]
+        )
+        assert np.array_equal(
+            dist_types[1].get_columns(X), X[:, dist_types[1].idx_group]
+        )
 
     @pytest.mark.parametrize(
         "dist_type, X",
