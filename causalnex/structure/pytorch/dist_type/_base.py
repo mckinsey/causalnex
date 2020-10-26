@@ -30,9 +30,15 @@
 ``causalnex.pytorch.dist_type._base`` defines the distribution type class interface and default behavior.
 """
 
+import itertools
 from abc import ABCMeta, abstractmethod
+from copy import deepcopy
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
+
+from causalnex.structure.structuremodel import StructureModel
 
 
 class DistTypeBase(metaclass=ABCMeta):
@@ -48,6 +54,94 @@ class DistTypeBase(metaclass=ABCMeta):
             which correspond to this datatype.
         """
         self.idx = idx
+
+    # pylint: disable=no-self-use
+    def preprocess_X(
+        self,
+        X: np.array,
+    ) -> np.ndarray:
+        """
+        Overload this method to perform any required preprocessing of the data
+        matrix. This can include data conversion, column expansion etc.
+        Changes to the tabu parameters should also be done here.
+
+        **WARN** This preprocessing CANNOT reorder the columns of X.
+
+        Args:
+            X: The original passed-in data.
+
+        Returns:
+            Preprocessed X
+        """
+        return X
+
+    # pylint: disable=no-self-use
+    def preprocess_tabu_edges(
+        self, tabu_edges: List[Tuple[int, int]]
+    ) -> List[Tuple[int, int]]:
+        """
+        Overload this method to perform any required preprocessing of the tabu_edges.
+
+        Args:
+            tabu_edges: The original tabu_edges.
+
+        Returns:
+            Preprocessed tabu_edges.
+        """
+        return tabu_edges
+
+    # pylint: disable=no-self-use
+    def preprocess_tabu_nodes(self, tabu_nodes: List[int]) -> List[int]:
+        """
+        Overload this method to perform any required preprocessing of the tabu_nodes.
+
+        Args:
+            tabu_nodes: The original tabu_nodes.
+
+        Returns:
+            Preprocessed tabu_nodes.
+        """
+        return tabu_nodes
+
+    # pylint: disable=no-self-use
+    def update_idx_col(self, idx_col: Dict[int, str]) -> Dict[int, str]:
+        """
+        Overload this method to update the idx_col dict with expanded colnames.
+
+        Args:
+            idx_col: The original index to column mapping.
+
+        Returns:
+            Updated index to column mapping.
+        """
+        return idx_col
+
+    def add_to_node(self, sm: StructureModel) -> StructureModel:
+        """
+        Adds self to a node of a structure model corresponding to self.idx.
+
+        Args:
+            sm: The input StructureModel
+
+        Returns:
+            Updated StructureModel
+        """
+        sm.nodes[self.idx]["dist_type"] = self
+        return sm
+
+    # pylint: disable=no-self-use
+    def modify_h(self, square_weight_mat: torch.Tensor) -> torch.Tensor:
+        """
+        Overload this method to apply updates to the W matrix in h(W).
+        Typically used to prevent spurious cycles when using expended columns.
+
+        Args:
+            square_weight_mat: The weight matrix used in h(W).
+
+        Returns:
+            Updated weight matrix used in h(W).
+        """
+        return square_weight_mat
 
     @abstractmethod
     def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
@@ -77,3 +171,107 @@ class DistTypeBase(metaclass=ABCMeta):
             Projects the self.idx column from the latent space to the dist_type space.
         """
         raise NotImplementedError("Must implement the inverse_link_function() method")
+
+
+class ExpandColumnsMixin:
+    """
+    Mixin class providing convenience methods for column expansion.
+    """
+
+    @staticmethod
+    def _expand_columns(X: np.array, new_columns: np.array) -> np.ndarray:
+        """
+        Expands the data matrix columns without reordering the indices.
+
+        Args:
+            X: Base dataset to expand.
+
+            new_columns: The columns to expand the dataset by.
+
+        Returns:
+            Expanded dataset.
+        """
+        return np.hstack([X, new_columns])
+
+    @staticmethod
+    def update_tabu_edges(
+        idx_group: List[int],
+        tabu_edges: List[Tuple[int, int]],
+        tabu_idx_group: bool,
+    ) -> List[Tuple[int, int]]:
+        """
+        Tabu edges are:
+            1. all user defined connections to original feature column
+            2. all inter-feature connections (optional)
+
+        Args:
+            idx_group: The group of indices which correspond to a single
+            expanded column.
+
+            tabu_edges: The list of tabu_edges to be updated.
+
+            tabu_idx_group: Whether inter-group edges should also be considered tabu.
+            I.e if a result of a column expansion, often want to prevent edges being learned
+            between parameters.
+
+        Returns:
+            Updated tabu_edges
+        """
+
+        if tabu_edges is None:
+            tabu_edges = []
+
+        # copy to prevent mutations
+        tabu_edges = deepcopy(tabu_edges)
+
+        # handle 1.
+        new_tabu_edges = []
+        # for each original tabu pair
+        for (i, j) in tabu_edges:
+            # idx_group[0] is the original column index
+            if i == idx_group[0]:
+                new_tabu_edges += [(idx, j) for idx in idx_group[1:]]
+            elif j == idx_group[0]:
+                new_tabu_edges += [(i, idx) for idx in idx_group[1:]]
+        # all new edges added to tabu_edges
+        tabu_edges += new_tabu_edges
+
+        # handle 2.
+        if tabu_idx_group:
+            # add on all pairwise permutations of particular feature group
+            # NOTE: permutations are needed for edge directionality
+            tabu_edges += list(itertools.permutations(idx_group, 2))
+
+        return tabu_edges
+
+    @staticmethod
+    def update_tabu_nodes(
+        idx_group: List[int], tabu_nodes: List[int]
+    ) -> List[Tuple[int, int]]:
+        """
+        Tabu nodes are:
+            1. all user defined connections to original feature column
+
+        Args:
+            idx_group: The group of indices which correspond to a single
+            expanded column.
+
+            tabu_nodes: The list of tabu_nodes to be updated.
+
+        Returns:
+            Updated tabu_nodes
+        """
+        if tabu_nodes is None:
+            return tabu_nodes
+
+        # copy to prevent mutations
+        tabu_nodes = deepcopy(tabu_nodes)
+
+        new_tabu_nodes = []
+        for i in tabu_nodes:
+            # NOTE: the first element in the idx_group is guaranteed as self.idx
+            if i == idx_group[0]:
+                new_tabu_nodes += idx_group[1:]
+        # add on the new tabu nodes
+        tabu_nodes += new_tabu_nodes
+        return tabu_nodes

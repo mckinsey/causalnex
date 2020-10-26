@@ -424,6 +424,21 @@ class NotearsMLP(nn.Module, BaseEstimator):
             dag_layer_weight * dag_layer_weight, dim=1
         ).t()  # [i, j]
 
+        # modify the h(W) matrix to deal with expanded columns
+        original_idxs = []
+        for dist_type in self.dist_types:
+            # modify the weight matrix to prevent spurious cycles with expended columns
+            square_weight_mat = dist_type.modify_h(square_weight_mat)
+            # gather the original idxs
+            original_idxs.append(dist_type.idx)
+        # original size is largest original index
+        original_size = np.max(original_idxs) + 1
+        # subselect the top LH corner of matrix which corresponds to original data
+        square_weight_mat = square_weight_mat[:original_size, :original_size]
+        # update d and d_torch to match the new matrix size
+        d = square_weight_mat.shape[0]
+        d_torch = torch.tensor(d).to(self.device)  # pylint: disable=not-callable
+
         # h = trace_expm(a) - d  # (Zheng et al. 2018)
         characteristic_poly_mat = (
             torch.eye(d).to(self.device) + square_weight_mat / d_torch
