@@ -33,12 +33,14 @@
 from .binary import DistTypeBinary
 from .categorical import DistTypeCategorical
 from .continuous import DistTypeContinuous
+from .ordinal import DistTypeOrdinal
 from .poisson import DistTypePoisson
 
 dist_type_aliases = {
     "bin": DistTypeBinary,
     "cat": DistTypeCategorical,
     "cont": DistTypeContinuous,
+    "ord": DistTypeOrdinal,
     "poiss": DistTypePoisson,
 }
 
@@ -47,5 +49,6 @@ __all__ = [
     "DistTypeBinary",
     "DistTypeCategorical",
     "DistTypeContinuous",
+    "DistTypeOrdinal",
     "DistTypePoisson",
 ]

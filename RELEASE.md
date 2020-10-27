@@ -1,6 +1,7 @@
 # Upcoming release
 
 * Add multiclass support to pytorch sklearn wrapper.
+* Add ordinal distributed data support for pytorch NOTEARS.
 * Add categorical distributed data support for pytorch NOTEARS.
 * Added poisson distributed data support for pytorch NOTEARS.
 * Remove Python 3.5 support and add Python 3.8 support

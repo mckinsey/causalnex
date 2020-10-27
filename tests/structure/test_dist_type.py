@@ -37,6 +37,7 @@ from causalnex.structure.pytorch.dist_type import (
     DistTypeBinary,
     DistTypeCategorical,
     DistTypeContinuous,
+    DistTypeOrdinal,
     DistTypePoisson,
 )
 from causalnex.structure.pytorch.notears import from_numpy, from_pandas
@@ -75,6 +76,11 @@ class TestDistTypeClasses:
                 np.random.randint(2, size=(5, 2)),
                 np.random.normal(size=(5, 2)),
             ),
+            (
+                DistTypeOrdinal,
+                np.random.randint(3, size=(5, 1)),
+                np.random.normal(size=(5, 3)),
+            ),
         ],
     )
     def test_loss(self, dist_type, X, X_hat):
@@ -112,6 +118,11 @@ class TestDistTypeClasses:
             ),
             (
                 DistTypePoisson,
+                np.random.randint(3, size=(5, 1)),
+                np.random.normal(size=(5, 3)),
+            ),
+            (
+                DistTypeOrdinal,
                 np.random.randint(3, size=(5, 1)),
                 np.random.normal(size=(5, 3)),
             ),
@@ -200,6 +211,18 @@ class TestDistTypeClasses:
                 [0],
                 [0, 1, 2],
             ),
+            (
+                DistTypePoisson,
+                np.random.randint(3, size=(5, 1)),
+                [0],
+                [0],
+            ),
+            (
+                DistTypeOrdinal,
+                np.random.randint(3, size=(5, 1)),
+                [0],
+                [0],
+            ),
         ],
     )
     def test_preprocess_tabu_nodes(self, dist_type, X, tabu_nodes, tabu_nodes_updated):
@@ -237,6 +260,18 @@ class TestDistTypeClasses:
                 [(0, 1)],
                 [(0, 2), (2, 0), (1, 3), (3, 1), (0, 1), (2, 1), (0, 3), (2, 3)],
             ),
+            (
+                DistTypePoisson,
+                np.random.randint(3, size=(50, 2)),
+                [(0, 1)],
+                [(0, 1)],
+            ),
+            (
+                DistTypeOrdinal,
+                np.random.randint(3, size=(50, 2)),
+                [(0, 1)],
+                [(0, 1)],
+            ),
         ],
     )
     def test_preprocess_tabu_edges(self, dist_type, X, tabu_edges, tabu_edges_updated):
@@ -268,6 +303,14 @@ class TestDistTypeClasses:
             (
                 DistTypeCategorical,
                 np.random.randint(3, size=(50, 1)),
+            ),
+            (
+                DistTypePoisson,
+                np.random.randint(3, size=(50, 2)),
+            ),
+            (
+                DistTypeOrdinal,
+                np.random.randint(3, size=(50, 2)),
             ),
         ],
     )
@@ -309,6 +352,8 @@ class TestDistTypeNotears:
                 ),
                 {0: "cont", 1: "cont", 2: "bin", 3: "bin", 4: "cat", 5: "cat"},
             ),
+            (np.random.randint(3, size=(50, 3)), {0: "poiss", 1: "poiss", 2: "poiss"}),
+            (np.random.randint(3, size=(50, 3)), {0: "ord", 1: "ord", 2: "ord"}),
         ],
     )
     def test_numpy_notears_with_schema(self, X, schema):
@@ -331,6 +376,8 @@ class TestDistTypeNotears:
                 ),
                 {0: "cont", 1: "cont", 2: "bin", 3: "bin", 4: "cat", 5: "cat"},
             ),
+            (np.random.randint(3, size=(50, 3)), {0: "poiss", 1: "poiss", 2: "poiss"}),
+            (np.random.randint(3, size=(50, 3)), {0: "ord", 1: "ord", 2: "ord"}),
         ],
     )
     def test_pandas_notears_with_schema(self, X, schema):
