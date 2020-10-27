@@ -172,7 +172,7 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
         return square_weight_mat
 
     @staticmethod
-    def to_index(X_one_hot: torch.Tensor) -> torch.Tensor:
+    def _to_index(X_one_hot: torch.Tensor) -> torch.Tensor:
         """
         Recover the numerical columns by argmaxing a one-hot vector.
 
@@ -221,7 +221,7 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
 
         return nn.functional.cross_entropy(
             input=X_hat[:, self.idx_group],
-            target=self.to_index(X[:, self.idx_group]),
+            target=self._to_index(X[:, self.idx_group]),
             reduction="mean",
         )
 

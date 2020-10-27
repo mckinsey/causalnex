@@ -78,8 +78,8 @@ class TestDistTypeClasses:
             ),
             (
                 DistTypeOrdinal,
-                np.random.randint(3, size=(5, 1)),
-                np.random.normal(size=(5, 3)),
+                np.random.randint(3, size=(5, 2)),
+                np.random.normal(size=(5, 2)),
             ),
         ],
     )
@@ -123,8 +123,8 @@ class TestDistTypeClasses:
             ),
             (
                 DistTypeOrdinal,
-                np.random.randint(3, size=(5, 1)),
-                np.random.normal(size=(5, 3)),
+                np.random.randint(3, size=(5, 2)),
+                np.random.normal(size=(5, 2)),
             ),
         ],
     )

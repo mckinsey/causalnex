@@ -190,7 +190,9 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         n_classes = len(self.classes_)
         # handle binary
         if n_classes == 2:
-            return np.asarray(self.get_edges_to_node(self._target, data="mean_effect"))
+            return np.asarray(
+                self.get_edges_to_node(self._target, data="mean_effect")
+            ).reshape(1, -1)
 
         # handle categorical
         data = []

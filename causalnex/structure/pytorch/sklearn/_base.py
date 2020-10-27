@@ -260,7 +260,7 @@ class DAGBase(
         X = np.hstack([X, y_fill])
 
         # check that the model has been fit
-        check_is_fitted(self, "graph_")
+        check_is_fitted(self)
 
         # extract the base solver
         structure_learner = self.graph_.graph["structure_learner"]
@@ -291,7 +291,7 @@ class DAGBase(
         Returns:
             The specified edge data.
         """
-        check_is_fitted(self, "graph_")
+        check_is_fitted(self)
 
         # build base data series
         edges = pd.Series(index=self._features)

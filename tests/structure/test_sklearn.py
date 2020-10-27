@@ -38,8 +38,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
 
-from causalnex.structure import DAGClassifier, DAGRegressor
 from causalnex.structure import data_generators as dg
+from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
 
 
 class TestDAGSklearn:
@@ -317,9 +317,10 @@ class TestDAGClassifier:
         clf.fit(X, y)
 
         assert isinstance(clf.coef_, np.ndarray)
-        coef_ = pd.Series(clf.coef_, index=X.columns)
+        assert clf.coef_.shape == (1, 2)
+        coef_ = pd.DataFrame(clf.coef_, columns=X.columns)
         # assert that the sign of the coefficient is correct for both nonlinear and linear cases
-        assert coef_[0] < 0
+        assert coef_.iloc[0, 0] < 0
 
     @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
     def test_coef_categorical(self, hidden_layer_units):
