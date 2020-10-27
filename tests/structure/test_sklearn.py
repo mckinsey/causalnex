@@ -26,12 +26,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
 from IPython.display import Image
-from mock import patch
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
@@ -119,27 +121,29 @@ class TestDAGSklearn:
         m = model()
         X = np.random.normal(size=(100, 2))
         m.fit(X, y)
-        image = m.plot_dag(enforce_dag=enforce_dag)
-        assert isinstance(image, Image)
 
-    @pytest.mark.parametrize(
-        "model, y",
-        [
-            (DAGRegressor, np.random.normal(size=(100,))),
-            (DAGClassifier, np.random.randint(2, size=(100,))),
-        ],
-    )
-    def test_plot_dag_importerror(self, model, y):
-        with patch.dict("sys.modules", {"IPython.display": None}):
-            m = model()
-            X = np.random.normal(size=(100, 2))
-            m.fit(X, y)
+        # plot with no passed axes
+        plot = m.plot_dag(enforce_dag=enforce_dag)
+        assert isinstance(plot, tuple)
+        assert isinstance(plot[0], Figure)
+        assert isinstance(plot[1], Axes)
 
-            with pytest.raises(
-                ImportError,
-                match=r"plot_dag method requires IPython installed.",
-            ):
-                m.plot_dag()
+        # plot with passed axes
+        _, ax = plt.subplots()
+        plot = m.plot_dag(enforce_dag=enforce_dag, ax=ax)
+        assert isinstance(plot, tuple)
+        assert plot[0] is None
+        assert isinstance(plot[1], Axes)
+
+        # plot with no passed axes
+        plot = m.plot_dag(enforce_dag=enforce_dag)
+        assert isinstance(plot, tuple)
+        assert isinstance(plot[0], Figure)
+        assert isinstance(plot[1], Axes)
+
+        # plot with Ipython
+        plot = m.plot_dag(enforce_dag=enforce_dag, use_mpl=False)
+        assert isinstance(plot, Image)
 
     @pytest.mark.parametrize(
         "model, y",

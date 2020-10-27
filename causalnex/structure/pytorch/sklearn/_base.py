@@ -33,7 +33,7 @@ This module contains the implementation of ``DAGBase``.
 import copy
 import warnings
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Iterable, List, Union
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,14 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
-from causalnex.plots import EDGE_STYLE, NODE_STYLE, plot_structure
+from causalnex.plots import (
+    EDGE_STYLE,
+    NODE_STYLE,
+    display_plot_ipython,
+    display_plot_mpl,
+    plot_structure,
+)
+from causalnex.plots.display import Axes, Figure, Image
 from causalnex.structure.pytorch import notears
 
 
@@ -327,32 +334,58 @@ class DAGBase(
         bias = self.graph_.nodes[self._target]["bias"]
         return 0.0 if bias is None else float(bias)
 
-    def plot_dag(self, enforce_dag: bool = False, filename: str = "./graph.png"):
-        """ Util function used to plot the fitted graph """
+    def plot_dag(
+        self,
+        enforce_dag: bool = False,
+        plot_structure_kwargs: Dict = None,
+        use_mpl: bool = True,
+        ax: Axes = None,
+        pixel_size_in: float = 0.01,
+    ) -> Union[Tuple[Figure, Axes], Image]:
+        """
+        Plot the DAG of the fitted model.
+        Args:
+            enforce_dag: Whether to threshold the model until it is a DAG.
+            Does not alter the underlying model.
 
-        try:
-            # pylint: disable=import-outside-toplevel
-            from IPython.display import Image
-        except ImportError as e:
-            raise ImportError("plot_dag method requires IPython installed.") from e
+            ax: Matplotlib axes to plot the model on.
+            If None, creates axis.
 
-        check_is_fitted(self, "graph_")
+            pixel_size_in: Scaling multiple for the plot.
 
+            plot_structure_kwargs: Dictionary of kwargs for the causalnex plotting module.
+
+            use_mpl: Whether to use matplotlib as the backend.
+            If False, ax and pixel_size_in are ignored.
+
+        Returns:
+            Plot of the DAG.
+        """
+
+        # handle thresholding
+        check_is_fitted(self)
         graph = copy.deepcopy(self.graph_)
         if enforce_dag:
             graph.threshold_till_dag()
 
-        # silence annoying plotting warning
-        warnings.filterwarnings("ignore")
-
-        viz = plot_structure(
-            graph,
-            graph_attributes={"scale": "0.5"},
-            all_node_attributes=NODE_STYLE.WEAK,
-            all_edge_attributes=EDGE_STYLE.WEAK,
+        # handle the plot kwargs
+        plt_kwargs_default = {
+            "graph_attributes": {"scale": "0.5"},
+            "all_node_attributes": NODE_STYLE.WEAK,
+            "all_edge_attributes": EDGE_STYLE.WEAK,
+        }
+        plt_kwargs = (
+            plot_structure_kwargs if plot_structure_kwargs else plt_kwargs_default
         )
-        viz.draw(filename)
+        prog = plt_kwargs.get("prog", "neato")
 
-        # reset warnings to always show
-        warnings.simplefilter("always")
-        return Image(filename)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # get pygraphviz plot:
+            viz = plot_structure(graph, **plt_kwargs)
+
+        if use_mpl is True:
+            return display_plot_mpl(
+                viz=viz, prog=prog, ax=ax, pixel_size_in=pixel_size_in
+            )
+        return display_plot_ipython(viz=viz, prog=prog)
