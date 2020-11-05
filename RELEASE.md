@@ -1,6 +1,7 @@
 # Upcoming release
 
 * Added multiclass support to pytorch sklearn wrapper.
+* Added poisson regression support to sklearn wrapper.
 * Added ordinal distributed data support for pytorch NOTEARS.
 * Added categorical distributed data support for pytorch NOTEARS.
 * Added poisson distributed data support for pytorch NOTEARS.

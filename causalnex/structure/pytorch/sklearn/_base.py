@@ -32,7 +32,7 @@ This module contains the implementation of ``DAGBase``.
 """
 import copy
 import warnings
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
@@ -75,6 +75,7 @@ class DAGBase(
         dependent_target: bool = True,
         enforce_dag: bool = False,
         standardize: bool = False,
+        target_dist_type: str = None,
         **kwargs
     ):
         """
@@ -121,6 +122,9 @@ class DAGBase(
 
             kwargs: Extra arguments passed to the NOTEARS from_pandas function.
 
+            target_dist_type: The distribution type of the target.
+            Uses the same aliases as dist_type_schema.
+
         Raises:
             TypeError: if alpha is not numeric.
             TypeError: if beta is not numeric.
@@ -138,6 +142,7 @@ class DAGBase(
         self.tabu_edges = tabu_edges
         self.tabu_parent_nodes = tabu_parent_nodes
         self.tabu_child_nodes = tabu_child_nodes
+        self._target_dist_type = target_dist_type
         self.kwargs = kwargs
 
         if not isinstance(alpha, (int, float)):
@@ -154,14 +159,6 @@ class DAGBase(
         self.enforce_dag = enforce_dag
         self.standardize = standardize
 
-    @abstractmethod
-    def _target_dist_type(self) -> str:
-        """
-        NOTE:
-        When extending this class override this method to return a dist_type alias
-        """
-        raise NotImplementedError("Must implement _target_dist_type()")
-
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]):
         """
         Fits the sm model using the concat of X and y.
@@ -177,7 +174,9 @@ class DAGBase(
         y.name = y.name or "__target"
 
         # if self.dist_type_schema is None, assume all columns are continuous
-        dist_type_schema = self.dist_type_schema or {col: "cont" for col in X.columns}
+        dist_type_schema = copy.deepcopy(self.dist_type_schema) or {
+            col: "cont" for col in X.columns
+        }
 
         if self.standardize:
             # only standardize the continuous dist type columns.
@@ -195,14 +194,14 @@ class DAGBase(
             )
 
             # if its a continuous target also standardize
-            if self._target_dist_type() == "cont":
+            if self._target_dist_type == "cont":
                 y = y.copy()
                 self._ss_y = StandardScaler()
                 y[:] = self._ss_y.fit_transform(y.values.reshape(-1, 1)).reshape(-1)
 
         # add the target to the dist_type_schema
         # NOTE: this must be done AFTER standardize
-        dist_type_schema[y.name] = self._target_dist_type()
+        dist_type_schema[y.name] = self._target_dist_type
 
         # preserve the feature and target colnames
         self._features = tuple(X.columns)
@@ -273,7 +272,7 @@ class DAGBase(
         y_pred = target_dist_type.get_columns(X_hat)
 
         # inverse-standardize
-        if self.standardize and self._target_dist_type() == "cont":
+        if self.standardize and self._target_dist_type == "cont":
             y_pred = self._ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
 
         return y_pred

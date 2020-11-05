@@ -73,14 +73,18 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         intercept_ (float): The target node bias value.
     """
 
-    def _target_dist_type(self) -> str:
-        return self.__target_dist_type
-
     def fit(
         self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
     ) -> "DAGClassifier":
         """
         Fits the sm model using the concat of X and y.
+
+        Raises:
+            NotImplementedError: If unsupported _target_dist_type provided.
+            ValueError: If less than 2 classes provided.
+
+        Returns:
+            Instance of DAGClassifier.
         """
         # clf target check
         check_classification_targets(y)
@@ -101,10 +105,14 @@ class DAGClassifier(ClassifierMixin, DAGBase):
                 " class: {}".format(self.classes_[0])
             )
 
-        # store the private attr __target_dist_type
-        self.__target_dist_type = "bin"
-        if n_classes > 2:
-            self.__target_dist_type = "cat"
+        if self._target_dist_type is None:
+            # store the protected attr _target_dist_type
+            self._target_dist_type = "cat" if n_classes > 2 else "bin"
+        # perform checks that the dist type is currently supported
+        elif self._target_dist_type not in ["bin", "cat"]:
+            raise NotImplementedError(
+                f"Currently only implements bin, and cat dist types. Got: {self._target_dist_type}"
+            )
 
         # fit the NOTEARS model
         super().fit(X, y)

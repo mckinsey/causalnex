@@ -194,6 +194,17 @@ class TestDAGSklearn:
 
 
 class TestDAGRegressor:
+    @pytest.mark.parametrize("target_dist_type", ["cat", "bin", "ord"])
+    def test_wrong_target_dist_error(self, target_dist_type):
+        model = DAGRegressor(target_dist_type=target_dist_type)
+        y = np.random.normal(size=(100,))
+        X = np.random.normal(size=(100, 2))
+        with pytest.raises(
+            NotImplementedError,
+            match=f"Currently only implements cont, and poiss dist types. Got: {target_dist_type}",
+        ):
+            model.fit(X, y)
+
     @pytest.mark.parametrize("fit_intercept", [True, False])
     def test_intercept(self, fit_intercept):
         model, y = DAGRegressor, np.random.normal(size=(100,))
@@ -281,6 +292,17 @@ class TestDAGRegressor:
 
 
 class TestDAGClassifier:
+    @pytest.mark.parametrize("target_dist_type", ["cont", "ord", "poiss"])
+    def test_wrong_target_dist_error(self, target_dist_type):
+        model = DAGClassifier(target_dist_type=target_dist_type)
+        y = np.random.randint(2, size=(100,))
+        X = np.random.normal(size=(100, 2))
+        with pytest.raises(
+            NotImplementedError,
+            match=f"Currently only implements bin, and cat dist types. Got: {target_dist_type}",
+        ):
+            model.fit(X, y)
+
     @pytest.mark.parametrize("fit_intercept", [True, False])
     def test_intercept_binary(self, fit_intercept):
         model, y = DAGClassifier, np.random.randint(2, size=(100,))

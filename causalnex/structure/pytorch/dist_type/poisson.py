@@ -29,7 +29,7 @@
 """
 ``causalnex.pytorch.data_type.poisson`` defines the poisson distribution type.
 """
-
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -38,6 +38,28 @@ from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
 class DistTypePoisson(DistTypeBase):
     """ Class defining poisson distribution type functionality """
+
+    def preprocess_X(self, X: np.ndarray, fit_transform: bool = True) -> np.ndarray:
+        """
+        Perform positivity check.
+
+        Args:
+            X: The original passed-in data.
+
+            fit_transform: Whether the class first fits
+            then transforms the data, or just transforms.
+            Just transforming is used to preprocess new data after the
+            initial NOTEARS fit.
+
+        Returns:
+            Preprocessed X
+
+        Raises:
+            ValueError: if data has negative values.
+        """
+        if (X[:, self.idx] < 0).sum() > 0:
+            raise ValueError("All data must be positive for Poisson.")
+        return X
 
     def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
         """

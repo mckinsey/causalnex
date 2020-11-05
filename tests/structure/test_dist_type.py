@@ -99,6 +99,24 @@ class TestDistTypeClasses:
         assert loss.shape == torch.Size([])
 
     @pytest.mark.parametrize(
+        "dist_type, X",
+        [
+            (
+                DistTypePoisson,
+                np.random.normal(size=(100, 2)),
+            ),
+        ],
+    )
+    def test_preprocess_type_checks(self, dist_type, X):
+        dist_types = [dist_type(idx=idx) for idx in np.arange(X.shape[1])]
+        for dt in dist_types:
+            with pytest.raises(
+                ValueError,
+                match=r"All data must be positive for Poisson.",
+            ):
+                X = dt.preprocess_X(X)
+
+    @pytest.mark.parametrize(
         "dist_type, X, X_hat",
         [
             (
