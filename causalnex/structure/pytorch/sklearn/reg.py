@@ -70,17 +70,27 @@ class DAGRegressor(RegressorMixin, DAGBase):
         intercept_ (float): The target node bias value.
     """
 
-    def _target_dist_type(self) -> str:
-        return self.__target_dist_type
-
     def fit(
         self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
     ) -> "DAGRegressor":
         """
         Fits the sm model using the concat of X and y.
+
+        Raises:
+            NotImplementedError: If unsupported _target_dist_type provided.
+
+        Returns:
+            Instance of DAGRegressor.
         """
-        # store the private attr __target_dist_type
-        self.__target_dist_type = "cont"
+        if self._target_dist_type is None:
+            # store the protected attr _target_dist_type
+            self._target_dist_type = "cont"
+        # perform checks that the dist type is currently supported
+        elif self._target_dist_type not in ["cont", "poiss"]:
+            raise NotImplementedError(
+                f"Currently only implements cont, and poiss dist types. Got: {self._target_dist_type}"
+            )
+
         # fit the NOTEARS model
         super().fit(X, y)
         return self

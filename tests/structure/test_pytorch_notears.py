@@ -64,7 +64,7 @@ class TestFromPandas:
     def test_expected_structure_learned(self, train_data_idx, train_model):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_pandas(train_data_idx, w_threshold=0.15)
+        g = from_pandas(train_data_idx, w_threshold=0.16)
         assert set(g.edges) == set(train_model.edges)
 
     def test_empty_data_raises_error(self):
@@ -303,7 +303,7 @@ class TestFromNumpy:
     def test_expected_structure_learned(self, train_data_idx, train_model_idx):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_numpy(train_data_idx.values, w_threshold=0.15)
+        g = from_numpy(train_data_idx.values, w_threshold=0.16)
         assert set(g.edges) == set(train_model_idx.edges)
 
     def test_empty_data_raises_error(self):
