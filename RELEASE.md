@@ -1,6 +1,5 @@
 # Upcoming release
 * Fixed import typos in sklearn tutorial.
-
 * Added multiclass support to pytorch sklearn wrapper.
 * Added poisson regression support to sklearn wrapper.
 * Added ordinal distributed data support for pytorch NOTEARS.
