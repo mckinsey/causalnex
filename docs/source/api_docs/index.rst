@@ -60,6 +60,7 @@ Welcome to CausalNex's API docs and tutorials!
    :caption: Tutorial
 
    03_tutorial/03_tutorial.md
+   03_tutorial/dist_schema_tutorial.md
    03_tutorial/plotting_tutorial.md
    03_tutorial/sklearn_tutorial.md
 

@@ -26,12 +26,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
 from IPython.display import Image
-from mock import patch
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
@@ -114,51 +116,34 @@ class TestDAGSklearn:
             (DAGClassifier, np.random.randint(2, size=(100,))),
         ],
     )
-    @pytest.mark.parametrize(
-        "fit_intercept, equals_zero", [(True, False), (False, True)]
-    )
-    def test_intercept(self, fit_intercept, equals_zero, model, y):
-        m = model(fit_intercept=fit_intercept)
-        X = np.random.normal(size=(100, 2))
-        X, y = pd.DataFrame(X), pd.Series(y)
-        m.fit(X, y)
-        # intercept should return zero when fit_intercept == False
-        assert (m.intercept_ == 0) is equals_zero
-        assert isinstance(m.intercept_, float)
-
-    @pytest.mark.parametrize(
-        "model, y",
-        [
-            (DAGRegressor, np.random.normal(size=(100,))),
-            (DAGClassifier, np.random.randint(2, size=(100,))),
-        ],
-    )
     @pytest.mark.parametrize("enforce_dag", [True, False])
     def test_plot_dag(self, enforce_dag, model, y):
         m = model()
         X = np.random.normal(size=(100, 2))
         m.fit(X, y)
-        image = m.plot_dag(enforce_dag=enforce_dag)
-        assert isinstance(image, Image)
 
-    @pytest.mark.parametrize(
-        "model, y",
-        [
-            (DAGRegressor, np.random.normal(size=(100,))),
-            (DAGClassifier, np.random.randint(2, size=(100,))),
-        ],
-    )
-    def test_plot_dag_importerror(self, model, y):
-        with patch.dict("sys.modules", {"IPython.display": None}):
-            m = model()
-            X = np.random.normal(size=(100, 2))
-            m.fit(X, y)
+        # plot with no passed axes
+        plot = m.plot_dag(enforce_dag=enforce_dag)
+        assert isinstance(plot, tuple)
+        assert isinstance(plot[0], Figure)
+        assert isinstance(plot[1], Axes)
 
-            with pytest.raises(
-                ImportError,
-                match=r"plot_dag method requires IPython installed.",
-            ):
-                m.plot_dag()
+        # plot with passed axes
+        _, ax = plt.subplots()
+        plot = m.plot_dag(enforce_dag=enforce_dag, ax=ax)
+        assert isinstance(plot, tuple)
+        assert plot[0] is None
+        assert isinstance(plot[1], Axes)
+
+        # plot with no passed axes
+        plot = m.plot_dag(enforce_dag=enforce_dag)
+        assert isinstance(plot, tuple)
+        assert isinstance(plot[0], Figure)
+        assert isinstance(plot[1], Axes)
+
+        # plot with Ipython
+        plot = m.plot_dag(enforce_dag=enforce_dag, use_mpl=False)
+        assert isinstance(plot, Image)
 
     @pytest.mark.parametrize(
         "model, y",
@@ -209,6 +194,28 @@ class TestDAGSklearn:
 
 
 class TestDAGRegressor:
+    @pytest.mark.parametrize("target_dist_type", ["cat", "bin", "ord"])
+    def test_wrong_target_dist_error(self, target_dist_type):
+        model = DAGRegressor(target_dist_type=target_dist_type)
+        y = np.random.normal(size=(100,))
+        X = np.random.normal(size=(100, 2))
+        with pytest.raises(
+            NotImplementedError,
+            match=f"Currently only implements cont, and poiss dist types. Got: {target_dist_type}",
+        ):
+            model.fit(X, y)
+
+    @pytest.mark.parametrize("fit_intercept", [True, False])
+    def test_intercept(self, fit_intercept):
+        model, y = DAGRegressor, np.random.normal(size=(100,))
+        m = model(fit_intercept=fit_intercept)
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        # intercept should return zero when fit_intercept == False
+        assert (m.intercept_ == 0) is not fit_intercept
+        assert isinstance(m.intercept_, float)
+
     @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
     def test_coef(self, hidden_layer_units):
         reg = DAGRegressor(hidden_layer_units=hidden_layer_units)
@@ -285,8 +292,44 @@ class TestDAGRegressor:
 
 
 class TestDAGClassifier:
+    @pytest.mark.parametrize("target_dist_type", ["cont", "ord", "poiss"])
+    def test_wrong_target_dist_error(self, target_dist_type):
+        model = DAGClassifier(target_dist_type=target_dist_type)
+        y = np.random.randint(2, size=(100,))
+        X = np.random.normal(size=(100, 2))
+        with pytest.raises(
+            NotImplementedError,
+            match=f"Currently only implements bin, and cat dist types. Got: {target_dist_type}",
+        ):
+            model.fit(X, y)
+
+    @pytest.mark.parametrize("fit_intercept", [True, False])
+    def test_intercept_binary(self, fit_intercept):
+        model, y = DAGClassifier, np.random.randint(2, size=(100,))
+        m = model(fit_intercept=fit_intercept)
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        # intercept should return zero when fit_intercept == False
+        assert (m.intercept_[0] == 0) is not fit_intercept
+        assert isinstance(m.intercept_, np.ndarray)
+        assert len(m.intercept_) == 1
+
+    @pytest.mark.parametrize("fit_intercept", [True, False])
+    def test_intercept_categorical(self, fit_intercept):
+        model, y = DAGClassifier, np.random.randint(3, size=(100,))
+        m = model(fit_intercept=fit_intercept)
+        X = np.random.normal(size=(100, 2))
+        X, y = pd.DataFrame(X), pd.Series(y)
+        m.fit(X, y)
+        # intercept should return zero when fit_intercept == False
+        for intercept in m.intercept_:
+            assert (intercept == 0) is not fit_intercept
+        assert isinstance(m.intercept_, np.ndarray)
+        assert len(m.intercept_) == 3
+
     @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
-    def test_coef(self, hidden_layer_units):
+    def test_coef_binary(self, hidden_layer_units):
         clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
         X, y = (
             pd.DataFrame(np.random.normal(size=(100, 2))),
@@ -296,12 +339,32 @@ class TestDAGClassifier:
         clf.fit(X, y)
 
         assert isinstance(clf.coef_, np.ndarray)
-        coef_ = pd.Series(clf.coef_, index=X.columns)
+        assert clf.coef_.shape == (1, 2)
+        coef_ = pd.DataFrame(clf.coef_, columns=X.columns)
         # assert that the sign of the coefficient is correct for both nonlinear and linear cases
-        assert coef_[0] < 0
+        assert coef_.iloc[0, 0] < 0
 
     @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
-    def test_feature_importances(self, hidden_layer_units):
+    def test_coef_categorical(self, hidden_layer_units):
+        clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=int)),
+        )
+        y[X[0] < -0.1] = 1
+        y[X[0] > 0.1] = 2
+        clf.fit(X, y)
+
+        assert isinstance(clf.coef_, np.ndarray)
+        assert clf.coef_.shape == (3, 2)
+        coef_ = pd.DataFrame(clf.coef_, columns=X.columns)
+        # second category is made likely by negative X
+        assert coef_.iloc[1, 0] < 0
+        # third category is made likely by positive X
+        assert coef_.iloc[2, 0] > 0
+
+    @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
+    def test_feature_importances_binary(self, hidden_layer_units):
         clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
         X, y = (
             pd.DataFrame(np.random.normal(size=(100, 2))),
@@ -311,12 +374,30 @@ class TestDAGClassifier:
         clf.fit(X, y)
 
         assert isinstance(clf.feature_importances_, np.ndarray)
-        coef_ = pd.Series(clf.feature_importances_, index=X.columns)
+        coef_ = pd.DataFrame(clf.feature_importances_, columns=X.columns)
         # assert that the sign of the coefficient is positive for both nonlinear and linear cases
-        assert coef_[0] > 0
+        assert coef_.iloc[0, 0] > 0
+
+    @pytest.mark.parametrize("hidden_layer_units", [None, [2], [2, 2]])
+    def test_feature_importances_categorical(self, hidden_layer_units):
+        clf = DAGClassifier(alpha=0.1, hidden_layer_units=hidden_layer_units)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=int)),
+        )
+        y[X[0] < -0.1] = 1
+        y[X[0] > 0.1] = 2
+        clf.fit(X, y)
+
+        assert isinstance(clf.feature_importances_, np.ndarray)
+        assert clf.feature_importances_.shape == (3, 2)
+        feature_importances_ = pd.DataFrame(clf.feature_importances_, columns=X.columns)
+        # assert that the sign of the coefficient is positive for both nonlinear and linear cases
+        assert feature_importances_.iloc[1, 0] > 0
+        assert feature_importances_.iloc[2, 0] > 0
 
     @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
-    def test_value_predict_type(self, y_type):
+    def test_value_predict_type_binary(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
             pd.DataFrame(np.random.normal(size=(100, 2))),
@@ -328,13 +409,34 @@ class TestDAGClassifier:
         y_pred = clf.predict(X)
         assert isinstance(y_pred[0], y_type)
         y_pred_proba = clf.predict_proba(X)
-        assert isinstance(y_pred_proba[0], np.float64)
+        assert isinstance(y_pred_proba[0, 0], np.float64)
+        assert len(y_pred_proba.shape) == 2
 
-    @pytest.mark.parametrize(
-        "y", [np.random.randint(1, size=(100,)), np.random.randint(3, size=(100,))]
-    )
+    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    def test_value_predict_type_categorical(self, y_type):
+        clf = DAGClassifier(alpha=0.1)
+        X, y = (
+            pd.DataFrame(np.random.normal(size=(100, 2))),
+            pd.Series(np.zeros(shape=(100,), dtype=y_type)),
+        )
+        y[X[0] < -0.1] = y_type(1)
+        y[X[0] > 0.1] = y_type(2)
+        clf.fit(X, y)
+
+        y_pred = clf.predict(X)
+        assert isinstance(y_pred[0], y_type)
+        y_pred_proba = clf.predict_proba(X)
+        assert isinstance(y_pred_proba[0, 0], np.float64)
+        assert len(y_pred_proba.shape) == 2
+
+    @pytest.mark.parametrize("y", [np.random.randint(1, size=(100,))])
     def test_class_number_error(self, y):
         clf = DAGClassifier(alpha=0.1)
-        X = (pd.DataFrame(np.random.normal(size=(100, 2))),)
-        with pytest.raises(ValueError):
+        X = pd.DataFrame(np.random.normal(size=(100, 2)))
+        with pytest.raises(
+            ValueError,
+            match="This solver needs samples of at least 2 classes"
+            " in the data, but the data contains only one"
+            " class: 0",
+        ):
             clf.fit(X, y)

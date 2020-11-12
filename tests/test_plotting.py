@@ -28,6 +28,17 @@
 import pytest
 from mock import patch
 
+from importlib import reload
+
+import matplotlib.pyplot as plt
+import pytest
+from IPython.display import Image
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from mock import patch
+
+import causalnex.plots as plots
+import causalnex.plots.display as display
 from causalnex.plots import color_gradient_string, plot_structure
 from causalnex.structure import StructureModel
 
@@ -166,6 +177,7 @@ class TestToPygraphviz:
         assert str(a) == str(b)
         assert str(a) != str(c)
 
+
     @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
     def test_install_warning(self, mocked_to_agraph):
         sm = StructureModel()
@@ -196,3 +208,56 @@ class TestColorGradientString:
         s = color_gradient_string("#00000000", "#99999999", 9)
         expected = ":".join(["#" + str(i) * 8 + ";0.10" for i in range(10)])
         assert s == expected
+
+
+class TestDisplay:
+    def test_display_importerror_ipython(self):
+        sm = StructureModel([("a", "b")])
+        viz = plot_structure(sm, prog="neato")
+        with patch.dict("sys.modules", {"IPython.display": None}):
+            reload(display)
+            with pytest.raises(
+                ImportError,
+                match=r"display_plot_ipython method requires IPython installed.",
+            ):
+                display.display_plot_ipython(viz)
+        # NOTE: must reload display again after patch exit
+        reload(display)
+
+    def test_display_importerror_mpl(self):
+        sm = StructureModel([("a", "b")])
+        viz = plot_structure(sm, prog="neato")
+        with patch.dict("sys.modules", {"matplotlib": None}):
+            reload(display)
+            with pytest.raises(
+                ImportError,
+                match=r"display_plot_mpl method requires matplotlib installed.",
+            ):
+                display.display_plot_mpl(viz)
+        # NOTE: must reload display again after patch exit
+        reload(display)
+
+    def test_agraph_import(self):
+        with patch.dict("sys.modules", {"pygraphviz.agraph": None}):
+            reload(display)
+        reload(display)
+
+    def test_return_types_ipython(self):
+        sm = StructureModel([("a", "b")])
+        viz = plot_structure(sm, prog="neato")
+        d = display.display_plot_ipython(viz)
+        assert isinstance(d, Image)
+
+    def test_return_types_mpl(self):
+        sm = StructureModel([("a", "b")])
+        viz = plot_structure(sm, prog="neato")
+        d = display.display_plot_mpl(viz)
+        assert isinstance(d, tuple)
+        assert isinstance(d[0], Figure)
+        assert isinstance(d[1], Axes)
+
+        _, ax = plt.subplots()
+        d = display.display_plot_mpl(viz, ax=ax)
+        assert isinstance(d, tuple)
+        assert d[0] is None
+        assert isinstance(d[1], Axes)

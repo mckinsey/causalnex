@@ -128,7 +128,7 @@ def from_numpy(
                 )
             )
 
-    # if dist_type_schema is None, assume all columns are continuous, else ini
+    # if dist_type_schema is None, assume all columns are continuous, else init the alias mapped object
     dist_types = (
         [DistTypeContinuous(idx=idx) for idx in np.arange(X.shape[1])]
         if dist_type_schema is None
@@ -136,6 +136,14 @@ def from_numpy(
             dist_type_aliases[alias](idx=idx) for idx, alias in dist_type_schema.items()
         ]
     )
+
+    # perform dist type pre-processing (i.e. column expansion)
+    for dist_type in dist_types:
+        # NOTE: preprocess_X must be called first to perform possible column expansions
+        X = dist_type.preprocess_X(X)
+        tabu_edges = dist_type.preprocess_tabu_edges(tabu_edges)
+        tabu_parent_nodes = dist_type.preprocess_tabu_nodes(tabu_parent_nodes)
+        tabu_child_nodes = dist_type.preprocess_tabu_nodes(tabu_child_nodes)
 
     _, d = X.shape
 
@@ -200,8 +208,8 @@ def from_numpy(
         sm.nodes[node]["bias"] = value
 
     for dist_type in dist_types:
-        # attach each dist_type object to corresponding node
-        sm.nodes[dist_type.idx]["dist_type"] = dist_type
+        # attach each dist_type object to corresponding node(s)
+        sm = dist_type.add_to_node(sm)
 
     # preserve the structure_learner as a graph attribute
     sm.graph["structure_learner"] = model
@@ -327,8 +335,18 @@ def from_pandas(
         **kwargs
     )
 
+    # set comprehension to ensure only unique dist types are extraced
+    # NOTE: this prevents double-renaming caused by the same dist type used on expanded columns
+    unique_dist_types = {node[1]["dist_type"] for node in g.nodes(data=True)}
+    # use the dist types to update the idx_col mapping
+    for dist_type in unique_dist_types:
+        idx_col = dist_type.update_idx_col(idx_col)
+    # update the col_idx dict with updated idx_col
+    col_idx = {c: i for i, c in idx_col.items()}
+
     sm = StructureModel()
-    sm.add_nodes_from(data.columns)
+    # add expanded set of nodes
+    sm.add_nodes_from(list(idx_col.values()))
 
     # recover the edge weights from g
     for u, v, edge_dict in g.edges.data(True):
@@ -350,8 +368,8 @@ def from_pandas(
         sm.nodes[node_name]["bias"] = node[1]["bias"]
 
     # recover and preseve the node dist_types
-    for node in g.nodes(data=True):
-        node_name = idx_col[node[0]]
-        sm.nodes[node_name]["dist_type"] = node[1]["dist_type"]
+    for node_data in g.nodes(data=True):
+        node_name = idx_col[node_data[0]]
+        sm.nodes[node_name]["dist_type"] = node_data[1]["dist_type"]
 
     return sm
