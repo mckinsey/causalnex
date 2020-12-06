@@ -97,6 +97,9 @@ def plot_structure(
 
     Returns:
         a styled pygraphgiz graph that can be rendered as an image
+
+    Raises:
+        Warning: Suggests mitigation strategies when ``pygraphviz`` is not installed.
     """
 
     # apply node and edge attributes
@@ -105,7 +108,22 @@ def plot_structure(
     )
 
     # create plot
-    a_graph = nx.nx_agraph.to_agraph(_sm)
+    try:
+        a_graph = nx.nx_agraph.to_agraph(_sm)
+    except ImportError as error_msg:
+        raise Warning(
+            """
+            Pygraphviz not installed. Also make sure you have the system-level
+            ``graphviz`` requirement installed.
+
+            Alternatively, you can visualise your graph using the networkx.draw
+            functionality:
+            >>> sm = StructureModel()
+            >>> fig, ax = plt.subplots()
+            >>> nx.draw_circular(sm, ax=ax)
+            >>> fig.show()
+            """
+        ) from error_msg
 
     # apply graph attributes
     a_graph.graph_attr.update(GRAPH_STYLE)
@@ -175,7 +193,6 @@ def _add_attributes(
     node_attributes: Dict[str, Dict[str, str]] = None,
     edge_attributes: Dict[str, Dict[str, str]] = None,
 ) -> StructureModel:
-
     _sm = deepcopy(sm)
 
     # shift labels to be above nodes
@@ -217,7 +234,6 @@ GRAPH_STYLE = {
     "pad": "0.8,0.3",
     "dpi": 300,
 }
-
 
 _style = namedtuple("Style", ["WEAK", "NORMAL", "STRONG"])
 

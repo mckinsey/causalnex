@@ -52,6 +52,18 @@ CausalNex is a Python package. To install it, simply run:
 pip install causalnex
 ```
 
+Since pygraphviz can be difficult to install, esp. on Windows machines, the requirement is optional.
+If you want to use the causalnex native plotting tools, you can use
+```bash
+pip install "causalnex[plot]"
+```
+Alternatively, you can use the `networkx` drawing functionality for visualisations with fewer dependencies.
+
+Use `all` for a full installation of dependencies (only the plotting right now):
+```bash
+pip install "causalnex[all]"
+```
+
 See more detailed installation instructions, including how to setup Python virtual environments, in our [installation guide](https://causalnex.readthedocs.io/en/latest/02_getting_started/02_install.html) and get started with our [tutorial](https://causalnex.readthedocs.io/en/latest/03_tutorial/03_tutorial.html).
 
 ## How do I use CausalNex?

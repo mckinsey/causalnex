@@ -58,7 +58,6 @@ extras_require = {
     "plot": [
         "pygraphviz>=1.5, <2.0",
     ],
-    "pytorch": ["torch>=1.4.0, <2.0"],
 }
 
 extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
