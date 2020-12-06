@@ -59,13 +59,7 @@ pip install "causalnex[plot]"
 ```
 Alternatively, you can use the `networkx` drawing functionality for visualisations with fewer dependencies.
 
-For the sklearn wrappers, or the the non-linear NoTears implementation, use
-```bash
-pip install "causalnex[pytorch]"
-```
-If you have problems with running it in Jupyter Notebooks on macOS, try `conda install mkl=2018`.
-
-Use `all` for a full installation of dependencies:
+Use `all` for a full installation of dependencies (only the plotting right now):
 ```bash
 pip install "causalnex[all]"
 ```
