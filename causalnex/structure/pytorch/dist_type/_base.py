@@ -161,6 +161,21 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return square_weight_mat
 
+    # pylint: disable=no-self-use
+    def collapse_adj(self, adj: np.ndarray) -> np.ndarray:
+        """
+        Overload this method to apply updates to collapse the W matrix
+        of a multi-parameter distribution
+        Likely has the same impact as modify_h.
+
+        Args:
+            adj: The adjacency matrix.
+
+        Returns:
+            Updated adjacency matrix.
+        """
+        return adj
+
     @abstractmethod
     def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
         """

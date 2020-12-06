@@ -7,6 +7,7 @@
 * Added categorical distributed data support for pytorch NOTEARS.
 * Added poisson distributed data support for pytorch NOTEARS.
 * Added matplotlib and ipython display convenience functions.
+* Added multi-parameter collapsed graph as graph attribute.
 * Added dist type schema tutorial to docs.
 * Removed Python 3.5 support and add Python 3.8 support
 * Updated core dependencies, supporting pandas 1.1, networkx 2.5, pgmpy 0.1.12.
