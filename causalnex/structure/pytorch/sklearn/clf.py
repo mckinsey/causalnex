@@ -73,6 +73,9 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         intercept_ (float): The target node bias value.
     """
 
+    _supported_types = ("ord", "bin", "cat")
+    _default_type = "cont"
+
     def fit(
         self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
     ) -> "DAGClassifier":
@@ -105,14 +108,9 @@ class DAGClassifier(ClassifierMixin, DAGBase):
                 " class: {}".format(self.classes_[0])
             )
 
+        # store the protected attr _target_dist_type
         if self._target_dist_type is None:
-            # store the protected attr _target_dist_type
             self._target_dist_type = "cat" if n_classes > 2 else "bin"
-        # perform checks that the dist type is currently supported
-        elif self._target_dist_type not in ["bin", "cat"]:
-            raise NotImplementedError(
-                f"Currently only implements bin, and cat dist types. Got: {self._target_dist_type}"
-            )
 
         # fit the NOTEARS model
         super().fit(X, y)
