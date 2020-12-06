@@ -74,18 +74,20 @@ class DistTypeOrdinal(DistTypeBase):
             self.encoder = OrdinalEncoder()
             self.encoder.fit(X[:, [self.idx]])
 
-        # Ordinal Encode
+        # Ordinal Encoder
         X[:, [self.idx]] = self.encoder.transform(X[:, [self.idx]])
 
-        # calculate the cumulative probability across each category
-        _, counts_elements = np.unique(X[:, self.idx], return_counts=True)
-        class_probs = counts_elements / np.sum(counts_elements)
-        cum_class_probs = np.cumsum(class_probs)
-        # last value is guaranteed to be 1.0 so remove to prevent divide by zero
-        cum_class_probs = cum_class_probs[:-1]
+        # only calc log_cum_odds on fit step
+        if fit_transform:
+            # calculate the cumulative probability across each category
+            _, counts_elements = np.unique(X[:, self.idx], return_counts=True)
+            class_probs = counts_elements / np.sum(counts_elements)
+            cum_class_probs = np.cumsum(class_probs)
+            # last value is guaranteed to be 1.0 so remove to prevent divide by zero
+            cum_class_probs = cum_class_probs[:-1]
 
-        # store the log cumulative odds across all categories
-        self.log_cum_odds = np.log(cum_class_probs / (1 - cum_class_probs))
+            # store the log cumulative odds across all categories
+            self.log_cum_odds = np.log(cum_class_probs / (1 - cum_class_probs))
 
         return X
 
@@ -156,3 +158,21 @@ class DistTypeOrdinal(DistTypeBase):
             Projects the self.idx column from the latent space to the dist_type space.
         """
         return self._get_probs(X_hat)
+
+    def get_columns(
+        self,
+        X: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Gets the column(s) associated with the instantiated DistType.
+
+        NOTE: ordinal get_columns is special in that inverse_link_function does NOT return
+        the entire dataset.
+
+        Args:
+            X: The return data from inverse_link_function.
+
+        Returns:
+            1d or 2d np.ndarray of columns.
+        """
+        return X
