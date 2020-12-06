@@ -112,7 +112,7 @@ class TestDistTypeClasses:
         for dt in dist_types:
             with pytest.raises(
                 ValueError,
-                match=r"All data must be positive for Poisson.",
+                match=r"All data must be positive for Poisson\.",
             ):
                 X = dt.preprocess_X(X)
 

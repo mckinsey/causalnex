@@ -76,7 +76,7 @@ class DAGBase(
         enforce_dag: bool = False,
         standardize: bool = False,
         target_dist_type: str = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Args:
@@ -130,7 +130,27 @@ class DAGBase(
             TypeError: if beta is not numeric.
             TypeError: if fit_intercept is not a bool.
             TypeError: if threshold is not numeric.
+            NotImplementedError: if target_dist_type not in supported_types
         """
+
+        if not isinstance(alpha, (int, float)):
+            raise TypeError("alpha should be numeric")
+        if not isinstance(beta, (int, float)):
+            raise TypeError("beta should be numeric")
+        if not isinstance(fit_intercept, bool):
+            raise TypeError("fit_intercept should be a bool")
+        if not isinstance(threshold, (int, float)):
+            raise TypeError("threshold should be numeric")
+        # supported types is a class attr in child class
+        self._supported_types: str
+        # defensive check
+        if (target_dist_type not in self._supported_types) and (
+            target_dist_type is not None
+        ):
+            raise NotImplementedError(
+                f"Currently only implements [{', '.join(self._supported_types)}] dist types."
+                f" Got: {target_dist_type}"
+            )
 
         # core causalnex parameters
         self.alpha = alpha
@@ -144,15 +164,6 @@ class DAGBase(
         self.tabu_child_nodes = tabu_child_nodes
         self._target_dist_type = target_dist_type
         self.kwargs = kwargs
-
-        if not isinstance(alpha, (int, float)):
-            raise TypeError("alpha should be numeric")
-        if not isinstance(beta, (int, float)):
-            raise TypeError("beta should be numeric")
-        if not isinstance(fit_intercept, bool):
-            raise TypeError("fit_intercept should be a bool")
-        if not isinstance(threshold, (int, float)):
-            raise TypeError("threshold should be numeric")
 
         # sklearn wrapper paramters
         self.dependent_target = dependent_target
@@ -174,6 +185,7 @@ class DAGBase(
         y.name = y.name or "__target"
 
         # if self.dist_type_schema is None, assume all columns are continuous
+        # NOTE: this is copied due to later insertions
         dist_type_schema = copy.deepcopy(self.dist_type_schema) or {
             col: "cont" for col in X.columns
         }
@@ -230,7 +242,7 @@ class DAGBase(
             tabu_parent_nodes=tabu_parent_nodes,
             tabu_child_nodes=self.tabu_child_nodes,
             use_bias=self.fit_intercept,
-            **self.kwargs
+            **self.kwargs,
         )
 
         # keep thresholding until the DAG constraint is enforced

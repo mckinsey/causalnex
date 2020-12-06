@@ -3,6 +3,8 @@
 CausalNex supports macOS, Linux and Windows (7 / 8 / 10 and Windows Server 2016+). If you encounter any problems on
 these platforms, please check the FAQ, and / or the Alchemy community support on Slack.
 
+CausalNex requires [PyTorch](https://pytorch.org/) to be installed.
+
 ## macOS / Linux
 
 In order to work effectively with CausalNex projects, we highly recommend you download and install

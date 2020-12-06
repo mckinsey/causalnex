@@ -196,14 +196,12 @@ class TestDAGSklearn:
 class TestDAGRegressor:
     @pytest.mark.parametrize("target_dist_type", ["cat", "bin", "ord"])
     def test_wrong_target_dist_error(self, target_dist_type):
-        model = DAGRegressor(target_dist_type=target_dist_type)
-        y = np.random.normal(size=(100,))
-        X = np.random.normal(size=(100, 2))
         with pytest.raises(
             NotImplementedError,
-            match=f"Currently only implements cont, and poiss dist types. Got: {target_dist_type}",
+            # match=f"Currently only implements [{', '.join(DAGRegressor._supported_types)}] dist types."
+            # " Got: {target_dist_type}"
         ):
-            model.fit(X, y)
+            DAGRegressor(target_dist_type=target_dist_type)
 
     @pytest.mark.parametrize("fit_intercept", [True, False])
     def test_intercept(self, fit_intercept):
@@ -290,18 +288,28 @@ class TestDAGRegressor:
         assert small_nl_score > linear_score
         assert medium_nl_score > small_nl_score
 
+    @pytest.mark.parametrize(
+        "target_dist_type, y",
+        [
+            ("poiss", np.random.randint(40, size=(100,))),
+        ],
+    )
+    def test_glm(self, target_dist_type, y):
+        reg = DAGRegressor(target_dist_type=target_dist_type)
+        X = np.random.normal(size=(100, 2))
+        reg.fit(X, y)
+        reg.predict(X)
+
 
 class TestDAGClassifier:
-    @pytest.mark.parametrize("target_dist_type", ["cont", "ord", "poiss"])
+    @pytest.mark.parametrize("target_dist_type", ["cont", "poiss"])
     def test_wrong_target_dist_error(self, target_dist_type):
-        model = DAGClassifier(target_dist_type=target_dist_type)
-        y = np.random.randint(2, size=(100,))
-        X = np.random.normal(size=(100, 2))
         with pytest.raises(
             NotImplementedError,
-            match=f"Currently only implements bin, and cat dist types. Got: {target_dist_type}",
+            # match=f"Currently only implements [{', '.join(DAGClassifier._supported_types)}] dist types."
+            # " Got: {target_dist_type}",
         ):
-            model.fit(X, y)
+            DAGClassifier(target_dist_type=target_dist_type)
 
     @pytest.mark.parametrize("fit_intercept", [True, False])
     def test_intercept_binary(self, fit_intercept):
@@ -440,3 +448,40 @@ class TestDAGClassifier:
             " class: 0",
         ):
             clf.fit(X, y)
+
+    @pytest.mark.parametrize(
+        "target_dist_type, y",
+        [
+            ("ord", np.random.randint(3, size=(100,))),
+        ],
+    )
+    def test_glm(self, target_dist_type, y):
+        clf = DAGClassifier(target_dist_type=target_dist_type)
+        X = np.random.normal(size=(100, 2))
+        clf.fit(X, y)
+        clf.predict(X)
+
+
+@pytest.mark.parametrize("hidden_layer_units", [None, [1], [5], [5, 5], [10, 10]])
+def test_independent_predictions(hidden_layer_units):
+    x = np.linspace(0.0, 100, 100)
+    X = pd.DataFrame({"x": x})
+    Y = pd.Series(x ** 2, name="y")
+
+    reg = DAGRegressor(
+        threshold=0.0,
+        alpha=0.0,
+        beta=0.5,
+        fit_intercept=True,
+        hidden_layer_units=hidden_layer_units,
+        standardize=False,
+    )
+    reg.fit(X, Y)
+
+    pred_alone = reg.predict(pd.DataFrame({"x": [10.0]}))
+    pred_joint0 = reg.predict(pd.DataFrame({"x": [10.0, 0.0]}))
+    pred_joint1 = reg.predict(pd.DataFrame({"x": [10.0] + x.tolist()}))
+
+    assert np.isclose(pred_alone[0], pred_joint0[0], rtol=0.01)
+    assert np.isclose(pred_alone[0], pred_joint1[0], rtol=0.01)
+    assert np.isclose(pred_joint0[0], pred_joint1[0], rtol=0.01)
