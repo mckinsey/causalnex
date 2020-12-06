@@ -137,6 +137,8 @@ def from_numpy(
         ]
     )
 
+    # shape of X before preprocessing
+    _, d_orig = X.shape
     # perform dist type pre-processing (i.e. column expansion)
     for dist_type in dist_types:
         # NOTE: preprocess_X must be called first to perform possible column expansions
@@ -144,7 +146,7 @@ def from_numpy(
         tabu_edges = dist_type.preprocess_tabu_edges(tabu_edges)
         tabu_parent_nodes = dist_type.preprocess_tabu_nodes(tabu_parent_nodes)
         tabu_child_nodes = dist_type.preprocess_tabu_nodes(tabu_child_nodes)
-
+    # shape of X after preprocessing
     _, d = X.shape
 
     # if None or empty, convert into a list with single item
@@ -188,8 +190,8 @@ def from_numpy(
     if w_threshold:
         sm.remove_edges_below_threshold(w_threshold)
 
-    mean_effect = model.adj_mean_effect
     # extract the mean effect and add as edge attribute
+    mean_effect = model.adj_mean_effect
     for u, v, edge_dict in sm.edges.data(True):
         sm.add_edge(
             u,
@@ -207,12 +209,18 @@ def from_numpy(
             value = bias[node]
         sm.nodes[node]["bias"] = value
 
+    # attach each dist_type object to corresponding node(s)
     for dist_type in dist_types:
-        # attach each dist_type object to corresponding node(s)
         sm = dist_type.add_to_node(sm)
 
     # preserve the structure_learner as a graph attribute
     sm.graph["structure_learner"] = model
+
+    # collapse the adj down and store as graph attr
+    adj = deepcopy(model.adj)
+    for dist_type in dist_types:
+        adj = dist_type.collapse_adj(adj)
+    sm.graph["graph_collapsed"] = StructureModel(adj[:d_orig, :d_orig])
 
     return sm
 
@@ -339,20 +347,19 @@ def from_pandas(
     # NOTE: this prevents double-renaming caused by the same dist type used on expanded columns
     unique_dist_types = {node[1]["dist_type"] for node in g.nodes(data=True)}
     # use the dist types to update the idx_col mapping
+    idx_col_expanded = deepcopy(idx_col)
     for dist_type in unique_dist_types:
-        idx_col = dist_type.update_idx_col(idx_col)
-    # update the col_idx dict with updated idx_col
-    col_idx = {c: i for i, c in idx_col.items()}
+        idx_col_expanded = dist_type.update_idx_col(idx_col_expanded)
 
     sm = StructureModel()
     # add expanded set of nodes
-    sm.add_nodes_from(list(idx_col.values()))
+    sm.add_nodes_from(list(idx_col_expanded.values()))
 
     # recover the edge weights from g
     for u, v, edge_dict in g.edges.data(True):
         sm.add_edge(
-            idx_col[u],
-            idx_col[v],
+            idx_col_expanded[u],
+            idx_col_expanded[v],
             origin="learned",
             weight=edge_dict["weight"],
             mean_effect=edge_dict["mean_effect"],
@@ -364,12 +371,24 @@ def from_pandas(
 
     # recover the node biases from g
     for node in g.nodes(data=True):
-        node_name = idx_col[node[0]]
+        node_name = idx_col_expanded[node[0]]
         sm.nodes[node_name]["bias"] = node[1]["bias"]
 
     # recover and preseve the node dist_types
     for node_data in g.nodes(data=True):
-        node_name = idx_col[node_data[0]]
+        node_name = idx_col_expanded[node_data[0]]
         sm.nodes[node_name]["dist_type"] = node_data[1]["dist_type"]
+
+    # recover the collapsed model from g
+    sm_collapsed = StructureModel()
+    sm_collapsed.add_nodes_from(list(idx_col.values()))
+    for u, v, edge_dict in g.graph["graph_collapsed"].edges.data(True):
+        sm_collapsed.add_edge(
+            idx_col[u],
+            idx_col[v],
+            origin="learned",
+            weight=edge_dict["weight"],
+        )
+    sm.graph["graph_collapsed"] = sm_collapsed
 
     return sm

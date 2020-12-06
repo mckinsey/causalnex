@@ -171,6 +171,27 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
 
         return square_weight_mat
 
+    def collapse_adj(self, adj: np.ndarray) -> np.ndarray:
+        """
+        Collapse categories into one column through summation.
+        Conceptually the same as modify_h.
+
+        Args:
+            adj: The adjacency matrix.
+
+        Returns:
+            Updated adjacency matrix.
+        """
+        orig_idx = self.idx_group[0]
+        expand_idx = self.idx_group[1:]
+
+        # Add on the edges from expanded nodes.
+        adj[orig_idx, :] = adj[orig_idx, :] + np.sum(adj[expand_idx, :], axis=0)
+        # Add on the edges to expanded nodes.
+        adj[:, orig_idx] = adj[:, orig_idx] + np.sum(adj[:, expand_idx], axis=1)
+
+        return adj
+
     @staticmethod
     def _to_index(X_one_hot: torch.Tensor) -> torch.Tensor:
         """
