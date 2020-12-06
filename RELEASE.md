@@ -1,6 +1,6 @@
 # Upcoming release
-* Added constructive ImportError for pygraphviz. 
-* Added PyTorch to requirements (i.e. not optional anymore). 
+* Added constructive ImportError for pygraphviz.
+* Added PyTorch to requirements (i.e. not optional anymore).
 * Added multiclass support to pytorch sklearn wrapper.
 * Added poisson regression support to sklearn wrapper.
 * Added ordinal distributed data support for pytorch NOTEARS.
