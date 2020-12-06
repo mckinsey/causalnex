@@ -25,9 +25,6 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
-from mock import patch
-
 from importlib import reload
 
 import matplotlib.pyplot as plt
@@ -37,7 +34,6 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from mock import patch
 
-import causalnex.plots as plots
 import causalnex.plots.display as display
 from causalnex.plots import color_gradient_string, plot_structure
 from causalnex.structure import StructureModel
@@ -176,7 +172,6 @@ class TestToPygraphviz:
 
         assert str(a) == str(b)
         assert str(a) != str(c)
-
 
     @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
     def test_install_warning(self, mocked_to_agraph):
