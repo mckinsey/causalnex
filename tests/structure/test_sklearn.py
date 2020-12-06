@@ -440,3 +440,28 @@ class TestDAGClassifier:
             " class: 0",
         ):
             clf.fit(X, y)
+
+
+@pytest.mark.parametrize("hidden_layer_units", [None, [1], [5], [5, 5], [10, 10]])
+def test_independent_predictions(hidden_layer_units):
+    x = np.linspace(0.0, 100, 100)
+    X = pd.DataFrame({"x": x})
+    Y = pd.Series(x ** 2, name="y")
+
+    reg = DAGRegressor(
+        threshold=0.0,
+        alpha=0.0,
+        beta=0.5,
+        fit_intercept=True,
+        hidden_layer_units=hidden_layer_units,
+        standardize=False,
+    )
+    reg.fit(X, Y)
+
+    pred_alone = reg.predict(pd.DataFrame({"x": [10.0]}))
+    pred_joint0 = reg.predict(pd.DataFrame({"x": [10.0, 0.0]}))
+    pred_joint1 = reg.predict(pd.DataFrame({"x": [10.0] + x.tolist()}))
+
+    assert np.isclose(pred_alone[0], pred_joint0[0], rtol=0.01)
+    assert np.isclose(pred_alone[0], pred_joint1[0], rtol=0.01)
+    assert np.isclose(pred_joint0[0], pred_joint1[0], rtol=0.01)
