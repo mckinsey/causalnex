@@ -5,6 +5,7 @@
 * Removed Python 3.5 support and add Python 3.8 support.
 * Updated core dependencies, supporting pandas 1.1, networkx 2.5, pgmpy 0.1.12.
 * Added PyTorch to requirements (i.e. not optional anymore).
+  * Allows sklearn imports via `from causalnex.structure import DAGRegressor, DAGClassifier`.
 * Added multiclass support to pytorch sklearn wrapper.
 * Added multi-parameter collapsed graph as graph attribute.
 * Added poisson regression support to sklearn wrapper.
