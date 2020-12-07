@@ -1,17 +1,21 @@
 # Upcoming release
-* Added constructive ImportError for pygraphviz.
-* Added PyTorch to requirements (i.e. not optional anymore).
-* Added multiclass support to pytorch sklearn wrapper.
-* Added poisson regression support to sklearn wrapper.
-* Added ordinal distributed data support for pytorch NOTEARS.
-* Added categorical distributed data support for pytorch NOTEARS.
-* Added poisson distributed data support for pytorch NOTEARS.
-* Added matplotlib and ipython display convenience functions.
-* Added multi-parameter collapsed graph as graph attribute.
-* Added dist type schema tutorial to docs.
+
+
+# Release 0.9.0
 * Removed Python 3.5 support and add Python 3.8 support
 * Updated core dependencies, supporting pandas 1.1, networkx 2.5, pgmpy 0.1.12.
+* Added PyTorch to requirements (i.e. not optional anymore).
+* Added multiclass support to pytorch sklearn wrapper.
+* Added multi-parameter collapsed graph as graph attribute.
+* Added poisson regression support to sklearn wrapper.
+* Added distribution support for structure learning: 
+  * Added ordinal distributed data support for pytorch NOTEARS.
+  * Added categorical distributed data support for pytorch NOTEARS.
+  * Added poisson distributed data support for pytorch NOTEARS.
+* Added dist type schema tutorial to docs.
 * Updated sklearn tutorial in docs to show new features.
+* Added constructive ImportError for pygraphviz.
+* Added matplotlib and ipython display convenience functions.
 
 # Release 0.8.1
 
