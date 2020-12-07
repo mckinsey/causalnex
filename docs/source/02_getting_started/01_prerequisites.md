@@ -3,6 +3,8 @@
 CausalNex supports macOS, Linux and Windows (7 / 8 / 10 and Windows Server 2016+). If you encounter any problems on
 these platforms, please check the FAQ, and / or the Alchemy community support on Slack.
 
+CausalNex requires [PyTorch](https://pytorch.org/) to be installed.
+
 ## macOS / Linux
 
 In order to work effectively with CausalNex projects, we highly recommend you download and install
@@ -28,11 +30,11 @@ manager program bundled with Anaconda.
 
 #### Create an environment with `conda`
 
-Use [`conda create`](https://conda.io/docs/user-guide/tasks/manage-environments.html#id1) to create a python 3.6
+Use [`conda create`](https://conda.io/docs/user-guide/tasks/manage-environments.html#id1) to create a python 3.8
 environment called `environment_name` by running:
 
 ```bash
-conda create --name environment_name python=3.6
+conda create --name environment_name python=3.8
 ```
 
 #### Activate an environment with `conda`

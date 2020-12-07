@@ -70,12 +70,6 @@ utils:
 
 ###############################################################################
 jobs:
-  unit_tests_35:
-    docker: *python
-    environment:
-      PYTHON_VERSION: '3.5'
-    <<: *unit_test_steps
-
   unit_tests_36:
     docker: *python
     environment:
@@ -86,6 +80,12 @@ jobs:
     environment:
       PYTHON_VERSION: '3.7'
     docker: *python
+    <<: *unit_test_steps
+
+  unit_tests_38:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.8'
     <<: *unit_test_steps
 
   linters_37:
@@ -125,15 +125,15 @@ workflows:
   version: 2
   regular:
     jobs:
-      - unit_tests_35
       - unit_tests_36
       - unit_tests_37
+      - unit_tests_38
       - linters_37
       - docs
       - all_circleci_checks_succeeded:
           requires:
-            - unit_tests_35
             - unit_tests_36
             - unit_tests_37
+            - unit_tests_38
             - linters_37
             - docs

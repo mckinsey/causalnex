@@ -293,8 +293,12 @@ class InferenceEngine:
             ]  # conditions
 
         code = template.__code__
+        pos_count = (
+            [code.co_posonlyargcount] if hasattr(code, "co_posonlyargcount") else []
+        )
         template.__code__ = types.CodeType(
             len(args),
+            *pos_count,
             code.co_kwonlyargcount,
             len(args),
             code.co_stacksize,

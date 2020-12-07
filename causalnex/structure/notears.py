@@ -425,14 +425,13 @@ def _learn_structure(
 
     # start optimisation
     for n_iter in range(max_iter):
-        while rho < 1e20:
+        while (rho < 1e20) and (h_new > 0.25 * h or h_new == np.inf):
             sol = sopt.minimize(_func, w_est, method="L-BFGS-B", jac=_grad, bounds=bnds)
             w_new = sol.x
             h_new = _h(w_new)
             if h_new > 0.25 * h:
                 rho *= 10
-            else:
-                break
+
         w_est, h = w_new, h_new
         alpha += rho * h
         if h <= h_tol:
@@ -534,7 +533,7 @@ def _learn_structure_lasso(
     w_est, w_new = np.zeros(2 * d * d), np.zeros(2 * d * d)
     rho, alpha, h_val, h_new = 1.0, 0.0, np.inf, np.inf
     for n_iter in range(max_iter):
-        while rho < 1e20:
+        while (rho < 1e20) and (h_new > 0.25 * h_val or h_new == np.inf):
             sol = sopt.minimize(_func, w_est, method="L-BFGS-B", jac=_grad, bounds=bnds)
             w_new = sol.x
             h_new = _h(
@@ -542,8 +541,7 @@ def _learn_structure_lasso(
             )
             if h_new > 0.25 * h_val:
                 rho *= 10
-            else:
-                break
+
         w_est, h_val = w_new, h_new
         alpha += rho * h_val
         if h_val <= h_tol:

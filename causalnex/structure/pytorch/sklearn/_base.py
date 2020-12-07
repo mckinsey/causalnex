@@ -32,8 +32,8 @@ This module contains the implementation of ``DAGBase``.
 """
 import copy
 import warnings
-from abc import ABCMeta, abstractmethod
-from typing import Dict, Iterable, List, Union
+from abc import ABCMeta
+from typing import Dict, Iterable, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,14 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
-from causalnex.plots import EDGE_STYLE, NODE_STYLE, plot_structure
+from causalnex.plots import (
+    EDGE_STYLE,
+    NODE_STYLE,
+    display_plot_ipython,
+    display_plot_mpl,
+    plot_structure,
+)
+from causalnex.plots.display import Axes, Figure, Image
 from causalnex.structure.pytorch import notears
 
 
@@ -68,7 +75,8 @@ class DAGBase(
         dependent_target: bool = True,
         enforce_dag: bool = False,
         standardize: bool = False,
-        **kwargs
+        target_dist_type: str = None,
+        **kwargs,
     ):
         """
         Args:
@@ -114,12 +122,35 @@ class DAGBase(
 
             kwargs: Extra arguments passed to the NOTEARS from_pandas function.
 
+            target_dist_type: The distribution type of the target.
+            Uses the same aliases as dist_type_schema.
+
         Raises:
             TypeError: if alpha is not numeric.
             TypeError: if beta is not numeric.
             TypeError: if fit_intercept is not a bool.
             TypeError: if threshold is not numeric.
+            NotImplementedError: if target_dist_type not in supported_types
         """
+
+        if not isinstance(alpha, (int, float)):
+            raise TypeError("alpha should be numeric")
+        if not isinstance(beta, (int, float)):
+            raise TypeError("beta should be numeric")
+        if not isinstance(fit_intercept, bool):
+            raise TypeError("fit_intercept should be a bool")
+        if not isinstance(threshold, (int, float)):
+            raise TypeError("threshold should be numeric")
+        # supported types is a class attr in child class
+        self._supported_types: str
+        # defensive check
+        if (target_dist_type not in self._supported_types) and (
+            target_dist_type is not None
+        ):
+            raise NotImplementedError(
+                f"Currently only implements [{', '.join(self._supported_types)}] dist types."
+                f" Got: {target_dist_type}"
+            )
 
         # core causalnex parameters
         self.alpha = alpha
@@ -131,29 +162,13 @@ class DAGBase(
         self.tabu_edges = tabu_edges
         self.tabu_parent_nodes = tabu_parent_nodes
         self.tabu_child_nodes = tabu_child_nodes
+        self._target_dist_type = target_dist_type
         self.kwargs = kwargs
-
-        if not isinstance(alpha, (int, float)):
-            raise TypeError("alpha should be numeric")
-        if not isinstance(beta, (int, float)):
-            raise TypeError("beta should be numeric")
-        if not isinstance(fit_intercept, bool):
-            raise TypeError("fit_intercept should be a bool")
-        if not isinstance(threshold, (int, float)):
-            raise TypeError("threshold should be numeric")
 
         # sklearn wrapper paramters
         self.dependent_target = dependent_target
         self.enforce_dag = enforce_dag
         self.standardize = standardize
-
-    @abstractmethod
-    def _target_dist_type(self) -> str:
-        """
-        NOTE:
-        When extending this class override this method to return a dist_type alias
-        """
-        raise NotImplementedError("Must implement _target_dist_type()")
 
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]):
         """
@@ -170,7 +185,10 @@ class DAGBase(
         y.name = y.name or "__target"
 
         # if self.dist_type_schema is None, assume all columns are continuous
-        dist_type_schema = self.dist_type_schema or {col: "cont" for col in X.columns}
+        # NOTE: this is copied due to later insertions
+        dist_type_schema = copy.deepcopy(self.dist_type_schema) or {
+            col: "cont" for col in X.columns
+        }
 
         if self.standardize:
             # only standardize the continuous dist type columns.
@@ -188,14 +206,14 @@ class DAGBase(
             )
 
             # if its a continuous target also standardize
-            if self._target_dist_type() == "cont":
+            if self._target_dist_type == "cont":
                 y = y.copy()
                 self._ss_y = StandardScaler()
                 y[:] = self._ss_y.fit_transform(y.values.reshape(-1, 1)).reshape(-1)
 
         # add the target to the dist_type_schema
         # NOTE: this must be done AFTER standardize
-        dist_type_schema[y.name] = self._target_dist_type()
+        dist_type_schema[y.name] = self._target_dist_type
 
         # preserve the feature and target colnames
         self._features = tuple(X.columns)
@@ -224,7 +242,7 @@ class DAGBase(
             tabu_parent_nodes=tabu_parent_nodes,
             tabu_child_nodes=self.tabu_child_nodes,
             use_bias=self.fit_intercept,
-            **self.kwargs
+            **self.kwargs,
         )
 
         # keep thresholding until the DAG constraint is enforced
@@ -253,17 +271,20 @@ class DAGBase(
         X = np.hstack([X, y_fill])
 
         # check that the model has been fit
-        check_is_fitted(self, "graph_")
+        check_is_fitted(self)
 
         # extract the base solver
         structure_learner = self.graph_.graph["structure_learner"]
         # use base solver to reconstruct data
         X_hat = structure_learner.reconstruct_data(X)
-        # pull off reconstructed y column
-        y_pred = X_hat[:, -1]
+
+        # get the target dist_type
+        target_dist_type = self.graph_.nodes(data=True)[self._target]["dist_type"]
+        # pull off reconstructed y columns
+        y_pred = target_dist_type.get_columns(X_hat)
 
         # inverse-standardize
-        if self.standardize and self._target_dist_type() == "cont":
+        if self.standardize and self._target_dist_type == "cont":
             y_pred = self._ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
 
         return y_pred
@@ -281,7 +302,7 @@ class DAGBase(
         Returns:
             The specified edge data.
         """
-        check_is_fitted(self, "graph_")
+        check_is_fitted(self)
 
         # build base data series
         edges = pd.Series(index=self._features)
@@ -306,7 +327,7 @@ class DAGBase(
         Returns:
             the L2 relationship between nodes.
         """
-        return self.get_edges_to_node(self._target).values
+        return np.asarray(self.get_edges_to_node(self._target))
 
     @property
     def coef_(self) -> np.ndarray:
@@ -316,7 +337,7 @@ class DAGBase(
         Returns:
             the mean effect relationship between nodes.
         """
-        return self.get_edges_to_node(self._target, data="mean_effect").values
+        return np.asarray(self.get_edges_to_node(self._target, data="mean_effect"))
 
     @property
     def intercept_(self) -> float:
@@ -324,32 +345,58 @@ class DAGBase(
         bias = self.graph_.nodes[self._target]["bias"]
         return 0.0 if bias is None else float(bias)
 
-    def plot_dag(self, enforce_dag: bool = False, filename: str = "./graph.png"):
-        """ Util function used to plot the fitted graph """
+    def plot_dag(
+        self,
+        enforce_dag: bool = False,
+        plot_structure_kwargs: Dict = None,
+        use_mpl: bool = True,
+        ax: Axes = None,
+        pixel_size_in: float = 0.01,
+    ) -> Union[Tuple[Figure, Axes], Image]:
+        """
+        Plot the DAG of the fitted model.
+        Args:
+            enforce_dag: Whether to threshold the model until it is a DAG.
+            Does not alter the underlying model.
 
-        try:
-            # pylint: disable=import-outside-toplevel
-            from IPython.display import Image
-        except ImportError as e:
-            raise ImportError("plot_dag method requires IPython installed.") from e
+            ax: Matplotlib axes to plot the model on.
+            If None, creates axis.
 
-        check_is_fitted(self, "graph_")
+            pixel_size_in: Scaling multiple for the plot.
 
+            plot_structure_kwargs: Dictionary of kwargs for the causalnex plotting module.
+
+            use_mpl: Whether to use matplotlib as the backend.
+            If False, ax and pixel_size_in are ignored.
+
+        Returns:
+            Plot of the DAG.
+        """
+
+        # handle thresholding
+        check_is_fitted(self)
         graph = copy.deepcopy(self.graph_)
         if enforce_dag:
             graph.threshold_till_dag()
 
-        # silence annoying plotting warning
-        warnings.filterwarnings("ignore")
-
-        viz = plot_structure(
-            graph,
-            graph_attributes={"scale": "0.5"},
-            all_node_attributes=NODE_STYLE.WEAK,
-            all_edge_attributes=EDGE_STYLE.WEAK,
+        # handle the plot kwargs
+        plt_kwargs_default = {
+            "graph_attributes": {"scale": "0.5"},
+            "all_node_attributes": NODE_STYLE.WEAK,
+            "all_edge_attributes": EDGE_STYLE.WEAK,
+        }
+        plt_kwargs = (
+            plot_structure_kwargs if plot_structure_kwargs else plt_kwargs_default
         )
-        viz.draw(filename)
+        prog = plt_kwargs.get("prog", "neato")
 
-        # reset warnings to always show
-        warnings.simplefilter("always")
-        return Image(filename)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # get pygraphviz plot:
+            viz = plot_structure(graph, **plt_kwargs)
+
+        if use_mpl is True:
+            return display_plot_mpl(
+                viz=viz, prog=prog, ax=ax, pixel_size_in=pixel_size_in
+            )
+        return display_plot_ipython(viz=viz, prog=prog)

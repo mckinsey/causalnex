@@ -41,6 +41,8 @@ import torch
 import torch.nn as nn
 
 
+# Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:
+# pylint: disable=abstract-method
 class LocallyConnected(nn.Module):
     """
     Local linear layer, i.e. Conv1dLocal() with filter size 1.
@@ -92,7 +94,6 @@ class LocallyConnected(nn.Module):
         if self.bias is not None:
             nn.init.uniform_(self.bias, -bound, bound)
 
-    # pylint: disable=arguments-differ
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward output calculation # [n, d, 1, m2] = [n, d, 1, m1] @ [1, d, m1, m2]

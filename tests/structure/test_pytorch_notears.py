@@ -40,6 +40,7 @@ from causalnex.structure.data_generators import (
     generate_binary_data,
     generate_binary_dataframe,
     generate_continuous_dataframe,
+    generate_count_dataframe,
     generate_structure,
 )
 from causalnex.structure.pytorch.notears import from_numpy, from_pandas
@@ -63,7 +64,7 @@ class TestFromPandas:
     def test_expected_structure_learned(self, train_data_idx, train_model):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_pandas(train_data_idx, w_threshold=0.15)
+        g = from_pandas(train_data_idx, w_threshold=0.16)
         assert set(g.edges) == set(train_model.edges)
 
     def test_empty_data_raises_error(self):
@@ -254,6 +255,35 @@ class TestFromPandas:
 
         assert f1_score > 0.8
 
+    def test_f1score_generated_poisson(self):
+        """ Poisson strucutre learned should have good f1 score """
+        np.random.seed(10)
+        sm = generate_structure(5, 3.0)
+        df = generate_count_dataframe(
+            sm, 1000, intercept=False, zero_inflation_factor=0.0, seed=10
+        )
+
+        dist_type_schema = {i: "poiss" for i in range(df.shape[1])}
+        sm_fitted = from_pandas(
+            df,
+            dist_type_schema=dist_type_schema,
+            lasso_beta=0.1,
+            ridge_beta=0.0,
+            w_threshold=0.1,
+            use_bias=False,
+        )
+
+        right_edges = sm.edges
+        n_predictions_made = len(sm_fitted.edges)
+        n_correct_predictions = len(set(sm_fitted.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.7
+
 
 class TestFromNumpy:
     """Test behaviour of the from_numpy_lasso method"""
@@ -273,7 +303,7 @@ class TestFromNumpy:
     def test_expected_structure_learned(self, train_data_idx, train_model_idx):
         """Given a small data set that can be examined by hand, the structure should be deterministic"""
 
-        g = from_numpy(train_data_idx.values, w_threshold=0.15)
+        g = from_numpy(train_data_idx.values, w_threshold=0.16)
         assert set(g.edges) == set(train_model_idx.edges)
 
     def test_empty_data_raises_error(self):
@@ -481,3 +511,33 @@ class TestFromNumpy:
         f1_score = 2 * (precision * recall) / (precision + recall)
 
         assert f1_score > 0.8
+
+    def test_f1score_generated_poisson(self):
+        """ Poisson strucutre learned should have good f1 score """
+        np.random.seed(10)
+        sm = generate_structure(5, 3.0)
+        df = generate_count_dataframe(
+            sm, 1000, intercept=False, zero_inflation_factor=0.0, seed=10
+        )
+        df = np.asarray(df)
+
+        dist_type_schema = {i: "poiss" for i in range(df.shape[1])}
+        sm_fitted = from_numpy(
+            df,
+            dist_type_schema=dist_type_schema,
+            lasso_beta=0.1,
+            ridge_beta=0.0,
+            w_threshold=0.1,
+            use_bias=False,
+        )
+
+        right_edges = sm.edges
+        n_predictions_made = len(sm_fitted.edges)
+        n_correct_predictions = len(set(sm_fitted.edges).intersection(set(right_edges)))
+        n_relevant_predictions = len(right_edges)
+
+        precision = n_correct_predictions / n_predictions_made
+        recall = n_correct_predictions / n_relevant_predictions
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+        assert f1_score > 0.7

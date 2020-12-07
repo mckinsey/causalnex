@@ -39,5 +39,5 @@ __all__ = [
     "DAGClassifier",
 ]
 
-from .pytorch import DAGClassifier, DAGRegressor
+from .pytorch.sklearn import DAGClassifier, DAGRegressor
 from .structuremodel import StructureModel

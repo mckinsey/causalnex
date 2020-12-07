@@ -1,5 +1,23 @@
 # Upcoming release
 
+
+# Release 0.9.0
+* Removed Python 3.5 support and add Python 3.8 support.
+* Updated core dependencies, supporting pandas 1.1, networkx 2.5, pgmpy 0.1.12.
+* Added PyTorch to requirements (i.e. not optional anymore).
+  * Allows sklearn imports via `from causalnex.structure import DAGRegressor, DAGClassifier`.
+* Added multiclass support to pytorch sklearn wrapper.
+* Added multi-parameter collapsed graph as graph attribute.
+* Added poisson regression support to sklearn wrapper.
+* Added distribution support for structure learning:
+  * Added ordinal distributed data support for pytorch NOTEARS.
+  * Added categorical distributed data support for pytorch NOTEARS.
+  * Added poisson distributed data support for pytorch NOTEARS.
+* Added dist type schema tutorial to docs.
+* Updated sklearn tutorial in docs to show new features.
+* Added constructive ImportError for pygraphviz.
+* Added matplotlib and ipython display convenience functions.
+
 # Release 0.8.1
 
 * Added `DAGClassifier` sklearn interface using the Pytorch NOTEARS implementation. Supports binary classification.
@@ -11,11 +29,11 @@
 
 # Release 0.8.0
 
-* Add DYNOTEARS (`from_numpy_dynamic`, an algorithm for structure learning on Dynamic Bayesian Networks).
+* Added DYNOTEARS (`from_numpy_dynamic`, an algorithm for structure learning on Dynamic Bayesian Networks).
 * Added Pytorch implementation for NOTEARS MLP (`pytorch.from_numpy`) which is much faster and allows nonlinear modelling.
 * Added `DAGRegressor` sklearn interface using the Pytorch NOTEARS implementation.
-* Add non-linear data generators for multiple data types.
-* Add a count data type to the data generator using a zero-inflated Poisson.
+* Added non-linear data generators for multiple data types.
+* Added a count data type to the data generator using a zero-inflated Poisson.
 * Set bounds/max class imbalance for binary features for the data generators.
 * Bugfix to resolve issue when applying NOTEARS on data containing NaN.
 * Bugfix for data_gen system. Fixes issues with root node initialization.
