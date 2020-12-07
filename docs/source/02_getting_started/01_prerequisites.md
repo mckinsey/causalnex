@@ -30,11 +30,11 @@ manager program bundled with Anaconda.
 
 #### Create an environment with `conda`
 
-Use [`conda create`](https://conda.io/docs/user-guide/tasks/manage-environments.html#id1) to create a python 3.6
+Use [`conda create`](https://conda.io/docs/user-guide/tasks/manage-environments.html#id1) to create a python 3.8
 environment called `environment_name` by running:
 
 ```bash
-conda create --name environment_name python=3.6
+conda create --name environment_name python=3.8
 ```
 
 #### Activate an environment with `conda`
