@@ -129,8 +129,8 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         n_classes = len(self.classes_)
         if n_classes == 2:
             # get the class by rounding the (0, 1) bound probability
-            # NOTE: probs is returned as a (n_samples, 1) array
-            indices = probs[:, 0].round().astype(np.int64)
+            # NOTE: probs is returned as a (n_samples, n_classes) array
+            indices = probs[:, 1].round().astype(np.int64)
         else:
             # use max probability in columns to determine class
             indices = np.argmax(probs, axis=1)
@@ -148,7 +148,7 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         # binary predict returns a (n_samples,) array
         # sklearn interface requires (n_samples, n_classes)
         if len(y_pred.shape) == 1:
-            y_pred = y_pred.reshape(-1, 1)
+            y_pred = np.vstack([1 - y_pred, y_pred]).T
         return y_pred
 
     @property

@@ -171,11 +171,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         x = self.dag_layer(x)  # [n, d * m1]
         x = x.view(-1, self.dims[0], self.dims[1])  # [n, d, m1]
-        for layer in self.loc_lin_layer_weights:
+        for output_dim, layer in zip(self.dims[1:], self.loc_lin_layer_weights):
             x = torch.sigmoid(x)  # [n, d, m1]
 
-            # soft clamp the denominator to prevent divide by zero and prevent very large weight increases
-            x = nn.LayerNorm((self.dims[0], self.dims[1]), eps=self.nonlinear_clamp)(x)
+            x = nn.LayerNorm(
+                output_dim,
+                eps=self.nonlinear_clamp,
+                elementwise_affine=True,
+            )(x)
 
             x = layer(x)  # [n, d, m2]
         x = x.squeeze(dim=2)  # [n, d]
