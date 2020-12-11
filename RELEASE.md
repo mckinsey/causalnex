@@ -1,5 +1,6 @@
 # Upcoming release
 
+* Fixed bug where the sklearn tutorial documentation wasn't rendering
 
 # Release 0.9.0
 * Removed Python 3.5 support and add Python 3.8 support.
