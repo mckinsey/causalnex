@@ -523,7 +523,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         # transpose to get the adjacency matrix
         return adj.T
 
-    def likelihood(self, x: np.ndarray):
+    def likelihood(self, x: np.ndarray) -> float:
         """
         Calculate likelihood of the model.
 
@@ -533,6 +533,5 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         X_torch = torch.from_numpy(x).float().to(self.device)
         X_hat = self(X_torch)
-        for dist_type in self.dist_types:
-            loss = loss + dist_type.loss(X_torch, X_hat)
-        return loss
+        loss = sum(dist_type.loss(X_torch, X_hat) for dist_type in self.dist_types)
+        return float(loss)
