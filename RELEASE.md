@@ -1,6 +1,9 @@
 # Upcoming release
 
-* Fixed bug where the sklearn tutorial documentation wasn't rendering
+
+# Release 0.9.1
+* Fixed bug where the sklearn tutorial documentation wasn't rendering.
+* Weaken pandas requirements to >=1.0, <2.0 (was ~=1.1).
 
 # Release 0.9.0
 * Removed Python 3.5 support and add Python 3.8 support.
