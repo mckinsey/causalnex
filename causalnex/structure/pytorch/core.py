@@ -522,3 +522,17 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         # transpose to get the adjacency matrix
         return adj.T
+
+    def likelihood(self, x: np.ndarray):
+        """
+        Calculate likelihood of the model.
+
+        Args:
+            x: 2d numpy array input data, axis=0 is data rows, axis=1 is data columns.
+                Data must be row oriented.
+        """
+        X_torch = torch.from_numpy(x).float().to(self.device)
+        X_hat = self(X_torch)
+        for dist_type in self.dist_types:
+            loss = loss + dist_type.loss(X_torch, X_hat)
+        return loss

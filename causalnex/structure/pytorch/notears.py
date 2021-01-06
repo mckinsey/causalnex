@@ -215,6 +215,7 @@ def from_numpy(
 
     # preserve the structure_learner as a graph attribute
     sm.graph["structure_learner"] = model
+    sm.graph["train_likelihood"] = model.likelihood(X)
 
     # collapse the adj down and store as graph attr
     adj = deepcopy(model.adj)
