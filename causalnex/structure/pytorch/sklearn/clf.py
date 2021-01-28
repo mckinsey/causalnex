@@ -31,7 +31,7 @@ This module contains the implementation of ``DAGClassifier``.
 ``DAGClassifier`` is a class which wraps the StructureModel in an sklearn interface for classification.
 """
 
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -39,6 +39,7 @@ from sklearn.base import ClassifierMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import check_classification_targets
 
+from causalnex.structure.pytorch.dist_type.categorical import DistTypeCategorical
 from causalnex.structure.pytorch.sklearn._base import DAGBase
 
 
@@ -72,14 +73,21 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         intercept_ (float): The target node bias value.
     """
 
-    def _target_dist_type(self) -> str:
-        return self.__target_dist_type
+    _supported_types = ("ord", "bin", "cat")
+    _default_type = "cont"
 
     def fit(
         self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
     ) -> "DAGClassifier":
         """
         Fits the sm model using the concat of X and y.
+
+        Raises:
+            NotImplementedError: If unsupported _target_dist_type provided.
+            ValueError: If less than 2 classes provided.
+
+        Returns:
+            Instance of DAGClassifier.
         """
         # clf target check
         check_classification_targets(y)
@@ -99,11 +107,11 @@ class DAGClassifier(ClassifierMixin, DAGBase):
                 " in the data, but the data contains only one"
                 " class: {}".format(self.classes_[0])
             )
-        if n_classes > 2:
-            raise ValueError("This solver does not support more than 2 classes")
 
-        # store the private attr __target_dist_type
-        self.__target_dist_type = "bin"
+        # store the protected attr _target_dist_type
+        if self._target_dist_type is None:
+            self._target_dist_type = "cat" if n_classes > 2 else "bin"
+
         # fit the NOTEARS model
         super().fit(X, y)
         return self
@@ -115,10 +123,17 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         Returns:
             Predicted y values for each row of X.
         """
+        # get the predicted probabilities
         probs = self.predict_proba(X)
 
-        # get the class by rounding the (0, 1) bound probability
-        indices = probs.round().astype(np.int64)
+        n_classes = len(self.classes_)
+        if n_classes == 2:
+            # get the class by rounding the (0, 1) bound probability
+            # NOTE: probs is returned as a (n_samples, n_classes) array
+            indices = probs[:, 1].round().astype(np.int64)
+        else:
+            # use max probability in columns to determine class
+            indices = np.argmax(probs, axis=1)
 
         return self.classes_[indices]
 
@@ -129,4 +144,91 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         Returns:
             Predicted y class probabilities for each row of X.
         """
-        return super().predict(X)
+        y_pred = super().predict(X)
+        # binary predict returns a (n_samples,) array
+        # sklearn interface requires (n_samples, n_classes)
+        if len(y_pred.shape) == 1:
+            y_pred = np.vstack([1 - y_pred, y_pred]).T
+        return y_pred
+
+    @property
+    def _target_node_names(self) -> List[str]:
+        # target node names are build according to
+        target_nodes = []
+        for catidx in range(len(self.classes_)):
+            target_nodes.append(
+                DistTypeCategorical.make_node_name(self._target, catidx)
+            )
+        return target_nodes
+
+    @property
+    def feature_importances_(self) -> np.ndarray:
+        """
+        Unsigned importances of the features wrt to the target.
+        NOTE: these are used as the graph adjacency matrix.
+        Returns:
+            the L2 relationship between nodes.
+            shape: (1, n_features) or (n_classes, n_features).
+        """
+        n_classes = len(self.classes_)
+        # handle binary
+        if n_classes == 2:
+            return np.asarray(self.get_edges_to_node(self._target).values).reshape(
+                1, -1
+            )
+
+        # handle categorical
+        data = []
+        for node in self._target_node_names:
+            # stack into (n_classes, n_features) format
+            data.append(np.asarray(self.get_edges_to_node(node).values).reshape(1, -1))
+        return np.vstack(data)
+
+    @property
+    def coef_(self) -> np.ndarray:
+        """
+        Signed relationship between features and the target.
+        For this linear case this equivalent to linear regression coefficients.
+        Returns:
+            the mean effect relationship between nodes.
+            shape: (1, n_features) or (n_classes, n_features).
+        """
+        n_classes = len(self.classes_)
+        # handle binary
+        if n_classes == 2:
+            return np.asarray(
+                self.get_edges_to_node(self._target, data="mean_effect")
+            ).reshape(1, -1)
+
+        # handle categorical
+        data = []
+        for node in self._target_node_names:
+            # get stack into (n_classes, n_features) format
+            data.append(
+                np.asarray(
+                    self.get_edges_to_node(node, data="mean_effect").values
+                ).reshape(1, -1)
+            )
+        return np.vstack(data)
+
+    @property
+    def intercept_(self) -> np.ndarray:
+        """
+        Returns:
+            The bias term from the target node.
+            shape: (1,) or (n_classes,).
+        """
+        n_classes = len(self.classes_)
+        # handle binary
+        if n_classes == 2:
+            bias = self.graph_.nodes[self._target]["bias"]
+            bias = 0.0 if bias is None else float(bias)
+            return np.array([bias])
+
+        # handle categorical
+        biases = []
+        for node in self._target_node_names:
+            bias = self.graph_.nodes[node]["bias"]
+            bias = 0.0 if bias is None else float(bias)
+            biases.append(bias)
+        return np.array(biases)

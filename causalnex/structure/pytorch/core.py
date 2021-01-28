@@ -171,12 +171,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         x = self.dag_layer(x)  # [n, d * m1]
         x = x.view(-1, self.dims[0], self.dims[1])  # [n, d, m1]
-        for layer in self.loc_lin_layer_weights:
+        for output_dim, layer in zip(self.dims[1:], self.loc_lin_layer_weights):
             x = torch.sigmoid(x)  # [n, d, m1]
-            # soft clamp the denominator to prevent divide by zero and prevent very large weight increases
-            x = (x - x.mean(dim=0).detach()) / torch.sqrt(
-                (self.nonlinear_clamp + x.var(dim=0).detach())
-            )
+
+            x = nn.LayerNorm(
+                output_dim,
+                eps=self.nonlinear_clamp,
+                elementwise_affine=True,
+            )(x)
 
             x = layer(x)  # [n, d, m2]
         x = x.squeeze(dim=2)  # [n, d]
@@ -193,6 +195,10 @@ class NotearsMLP(nn.Module, BaseEstimator):
         Returns:
             reconstructed data
         """
+
+        # perform preprocessing and column expansions, do NOT refit
+        for dist_type in self.dist_types:
+            X = dist_type.preprocess_X(X, fit_transform=False)
 
         with torch.no_grad():
             # convert the predict data to pytorch tensor
@@ -365,8 +371,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             X_hat = self(X)
             h_val = self._h_func()
 
-            # preallocate loss tensor
-            loss = torch.tensor(0, device=X.device)  # pylint: disable=not-callable
+            loss = 0.0
             # sum the losses across all dist types
             for dist_type in self.dist_types:
                 loss = loss + dist_type.loss(X, X_hat)
@@ -423,6 +428,21 @@ class NotearsMLP(nn.Module, BaseEstimator):
         square_weight_mat = torch.sum(
             dag_layer_weight * dag_layer_weight, dim=1
         ).t()  # [i, j]
+
+        # modify the h(W) matrix to deal with expanded columns
+        original_idxs = []
+        for dist_type in self.dist_types:
+            # modify the weight matrix to prevent spurious cycles with expended columns
+            square_weight_mat = dist_type.modify_h(square_weight_mat)
+            # gather the original idxs
+            original_idxs.append(dist_type.idx)
+        # original size is largest original index
+        original_size = np.max(original_idxs) + 1
+        # subselect the top LH corner of matrix which corresponds to original data
+        square_weight_mat = square_weight_mat[:original_size, :original_size]
+        # update d and d_torch to match the new matrix size
+        d = square_weight_mat.shape[0]
+        d_torch = torch.tensor(d).to(self.device)  # pylint: disable=not-callable
 
         # h = trace_expm(a) - d  # (Zheng et al. 2018)
         characteristic_poly_mat = (

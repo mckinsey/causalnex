@@ -36,8 +36,11 @@ __all__ = [
     "EDGE_STYLE",
     "GRAPH_STYLE",
     "color_gradient_string",
+    "display_plot_ipython",
+    "display_plot_mpl",
 ]
 
+from .display import display_plot_ipython, display_plot_mpl
 from .plots import (
     EDGE_STYLE,
     GRAPH_STYLE,
