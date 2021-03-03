@@ -50,7 +50,6 @@ from causalnex.structure.pytorch.nonlinear import LocallyConnected
 
 
 # Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:
-# pylint: disable=abstract-method
 class NotearsMLP(nn.Module, BaseEstimator):
     """
     Class for NOTEARS MLP (Multi-layer Perceptron) model.

@@ -198,10 +198,8 @@ class InferenceEngine:
             ValueError: if performing intervention would create an isolated node.
         """
         if not any(
-            [
-                node in inspect.getargs(f.__code__)[0][1:]
-                for _, f in self._node_functions.items()
-            ]
+            node in inspect.getargs(f.__code__)[0][1:]
+            for _, f in self._node_functions.items()
         ):
             raise ValueError(
                 "Do calculus cannot be applied because it would result in an isolate"
@@ -289,7 +287,7 @@ class InferenceEngine:
             return self._cpds[arg_spec.args[0]][  # target name
                 arg_spec.locals[arg_spec.args[0]]
             ][  # target state
-                tuple([(arg, arg_spec.locals[arg]) for arg in arg_spec.args[1:]])
+                tuple((arg, arg_spec.locals[arg]) for arg in arg_spec.args[1:])
             ]  # conditions
 
         code = template.__code__

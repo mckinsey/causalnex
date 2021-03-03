@@ -461,18 +461,10 @@ def test_data_c_discrete(test_data_c) -> pd.DataFrame:
 def test_data_c_likelihood(train_data_discrete_cpds) -> pd.DataFrame:
     """Marginal likelihoods for train_data in train_model"""
 
-    # Known bug in pylint with generated Dict: https://github.com/PyCQA/pylint/issues/1498
     data_arr = [
         [
-            (train_data_discrete_cpds["c"])[  # pylint: disable=unsubscriptable-object
-                y, x
-            ]
-            for y in range(
-                len(
-                    # pylint: disable=unsubscriptable-object
-                    train_data_discrete_cpds["c"]
-                )
-            )
+            (train_data_discrete_cpds["c"])[y, x]
+            for y in range(len(train_data_discrete_cpds["c"]))
         ]
         for x in range(len(train_data_discrete_cpds["c"][0]))
     ]

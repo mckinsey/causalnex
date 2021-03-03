@@ -555,7 +555,7 @@ def valid_sample(samples, query_result):
         counts[k] = v / len(samples)
         difference = abs(counts.get(k, 0) - query_result[k])
         differences.append(difference)
-    return all([not round(difference, 2) > 0.01 for difference in differences])
+    return all(not round(difference, 2) > 0.01 for difference in differences)
 
 
 def test_draw_sample_sprinkler(sprinkler_bbn):

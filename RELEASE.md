@@ -1,5 +1,5 @@
 # Upcoming release
-
+* Update pylint version to 2.7
 
 # Release 0.9.1
 * Fixed bug where the sklearn tutorial documentation wasn't rendering.
