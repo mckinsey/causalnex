@@ -1,4 +1,5 @@
 # Upcoming release
+* Remove Boston housing dataset from "sklearn tutorial", see #91 for more information.
 * Update pylint version to 2.7
 
 # Release 0.9.1
