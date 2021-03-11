@@ -98,11 +98,9 @@ class TestFromPandas:
         data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
         g = from_pandas(data)
         assert all(
-            [
-                0.99 <= weight <= 1
-                for u, v, weight in g.edges(data="weight")
-                if u == 0 and v == 1
-            ]
+            0.99 <= weight <= 1
+            for u, v, weight in g.edges(data="weight")
+            if u == 0 and v == 1
         )
 
     def test_inverse_relationships_get_negative_weight(self):
@@ -112,11 +110,9 @@ class TestFromPandas:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_pandas(data)
         assert all(
-            [
-                weight < 0
-                for u, v, weight in g.edges(data="mean_effect")
-                if u == 0 and v == 1
-            ]
+            weight < 0
+            for u, v, weight in g.edges(data="mean_effect")
+            if u == 0 and v == 1
         )
 
     def test_no_cycles(self, train_data_idx):

@@ -450,7 +450,7 @@ class BayesianNetwork:
         transformed_data[
             "{node}_prediction".format(node=node)
         ] = transformed_data.apply(
-            lambda row: cpd[tuple([row[parent] for parent in parents])].idxmax()
+            lambda row: cpd[tuple(row[parent] for parent in parents)].idxmax()
             if parents
             else cpd[""].idxmax(),
             axis=1,
@@ -528,7 +528,7 @@ class BayesianNetwork:
         def lookup_probability(row, s):
             """Retrieve probability from CPD"""
             if parents:
-                return cpd[tuple([row[parent] for parent in parents])].loc[s]
+                return cpd[tuple(row[parent] for parent in parents)].loc[s]
             return cpd.at[s, ""]
 
         for state in self.node_states[node]:
