@@ -126,13 +126,13 @@ class TestDistTypeClasses:
             ),
             (
                 DistTypeBinary,
-                np.random.randint(2, size=(5, 2)),
-                np.random.normal(size=(5, 2)),
+                np.random.randint(2, size=(50, 2)),
+                np.random.normal(size=(50, 2)),
             ),
             (
                 DistTypeCategorical,
-                np.random.randint(3, size=(5, 1)),
-                np.random.normal(size=(5, 3)),
+                np.random.randint(3, size=(50, 1)),
+                np.random.normal(size=(50, 3)),
             ),
             (
                 DistTypePoisson,
@@ -141,8 +141,8 @@ class TestDistTypeClasses:
             ),
             (
                 DistTypeOrdinal,
-                np.random.randint(3, size=(5, 2)),
-                np.random.normal(size=(5, 2)),
+                np.random.randint(3, size=(50, 2)),
+                np.random.normal(size=(50, 2)),
             ),
         ],
     )
