@@ -615,30 +615,30 @@ class TestFromNumpyLasso:
     def test_tabu_expected_edges(self, train_data_idx):
         """Tabu edges should not exist in the network"""
 
-        tabu_e = [("d", "a"), ("b", "c")]
+        tabu_e = [(0, 1), (2, 3)]
         g = from_numpy_lasso(train_data_idx.values, 0.1, tabu_edges=tabu_e)
         assert [e not in g.edges for e in tabu_e]
 
     def test_tabu_expected_parent_nodes(self, train_data_idx):
         """Tabu parent nodes should not have any outgoing edges"""
 
-        tabu_p = ["a", "d", "b"]
+        tabu_p = [0, 1, 2]
         g = from_numpy_lasso(train_data_idx.values, 0.1, tabu_parent_nodes=tabu_p)
         assert [p not in [e[0] for e in g.edges] for p in tabu_p]
 
     def test_tabu_expected_child_nodes(self, train_data_idx):
         """Tabu child nodes should not have any ingoing edges"""
 
-        tabu_c = ["a", "d", "b"]
+        tabu_c = [0, 1, 2]
         g = from_numpy_lasso(train_data_idx.values, 0.1, tabu_child_nodes=tabu_c)
         assert [c not in [e[1] for e in g.edges] for c in tabu_c]
 
     def test_multiple_tabu(self, train_data_idx):
         """Any edge related to tabu edges/parent nodes/child nodes should not exist in the network"""
 
-        tabu_e = [("d", "a"), ("b", "c")]
-        tabu_p = ["b"]
-        tabu_c = ["a", "d"]
+        tabu_e = [(3, 0), (1, 2)]
+        tabu_p = [1]
+        tabu_c = [0, 3]
         g = from_numpy_lasso(
             train_data_idx.values,
             0.1,
@@ -668,8 +668,6 @@ class TestFromNumpyLasso:
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_numpy_lasso(train_data_idx.values, 0.1, w_threshold=0.3)
 
-        print(g.edges)
-        print(train_model_idx.edges)
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(
             set(g.edges).intersection(set(train_model_idx.edges))
