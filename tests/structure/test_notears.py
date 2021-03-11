@@ -344,8 +344,6 @@ class TestFromPandasLasso:
     def test_f1_score_fixed(self, train_data_idx, train_model):
         """Structure learnt from regularisation should have very high f1 score relative to the ground truth"""
         g = from_pandas_lasso(train_data_idx, 0.1, w_threshold=0.3)
-        print(sorted(list(g.edges)))
-        print(train_model.edges)
 
         n_predictions_made = len(g.edges)
         n_correct_predictions = len(set(g.edges).intersection(set(train_model.edges)))
