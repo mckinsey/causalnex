@@ -35,11 +35,9 @@ import torch
 from IPython.display import Image
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from sklearn.datasets import load_diabetes
 from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.utils import Bunch
 
 from causalnex.structure import data_generators as dg
 from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
