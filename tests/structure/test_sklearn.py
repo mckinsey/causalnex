@@ -489,28 +489,3 @@ def test_independent_predictions(hidden_layer_units):
     assert np.isclose(pred_alone[0], pred_joint0[0])
     assert np.isclose(pred_alone[0], pred_joint1[0])
     assert np.isclose(pred_joint0[0], pred_joint1[0])
-
-
-def test_tabu_regressor():
-    torch.manual_seed(42)
-    data: Bunch = load_diabetes()
-    X = data.data  # pylint: disable=no-member
-    y = data.target  # pylint: disable=no-member
-    names = data["feature_names"]
-
-    reg = DAGRegressor(
-        threshold=0.0,
-        alpha=0.0001,
-        beta=0.2,
-        hidden_layer_units=[2],
-        standardize=True,
-        enforce_dag=True,
-        tabu_child_nodes=["age", "sex", "bmi"],
-    )
-
-    _ = cross_val_score(reg, X, y, cv=KFold(n_splits=3, shuffle=True, random_state=42))
-
-    X = pd.DataFrame(X, columns=names)
-    y = pd.Series(y, name="DPROG")
-    reg.fit(X, y)
-    reg.plot_dag(enforce_dag=True)
