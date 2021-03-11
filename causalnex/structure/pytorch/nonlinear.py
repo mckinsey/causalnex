@@ -42,7 +42,6 @@ import torch.nn as nn
 
 
 # Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:
-# pylint: disable=abstract-method
 class LocallyConnected(nn.Module):
     """
     Local linear layer, i.e. Conv1dLocal() with filter size 1.

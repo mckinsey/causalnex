@@ -1,7 +1,9 @@
 # Upcoming release
 
-* Minor fixes
-
+# Release 0.9.2
+* Remove Boston housing dataset from "sklearn tutorial", see #91 for more information.
+* Update pylint version to 2.7
+* Improve speed and non-stochasticity of tests
 
 # Release 0.9.1
 * Fixed bug where the sklearn tutorial documentation wasn't rendering.

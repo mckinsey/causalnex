@@ -119,11 +119,9 @@ class TestFromPandas:
         data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
         g = from_pandas(data)
         assert all(
-            [
-                0.99 <= weight <= 1
-                for u, v, weight in g.edges(data="weight")
-                if u == 0 and v == 1
-            ]
+            0.99 <= weight <= 1
+            for u, v, weight in g.edges(data="weight")
+            if u == 0 and v == 1
         )
 
     def test_inverse_relationships_get_negative_weight(self):
@@ -133,7 +131,7 @@ class TestFromPandas:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_pandas(data)
         assert all(
-            [weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1]
+            weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
         )
 
     def test_no_cycles(self, train_data_idx):
@@ -268,11 +266,9 @@ class TestFromPandasLasso:
         data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
         g = from_pandas_lasso(data, 0.1)
         assert all(
-            [
-                0.99 <= weight <= 1
-                for u, v, weight in g.edges(data="weight")
-                if u == 0 and v == 1
-            ]
+            0.99 <= weight <= 1
+            for u, v, weight in g.edges(data="weight")
+            if u == 0 and v == 1
         )
 
     def test_inverse_relationships_get_negative_weight(self):
@@ -282,7 +278,7 @@ class TestFromPandasLasso:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_pandas_lasso(data, 0.1)
         assert all(
-            [weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1]
+            weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
         )
 
     def test_no_cycles(self, train_data_idx):
@@ -452,11 +448,9 @@ class TestFromNumpy:
         data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
         g = from_numpy(data.values)
         assert all(
-            [
-                0.99 <= weight <= 1
-                for u, v, weight in g.edges(data="weight")
-                if u == 0 and v == 1
-            ]
+            0.99 <= weight <= 1
+            for u, v, weight in g.edges(data="weight")
+            if u == 0 and v == 1
         )
 
     def test_inverse_relationships_get_negative_weight(self):
@@ -466,7 +460,7 @@ class TestFromNumpy:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_numpy(data.values)
         assert all(
-            [weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1]
+            weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
         )
 
     def test_no_cycles(self, train_data_idx):
@@ -595,11 +589,9 @@ class TestFromNumpyLasso:
         data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
         g = from_numpy_lasso(data.values, 0.1)
         assert all(
-            [
-                0.99 <= weight <= 1
-                for u, v, weight in g.edges(data="weight")
-                if u == 0 and v == 1
-            ]
+            0.99 <= weight <= 1
+            for u, v, weight in g.edges(data="weight")
+            if u == 0 and v == 1
         )
 
     def test_inverse_relationships_get_negative_weight(self):
@@ -609,7 +601,7 @@ class TestFromNumpyLasso:
         data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
         g = from_numpy_lasso(data.values, 0.1)
         assert all(
-            [weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1]
+            weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
         )
 
     def test_no_cycles(self, train_data_idx):
