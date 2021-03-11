@@ -35,11 +35,9 @@ import torch
 from IPython.display import Image
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from sklearn.datasets import load_diabetes
 from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
-from sklearn.utils import Bunch
 
 from causalnex.structure import data_generators as dg
 from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
@@ -489,28 +487,3 @@ def test_independent_predictions(hidden_layer_units):
     assert np.isclose(pred_alone[0], pred_joint0[0])
     assert np.isclose(pred_alone[0], pred_joint1[0])
     assert np.isclose(pred_joint0[0], pred_joint1[0])
-
-
-def test_tabu_regressor():
-    torch.manual_seed(42)
-    data: Bunch = load_diabetes()
-    X = data.data  # pylint: disable=no-member
-    y = data.target  # pylint: disable=no-member
-    names = data["feature_names"]
-
-    reg = DAGRegressor(
-        threshold=0.0,
-        alpha=0.0001,
-        beta=0.2,
-        hidden_layer_units=[2],
-        standardize=True,
-        enforce_dag=True,
-        tabu_child_nodes=["age", "sex", "bmi"],
-    )
-
-    _ = cross_val_score(reg, X, y, cv=KFold(n_splits=3, shuffle=True, random_state=42))
-
-    X = pd.DataFrame(X, columns=names)
-    y = pd.Series(y, name="DPROG")
-    reg.fit(X, y)
-    reg.plot_dag(enforce_dag=True)
