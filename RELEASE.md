@@ -1,5 +1,7 @@
 # Upcoming release
 
+* Fixes cyclical import of `causalnex.plots`, as per #106.
+
 # Release 0.9.2
 * Remove Boston housing dataset from "sklearn tutorial", see #91 for more information.
 * Update pylint version to 2.7

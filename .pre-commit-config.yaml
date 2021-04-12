@@ -31,7 +31,7 @@ repos:
         exclude: ^causalnex/ebaybbn
 
 -   repo: https://github.com/psf/black
-    rev: stable
+    rev: 20.8b1
     hooks:
     -   id: black
 

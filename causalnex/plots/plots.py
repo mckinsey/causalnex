@@ -33,11 +33,9 @@ from typing import Dict, Tuple
 
 import networkx as nx
 
-from causalnex.structure.structuremodel import StructureModel
-
 
 def plot_structure(
-    sm: StructureModel,
+    sm: nx.DiGraph,
     prog: str = "neato",
     all_node_attributes: Dict[str, str] = None,
     all_edge_attributes: Dict[str, str] = None,
@@ -187,12 +185,12 @@ def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
 
 
 def _add_attributes(
-    sm: StructureModel,
+    sm: nx.DiGraph,
     all_node_attributes: Dict[str, str] = None,
     all_edge_attributes: Dict[str, str] = None,
     node_attributes: Dict[str, Dict[str, str]] = None,
     edge_attributes: Dict[str, Dict[str, str]] = None,
-) -> StructureModel:
+) -> nx.DiGraph:
     _sm = deepcopy(sm)
 
     # shift labels to be above nodes
