@@ -1,5 +1,9 @@
 # Upcoming release
 
+# Release 0.10.0
+
+* Add utility function to extract Markov blanket from a Bayesian Network
+* Support receiving a list of inputs for `InferenceEngine` with a multiprocessing option
 * Fixes cyclical import of `causalnex.plots`, as per #106.
 
 # Release 0.9.2

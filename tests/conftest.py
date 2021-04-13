@@ -71,6 +71,16 @@ def train_model() -> StructureModel:
 
 
 @pytest.fixture
+def bn_train_model(train_model) -> BayesianNetwork:
+    """
+    This generates a Bayesian Network and is used in testing Markov blanket method
+    """
+    train_model.add_edges_from([("a", "f"), ("f", "g"), ("e", "f")])
+
+    return BayesianNetwork(train_model)
+
+
+@pytest.fixture
 def train_model_idx(train_model) -> BayesianModel:
     """
     This Bayesian model is identical to the train_model() fixture, with the exception that node names

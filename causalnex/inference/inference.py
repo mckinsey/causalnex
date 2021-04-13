@@ -35,9 +35,10 @@ import copy
 import inspect
 import re
 import types
-from typing import Callable, Dict, Hashable, Tuple, Union
+from typing import Callable, Dict, Hashable, List, Tuple, Union
 
 import pandas as pd
+from pathos import multiprocessing
 
 from causalnex.ebaybbn import build_bbn
 from causalnex.network import BayesianNetwork
@@ -123,7 +124,7 @@ class InferenceEngine:
         self._generate_domains_bn(bn)
         self._generate_bbn()
 
-    def query(
+    def _single_query(
         self, observations: Dict[str, Hashable] = None
     ) -> Dict[str, Dict[Hashable, float]]:
         """
@@ -138,6 +139,7 @@ class InferenceEngine:
             A dictionary of marginal probabilities of the network.
             For instance, :math:`P(a=1) = 0.3, P(a=2) = 0.7` -> {a: {1: 0.3, 2: 0.7}}
         """
+
         bbn_results = (
             self._bbn.query(**observations) if observations else self._bbn.query()
         )
@@ -147,6 +149,40 @@ class InferenceEngine:
             results[node][state] = prob
 
         return results
+
+    def query(
+        self,
+        observations: Union[Dict[str, Hashable], List[Dict[str, Hashable]]] = None,
+        parallel: bool = False,
+        num_cores: int = None,
+    ) -> Union[
+        Dict[str, Dict[Hashable, float]], List[Dict[str, Dict[Hashable, float]]]
+    ]:
+        """
+        Query the ``BayesianNetwork`` for marginals given one or more observations.
+
+        Args:
+            observations: one or more observations of states of nodes in the Bayesian Network.
+            parallel: if True, run the query using multiprocessing
+            num_cores: only applicable if paralle=True. The number of cores used during multiprocessing.
+                       If num_cores is not provided, number of processors will be autodetected and used
+
+        Returns:
+            A dictionary or a list of dictionaries of marginal probabilities of the network.
+        """
+
+        if isinstance(observations, dict) or observations is None:
+            return self._single_query(observations)
+        result = []
+        if parallel:
+            with multiprocessing.Pool(num_cores) as p:
+                result = p.map(self._single_query, observations)
+
+        else:
+            for obs in observations:
+                result.append(self._single_query(obs))
+
+        return result
 
     def _do(self, observation: str, state: Dict[Hashable, float]) -> None:
         """

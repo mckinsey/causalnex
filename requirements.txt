@@ -1,6 +1,7 @@
 networkx~=2.5
 numpy>=1.14.2, <2.0
 pandas>=1.0, <2.0
+pathos>=0.2.7, <0.3.0
 pgmpy>=0.1.12,<0.2.0
 prettytable>=0.7.2, <0.8
 scikit-learn>=0.20.2, <0.23.0, !=0.22.2.post1
