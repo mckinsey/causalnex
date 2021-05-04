@@ -26,18 +26,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-``causalnex.discretiser`` provides functionality to discretise data.
-"""
+import pytest
 
-__all__ = [
-    "Discretiser",
-    "DecisionTreeSupervisedDiscretiserMethod",
-    "MDLPSupervisedDiscretiserMethod",
-]
 
-from .discretiser import Discretiser
-from .discretiser_strategy import (
-    DecisionTreeSupervisedDiscretiserMethod,
-    MDLPSupervisedDiscretiserMethod,
-)
+class TestBaseClass:
+    def test_fit_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn(get_iris_data)
+        with pytest.raises(NotImplementedError):
+            obj.fit(
+                feat_names=["petal width (cm)"],
+                dataframe=get_iris_data,
+                target_continuous=False,
+                target="target",
+            )
+
+    def test_fit_transform_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn_transform(get_iris_data)
