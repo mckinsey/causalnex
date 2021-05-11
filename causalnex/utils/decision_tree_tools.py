@@ -25,41 +25,39 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-This module contains the helper functions for interacting with Bayesian Network
-"""
+"""Helper functions for advanced discretisations"""
 
-from copy import deepcopy
+from typing import List, Union
 
-from causalnex.network import BayesianNetwork
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 
-def get_markov_blanket(bn: BayesianNetwork, target_node: str) -> "BayesianNetwork":
-    """
-    Generate the markov blanket of a node in the network
+def extract_thresholds_from_dtree(
+    dtree: Union[DecisionTreeClassifier, DecisionTreeRegressor],
+    length_df: int,
+) -> List[np.array]:
+    """A helper function that extracts the decision threshold of a decision tree
+
     Args:
-        bn (BayesianNetwork): A BayesianNetwork object that contains the structure of the full graph
-        target_node (str): Name of the target node that we want the markov boundary for
+        dtree: A decisiontree model object
+        length_df (int): length of the target dataframe
+
     Returns:
-        A Bayesian Network object containing the structure of the input's markov blanket
-    Raises:
-        KeyError: if target_node is not in the network
+        a list of numpy array indicating the thersholds for each feature
     """
 
-    if target_node not in bn.nodes:
-        raise KeyError(f"{target_node} is not found in the network")
+    tree_threshold = dtree.tree_.threshold
+    tree_feature = dtree.tree_.feature
 
-    mb_graph = deepcopy(bn)
-    keep_nodes = set()
-    for node in mb_graph.nodes:
-        if node in mb_graph.structure.predecessors(target_node):
-            keep_nodes.add(node)
-        if node in mb_graph.structure.successors(target_node):
-            keep_nodes.add(node)
-            for parent in mb_graph.structure.predecessors(node):
-                keep_nodes.add(parent)
-    for node in mb_graph.nodes:
-        if node not in keep_nodes and node != target_node:
-            mb_graph.structure.remove_node(node)
+    # store decision thresholds of all features in a list
+    thresholds_for_features = []
 
-    return BayesianNetwork(mb_graph.structure)
+    for feat in range(length_df):
+        if feat not in tree_feature:
+            thresholds_for_features.append(np.array([]))
+        else:
+            thresholds_for_features.append(
+                np.unique(tree_threshold[tree_feature == feat])
+            )
+    return thresholds_for_features

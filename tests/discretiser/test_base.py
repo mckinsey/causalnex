@@ -25,41 +25,24 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-This module contains the helper functions for interacting with Bayesian Network
-"""
 
-from copy import deepcopy
-
-from causalnex.network import BayesianNetwork
+import pytest
 
 
-def get_markov_blanket(bn: BayesianNetwork, target_node: str) -> "BayesianNetwork":
-    """
-    Generate the markov blanket of a node in the network
-    Args:
-        bn (BayesianNetwork): A BayesianNetwork object that contains the structure of the full graph
-        target_node (str): Name of the target node that we want the markov boundary for
-    Returns:
-        A Bayesian Network object containing the structure of the input's markov blanket
-    Raises:
-        KeyError: if target_node is not in the network
-    """
+class TestBaseClass:
+    def test_fit_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn(get_iris_data)
+        with pytest.raises(NotImplementedError):
+            obj.fit(
+                feat_names=["petal width (cm)"],
+                dataframe=get_iris_data,
+                target_continuous=False,
+                target="target",
+            )
 
-    if target_node not in bn.nodes:
-        raise KeyError(f"{target_node} is not found in the network")
-
-    mb_graph = deepcopy(bn)
-    keep_nodes = set()
-    for node in mb_graph.nodes:
-        if node in mb_graph.structure.predecessors(target_node):
-            keep_nodes.add(node)
-        if node in mb_graph.structure.successors(target_node):
-            keep_nodes.add(node)
-            for parent in mb_graph.structure.predecessors(node):
-                keep_nodes.add(parent)
-    for node in mb_graph.nodes:
-        if node not in keep_nodes and node != target_node:
-            mb_graph.structure.remove_node(node)
-
-    return BayesianNetwork(mb_graph.structure)
+    def test_fit_transform_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn_transform(get_iris_data)
