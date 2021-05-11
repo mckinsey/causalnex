@@ -32,7 +32,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from pgmpy.models import BayesianModel
+from sklearn.datasets import load_iris
 
+from causalnex.discretiser import Discretiser
 from causalnex.network import BayesianNetwork
 from causalnex.structure import StructureModel
 from causalnex.structure.notears import from_pandas
@@ -1034,3 +1036,37 @@ def adjacency_mat_num_stability() -> np.ndarray:
         ]
     )
     return W
+
+
+@pytest.fixture
+def iris_test_data() -> pd.DataFrame:
+    """
+    Iris dataset to test sklearn wrappers
+    """
+    iris = load_iris()
+    X, y = iris["data"], iris["target"]
+    names = iris["feature_names"]
+    df = pd.DataFrame(X, columns=names)
+    df["type"] = y
+    df["sepal length (cm)"] = Discretiser(
+        method="quantile", num_buckets=3
+    ).fit_transform(df["sepal length (cm)"].values)
+
+    return df
+
+
+@pytest.fixture
+def iris_edge_list():
+    """
+    Edge list to construct bayesian network for iris data
+    """
+    edge_list = [
+        ("sepal width (cm)", "sepal length (cm)"),
+        ("petal length (cm)", "sepal length (cm)"),
+        ("petal length (cm)", "sepal width (cm)"),
+        ("petal width (cm)", "petal length (cm)"),
+        ("type", "sepal width (cm)"),
+        ("type", "petal width (cm)"),
+    ]
+
+    return edge_list

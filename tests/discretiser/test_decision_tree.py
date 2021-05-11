@@ -178,7 +178,6 @@ class TestDecisionTree:
             target_continuous=False,
             target="target",
         )
-
         output = tree_discretiser.transform(get_iris_data[["sepal width (cm)"]]).values
         assert (ground_truth == output.reshape(-1, 15)).all()
 

@@ -225,6 +225,7 @@ class MDLPSupervisedDiscretiserMethod(AbstractSupervisedDiscretiserMethod):
         >>> )
         >>> discretised_data = discretiser.transform(data[["sepal length (cm)"]])
         >>> discretised_data.values.ravel()
+
         array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 2, 2, 2, 1, 2, 1, 2, 0, 2, 0, 0, 2, 2, 2, 1, 2,
