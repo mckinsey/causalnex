@@ -7,6 +7,7 @@
 * Add utility function to extract Markov blanket from a Bayesian Network
 * Support receiving a list of inputs for `InferenceEngine` with a multiprocessing option
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms
+* Added manifest files to ensure requirements and licenses are packaged
 
 # Release 0.9.2
 * Remove Boston housing dataset from "sklearn tutorial", see #91 for more information.
