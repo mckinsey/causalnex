@@ -26,10 +26,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
-"""
+import pytest
 
-__version__ = "0.10.0"
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+class TestBaseClass:
+    def test_fit_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn(get_iris_data)
+        with pytest.raises(NotImplementedError):
+            obj.fit(
+                feat_names=["petal width (cm)"],
+                dataframe=get_iris_data,
+                target_continuous=False,
+                target="target",
+            )
+
+    def test_fit_transform_not_implemented(self, get_iris_data, get_dummy_class):
+        obj = get_dummy_class
+        with pytest.raises(NotImplementedError):
+            obj.learn_transform(get_iris_data)

@@ -385,3 +385,26 @@ class TestInferenceEngineDiscrete:
         assert math.isclose(
             ie.query()["d"][False], train_data_discrete_marginals["d"][False]
         )
+
+    def test_multi_query(self, bn):
+        """Test query with a list of observations and multiprocessing"""
+
+        ie = InferenceEngine(bn)
+        results_parallel = ie.query(
+            [{"a": "a", "b": "x"}, {"a": "c", "e": False}, {"b": "x"}], parallel=True
+        )
+        results_loop = ie.query(
+            [{"a": "a", "b": "x"}, {"a": "c", "e": False}, {"b": "x"}], parallel=False
+        )
+        single_0 = ie.query({"a": "a", "b": "x"})
+        single_1 = ie.query({"a": "c", "e": False})
+        single_2 = ie.query({"b": "x"})
+
+        assert len(results_parallel) == 3
+        assert results_parallel == results_loop
+        assert results_parallel[0]["a"]["a"] == 1
+        assert results_parallel[1]["e"][False] == 1
+        assert results_parallel[2]["b"]["x"] == 1
+        assert single_0 == results_parallel[0]
+        assert single_1 == results_parallel[1]
+        assert single_2 == results_parallel[2]

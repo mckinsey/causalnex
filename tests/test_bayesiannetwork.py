@@ -35,6 +35,7 @@ import pytest
 from causalnex.network import BayesianNetwork
 from causalnex.structure import StructureModel
 from causalnex.structure.notears import from_pandas
+from causalnex.utils.network_utils import get_markov_blanket
 
 
 class TestFitNodeStates:
@@ -650,3 +651,34 @@ class TestStructure:
 
         with pytest.raises(AttributeError, match=r"can't set attribute"):
             bn.structure = new_sm
+
+
+class TestMarkovBlanket:
+    """Test behavior of Markov Blanket """
+
+    def test_elements(self, bn_train_model):
+        """ check if all elements are included"""
+        blanket = get_markov_blanket(bn_train_model, "a")
+        parents_of_node = {"b", "d"}
+        children_of_node = {"f"}
+        parents_of_children = {"e"}
+
+        assert parents_of_node <= set(blanket.nodes)
+        assert children_of_node <= set(blanket.nodes)
+        assert parents_of_children <= set(blanket.nodes)
+
+    def test_connection(self, bn_train_model):
+        """ Check if edges are correct """
+        blanket = get_markov_blanket(bn_train_model, "a")
+        assert blanket.structure.has_edge("b", "a")
+        assert blanket.structure.has_edge("d", "a")
+        assert blanket.structure.has_edge("a", "f")
+        assert blanket.structure.has_edge("e", "f")
+        assert blanket.structure.has_edge("e", "b")
+
+    def test_invalid_node(self, bn_train_model):
+        with pytest.raises(
+            KeyError,
+            match="is not found in the network",
+        ):
+            get_markov_blanket(bn_train_model, "invalid")

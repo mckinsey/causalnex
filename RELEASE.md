@@ -1,5 +1,16 @@
 # Upcoming release
 
+# Release 0.10.0
+* Add supervised discretisation strategies using Decision Tree and MDLP algorithms.
+* Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN.
+* Fixes cyclical import of `causalnex.plots`, as per #106.
+* Add utility function to extract Markov blanket from a Bayesian Network
+* Support receiving a list of inputs for `InferenceEngine` with a multiprocessing option
+* Add supervised discretisation strategies using Decision Tree and MDLP algorithms
+* Added manifest files to ensure requirements and licenses are packaged
+* Fix estimator issues with sklearn ("unofficial python 3.9 support", doesn't work with `discretiser` option)
+* Minor bumps in dependency versions, remove prettytable as dependency
+
 # Release 0.9.2
 * Remove Boston housing dataset from "sklearn tutorial", see #91 for more information.
 * Update pylint version to 2.7

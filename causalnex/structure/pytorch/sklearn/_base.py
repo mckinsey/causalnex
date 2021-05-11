@@ -76,7 +76,7 @@ class DAGBase(
         enforce_dag: bool = False,
         standardize: bool = False,
         target_dist_type: str = None,
-        **kwargs,
+        notears_mlp_kwargs: Dict = None,
     ):
         """
         Args:
@@ -120,7 +120,7 @@ class DAGBase(
             The L-BFGS algorithm used to fit the underlying NOTEARS works best on data
             all of the same scale so this parameter is reccomended.
 
-            kwargs: Extra arguments passed to the NOTEARS from_pandas function.
+            notears_mlp_kwargs: Additional arguments for the NOTEARS MLP model.
 
             target_dist_type: The distribution type of the target.
             Uses the same aliases as dist_type_schema.
@@ -162,8 +162,8 @@ class DAGBase(
         self.tabu_edges = tabu_edges
         self.tabu_parent_nodes = tabu_parent_nodes
         self.tabu_child_nodes = tabu_child_nodes
-        self._target_dist_type = target_dist_type
-        self.kwargs = kwargs
+        self.target_dist_type = target_dist_type
+        self.notears_mlp_kwargs = notears_mlp_kwargs
 
         # sklearn wrapper paramters
         self.dependent_target = dependent_target
@@ -206,14 +206,14 @@ class DAGBase(
             )
 
             # if its a continuous target also standardize
-            if self._target_dist_type == "cont":
+            if self.target_dist_type == "cont":
                 y = y.copy()
                 self._ss_y = StandardScaler()
                 y[:] = self._ss_y.fit_transform(y.values.reshape(-1, 1)).reshape(-1)
 
         # add the target to the dist_type_schema
         # NOTE: this must be done AFTER standardize
-        dist_type_schema[y.name] = self._target_dist_type
+        dist_type_schema[y.name] = self.target_dist_type
 
         # preserve the feature and target colnames
         self._features = tuple(X.columns)
@@ -242,7 +242,7 @@ class DAGBase(
             tabu_parent_nodes=tabu_parent_nodes,
             tabu_child_nodes=self.tabu_child_nodes,
             use_bias=self.fit_intercept,
-            **self.kwargs,
+            **(self.notears_mlp_kwargs or {}),
         )
 
         # keep thresholding until the DAG constraint is enforced
@@ -284,7 +284,7 @@ class DAGBase(
         y_pred = target_dist_type.get_columns(X_hat)
 
         # inverse-standardize
-        if self.standardize and self._target_dist_type == "cont":
+        if self.standardize and self.target_dist_type == "cont":
             y_pred = self._ss_y.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
 
         return y_pred

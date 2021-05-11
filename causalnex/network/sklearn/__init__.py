@@ -27,9 +27,10 @@
 # limitations under the License.
 
 """
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
+``causalnex.network.sklearn`` provides functionality to learn joint probability
+distribution of networks with sklearn compatibility.
 """
 
-__version__ = "0.10.0"
+__all__ = ["BayesianNetworkClassifier"]
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+from .models import BayesianNetworkClassifier

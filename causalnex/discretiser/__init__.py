@@ -30,6 +30,14 @@
 ``causalnex.discretiser`` provides functionality to discretise data.
 """
 
-__all__ = ["Discretiser"]
+__all__ = [
+    "Discretiser",
+    "DecisionTreeSupervisedDiscretiserMethod",
+    "MDLPSupervisedDiscretiserMethod",
+]
 
 from .discretiser import Discretiser
+from .discretiser_strategy import (
+    DecisionTreeSupervisedDiscretiserMethod,
+    MDLPSupervisedDiscretiserMethod,
+)

@@ -25,11 +25,39 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Helper functions for advanced discretisations"""
 
-"""
-causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
-"""
+from typing import List, Union
 
-__version__ = "0.10.0"
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+
+def extract_thresholds_from_dtree(
+    dtree: Union[DecisionTreeClassifier, DecisionTreeRegressor],
+    length_df: int,
+) -> List[np.array]:
+    """A helper function that extracts the decision threshold of a decision tree
+
+    Args:
+        dtree: A decisiontree model object
+        length_df (int): length of the target dataframe
+
+    Returns:
+        a list of numpy array indicating the thersholds for each feature
+    """
+
+    tree_threshold = dtree.tree_.threshold
+    tree_feature = dtree.tree_.feature
+
+    # store decision thresholds of all features in a list
+    thresholds_for_features = []
+
+    for feat in range(length_df):
+        if feat not in tree_feature:
+            thresholds_for_features.append(np.array([]))
+        else:
+            thresholds_for_features.append(
+                np.unique(tree_threshold[tree_feature == feat])
+            )
+    return thresholds_for_features
