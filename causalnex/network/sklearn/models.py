@@ -158,7 +158,8 @@ class BayesianNetworkClassifier(BaseEstimator, ClassifierMixin):
 
         self._validate_discretiser(discretiser_alg, discretiser_kwargs)
 
-        self.structure = StructureModel(list_of_edges)
+        self.list_of_edges = list_of_edges
+        self.structure = StructureModel(self.list_of_edges)
         self.bn = BayesianNetwork(self.structure)
         self.return_prob = return_prob
         self.probability_kwargs = probability_kwargs

@@ -83,7 +83,7 @@ class DAGClassifier(ClassifierMixin, DAGBase):
         Fits the sm model using the concat of X and y.
 
         Raises:
-            NotImplementedError: If unsupported _target_dist_type provided.
+            NotImplementedError: If unsupported target_dist_type provided.
             ValueError: If less than 2 classes provided.
 
         Returns:
@@ -109,8 +109,8 @@ class DAGClassifier(ClassifierMixin, DAGBase):
             )
 
         # store the protected attr _target_dist_type
-        if self._target_dist_type is None:
-            self._target_dist_type = "cat" if n_classes > 2 else "bin"
+        if self.target_dist_type is None:
+            self.target_dist_type = "cat" if n_classes > 2 else "bin"
 
         # fit the NOTEARS model
         super().fit(X, y)
