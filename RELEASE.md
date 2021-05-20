@@ -1,5 +1,8 @@
 # Upcoming release
 
+# Release 0.10.1
+* Fix decision tree and mdlp discretisations bug when input data is shuffled
+
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms.
 * Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN.
