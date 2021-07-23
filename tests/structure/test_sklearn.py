@@ -416,7 +416,7 @@ class TestDAGClassifier:
         assert feature_importances_.iloc[1, 0] > 0
         assert feature_importances_.iloc[2, 0] > 0
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_binary(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
@@ -432,7 +432,7 @@ class TestDAGClassifier:
         assert isinstance(y_pred_proba[0, 0], np.float64)
         assert len(y_pred_proba.shape) == 2
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_categorical(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (

@@ -177,8 +177,8 @@ class DecisionTreeSupervisedDiscretiserMethod(AbstractSupervisedDiscretiserMetho
                 self.map_thresholds[feat] = threshold
 
             if self.split_unselected_feat:
-                for feat in self.map_thresholds:
-                    if self.map_thresholds[feat].size == 0:
+                for feat, thres in self.map_thresholds.items():
+                    if thres.size == 0:
                         dtree = deepcopy(dtree)
                         dtree.fit(dataframe[[feat]], dataframe[[target]])
                         thresholds = extract_thresholds_from_dtree(dtree, 1)[0]

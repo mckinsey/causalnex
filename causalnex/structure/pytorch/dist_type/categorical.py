@@ -34,8 +34,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
 from sklearn.preprocessing import OneHotEncoder
+from torch import nn
 
 from causalnex.structure.pytorch.dist_type._base import DistTypeBase, ExpandColumnsMixin
 from causalnex.structure.structuremodel import StructureModel
