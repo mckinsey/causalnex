@@ -102,7 +102,8 @@ class AbstractSupervisedDiscretiserMethod(BaseEstimator, ABC):
             outputs[col] = self._transform_one_column(data[[col]])
 
         transformed_df = pd.DataFrame.from_dict(outputs)
-        return transformed_df
+
+        return transformed_df.set_index(data.index)
 
     def fit_transform(self, *args, **kwargs):
         """

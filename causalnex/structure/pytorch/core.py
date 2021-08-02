@@ -42,8 +42,8 @@ from typing import Iterable, List, Tuple, Union
 import numpy as np
 import scipy.optimize as sopt
 import torch
-import torch.nn as nn
 from sklearn.base import BaseEstimator
+from torch import nn
 
 from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 from causalnex.structure.pytorch.nonlinear import LocallyConnected
@@ -420,7 +420,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
             DAGness of the adjacency matrix
         """
         d = self.dims[0]
-        d_torch = torch.tensor(d).to(self.device)  # pylint: disable=not-callable
 
         # only consider the dag_layer for h(W) for compute efficiency
         dag_layer_weight = self.dag_layer_weight.view(d, -1, d)  # [j, m1, i]
@@ -441,7 +440,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         square_weight_mat = square_weight_mat[:original_size, :original_size]
         # update d and d_torch to match the new matrix size
         d = square_weight_mat.shape[0]
-        d_torch = torch.tensor(d).to(self.device)  # pylint: disable=not-callable
+        d_torch = torch.tensor(d).to(self.device)
 
         # h = trace_expm(a) - d  # (Zheng et al. 2018)
         characteristic_poly_mat = (

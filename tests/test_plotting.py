@@ -34,8 +34,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from mock import patch
 
-import causalnex.plots.display as display
-from causalnex.plots import color_gradient_string, plot_structure
+from causalnex.plots import color_gradient_string, display, plot_structure
 from causalnex.structure import StructureModel
 
 

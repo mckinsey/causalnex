@@ -565,8 +565,8 @@ class TestFitNodesStatesAndCPDs:
 
         assert cpds1.keys() == cpds2.keys()
 
-        for k in cpds1:
-            assert cpds1[k].equals(cpds2[k])
+        for k, df in cpds1.items():
+            assert df.equals(cpds2[k])
 
 
 class TestCPDsProperty:
