@@ -41,4 +41,4 @@ rm -rf docs/build
 mkdir docs/build/
 cp -r docs/_templates docs/conf.py docs/build/
 
-sphinx-build -v -c docs/ -Ea -j auto -D language=en docs/build/ docs/build/html
+sphinx-build -v -c docs/ -Ea -D language=en docs/build/ docs/build/html

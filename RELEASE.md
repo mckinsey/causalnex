@@ -2,7 +2,8 @@
 
 # Release 0.10.1
 * Fix decision tree and mdlp discretisations bug when input data is shuffled
-* Fix broken URLs in FAQ documentation, as per #113
+* Fix broken URLs in FAQ documentation, as per #113 and #125
+* Add a link to `PyGraphviz` installation guide under the installation prerequisites
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms.
