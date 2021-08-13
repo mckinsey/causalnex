@@ -1070,3 +1070,37 @@ def iris_edge_list():
     ]
 
     return edge_list
+
+
+@pytest.fixture
+def chain_network() -> BayesianNetwork:
+    """
+    This Bayesian Model structure to test do interventions that split graph
+    into subgraphs.
+
+    a → b → c → d → e
+
+    """
+
+    n = 50
+    nodes_names = list("abcde")
+    random_binary_matrix = (
+        np.random.randint(10, size=(n, len(nodes_names))) > 6
+    ).astype(int)
+    df = pd.DataFrame(data=random_binary_matrix, columns=nodes_names)
+
+    model = StructureModel()
+    model.add_edges_from(
+        [
+            ("a", "b"),
+            ("b", "c"),
+            ("c", "d"),
+            ("d", "e"),
+        ]
+    )
+
+    chain_bn = BayesianNetwork(model)
+    chain_bn = chain_bn.fit_node_states(df)
+    chain_bn = chain_bn.fit_cpds(df, method="BayesianEstimator", bayes_prior="K2")
+
+    return chain_bn

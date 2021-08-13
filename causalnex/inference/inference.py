@@ -30,13 +30,13 @@ This module contains the implementation of ``InferenceEngine``.
 
 ``InferenceEngine`` provides tools to make inferences based on interventions and observations.
 """
-
 import copy
 import inspect
 import re
 import types
 from typing import Callable, Dict, Hashable, List, Tuple, Union
 
+import networkx as nx
 import pandas as pd
 from pathos import multiprocessing
 
@@ -91,7 +91,7 @@ class InferenceEngine:
 
     def __init__(self, bn: BayesianNetwork):
         """
-        Create a new ``InferenceEngine`` from an existing ``BayesianNetwork``.
+        Creates a new ``InferenceEngine`` from an existing ``BayesianNetwork``.
 
         It is expected that structure and probability distribution has already been learned
         for the ``BayesianNetwork`` that is to be used for inference.
@@ -104,8 +104,8 @@ class InferenceEngine:
             ValueError: if the Bayesian Network contains isolates, or if a variable name is invalid,
                         or if the CPDs have not been learned yet.
         """
-
         bad_nodes = [node for node in bn.nodes if not re.match("^[0-9a-zA-Z_]+$", node)]
+
         if bad_nodes:
             raise ValueError(
                 "Variable names must match ^[0-9a-zA-Z_]+$ - please fix the "
@@ -119,16 +119,20 @@ class InferenceEngine:
             )
 
         self._cpds = None
+        self._upstream_cpds = {}
 
         self._create_cpds_dict_bn(bn)
         self._generate_domains_bn(bn)
         self._generate_bbn()
 
+        # TODO: can we do it without a query() call? # pylint: disable=fixme
+        self._default_marginals = self.query()
+
     def _single_query(
         self, observations: Dict[str, Hashable] = None
     ) -> Dict[str, Dict[Hashable, float]]:
         """
-        Query the ``BayesianNetwork`` for marginals given some observations.
+        Queries the ``BayesianNetwork`` for marginals given some observations.
 
         Args:
             observations: observed states of nodes in the Bayesian Network.
@@ -139,14 +143,18 @@ class InferenceEngine:
             A dictionary of marginal probabilities of the network.
             For instance, :math:`P(a=1) = 0.3, P(a=2) = 0.7` -> {a: {1: 0.3, 2: 0.7}}
         """
-
         bbn_results = (
             self._bbn.query(**observations) if observations else self._bbn.query()
         )
-
         results = {node: dict() for node in self._cpds}
+
         for (node, state), prob in bbn_results.items():
             results[node][state] = prob
+
+        # the upstream nodes are set to the default marginals based on the
+        # original cpds of the bn
+        for detached_node in self._upstream_cpds:
+            results[detached_node] = self._default_marginals[detached_node]
 
         return results
 
@@ -159,7 +167,7 @@ class InferenceEngine:
         Dict[str, Dict[Hashable, float]], List[Dict[str, Dict[Hashable, float]]]
     ]:
         """
-        Query the ``BayesianNetwork`` for marginals given one or more observations.
+        Queries the ``BayesianNetwork`` for marginals given one or more observations.
 
         Args:
             observations: one or more observations of states of nodes in the Bayesian Network.
@@ -170,21 +178,21 @@ class InferenceEngine:
         Returns:
             A dictionary or a list of dictionaries of marginal probabilities of the network.
         """
-
         if isinstance(observations, dict) or observations is None:
             return self._single_query(observations)
+
         result = []
+
         if parallel:
             with multiprocessing.Pool(num_cores) as p:
                 result = p.map(self._single_query, observations)
-
         else:
             for obs in observations:
                 result.append(self._single_query(obs))
 
         return result
 
-    def _do(self, observation: str, state: Dict[Hashable, float]) -> None:
+    def _do(self, observation: str, state: Dict[Hashable, float]):
         """
         Makes an intervention on the Bayesian Network.
 
@@ -215,10 +223,12 @@ class InferenceEngine:
         self._cpds[observation] = {s: {(): p} for s, p in state.items()}
 
     def do_intervention(
-        self, node: str, state: Union[Hashable, Dict[Hashable, float]] = None
-    ) -> None:
+        self,
+        node: str,
+        state: Union[Hashable, Dict[Hashable, float]] = None,
+    ):
         """
-        Make an intervention on the Bayesian Network.
+        Makes an intervention on the Bayesian Network.
 
         For instance,
             `do_intervention('X', 'x')` will set :math:`P(X=x)` to 1, and :math:`P(X=y)` to 0
@@ -245,36 +255,45 @@ class InferenceEngine:
             state = {s: float(s == state) for s in self._cpds[node]}
 
         self._do(node, state)
+
+        # check for presence of separate subgraph after do-intervention
+        self._remove_disconnected_nodes(node)
         self._generate_bbn()
 
-    def reset_do(self, observation: str) -> None:
+    def reset_do(self, observation: str):
         """
         Resets any do_interventions that have been applied to the observation.
 
         Args:
             observation: observation that will be reset.
         """
-
         self._cpds[observation] = self._cpds_original[observation]
+
+        for upstream_node, original_cpds in self._upstream_cpds.items():
+            self._cpds[upstream_node] = original_cpds
+
+        self._upstream_cpds = {}
         self._generate_bbn()
 
     def _generate_bbn(self):
-        """Re-create the _bbn."""
+        """Re-creates the _bbn."""
         self._node_functions = self._create_node_functions()
-
         self._bbn = build_bbn(
             list(self._node_functions.values()), domains=self._domains
         )
 
-    def _generate_domains_bn(self, bn):
-
+    def _generate_domains_bn(self, bn: BayesianNetwork):
+        """Generates domains from Bayesian network"""
         self._domains = {
             variable: list(cpd.index.values) for variable, cpd in bn.cpds.items()
         }
 
-    def _create_cpds_dict_bn(self, bn: BayesianNetwork) -> None:
+    def _create_cpds_dict_bn(self, bn: BayesianNetwork):
         """
-        Map CPDs in the ``BayesianNetwork`` to required format:
+        Maps CPDs in the ``BayesianNetwork`` to required format:
+
+        Args:
+            bn: Bayesian network
 
         >>> {"observation":
         >>>     {"state":
@@ -292,7 +311,6 @@ class InferenceEngine:
         >>>     }
         >>> }
         """
-
         lookup = {
             variable: {
                 state: {
@@ -305,7 +323,6 @@ class InferenceEngine:
             }
             for variable, cpd in bn.cpds.items()
         }
-
         self._cpds = lookup
         self._cpds_original = copy.deepcopy(self._cpds)
 
@@ -349,22 +366,25 @@ class InferenceEngine:
             code.co_cellvars,
         )
         template.__name__ = name
-
         return template
 
     def _create_node_functions(self) -> Dict[str, Callable]:
-        """Creates all functions required to create a ``BayesianNetwork``."""
+        """
+        Creates all functions required to create a ``BayesianNetwork``.
 
+        Returns:
+            Dictionary of node functions
+        """
         node_functions = dict()
 
         for node, states in self._cpds.items():
             # since we only need condition names, which are consistent across all states,
             # then we can inspect the 0th element
-            states_conditions = list(states.values())[0]
+            states_conditions = next(iter(states.values()))
 
             # take any state, and get its conditions
-            state_conditions = list(states_conditions.items())[0]
-            condition_nodes = [n for n, v in state_conditions[0]]
+            state_conditions = next(iter(states_conditions.keys()))
+            condition_nodes = [n for n, v in state_conditions]
 
             node_args = tuple([node] + condition_nodes)  # type: Tuple[str]
             function_name = "f_{node}".format(node=node)
@@ -372,3 +392,40 @@ class InferenceEngine:
             node_functions[node] = node_function
 
         return node_functions
+
+    def _remove_disconnected_nodes(self, var: str):
+        """
+        Identifies and removes from the _cpds the nodes of the bbn which are
+        part of one or more upstream subgraphs that could have been formed
+        after a do-intervention.
+
+        Uses the attribute _cpds to determine the parents of each node.
+        Leverages networkX `weakly_connected_component` method to identify the
+        subgraphs.
+
+        For instance, the network A -> B -> C -> D -> E  would be split into
+        two sub networks (A -> B) and (C -> D -> E) if we intervene on
+        node C.
+
+        Args:
+            var: variable we have intervened on
+        """
+        # construct graph from CPDs
+        g = nx.DiGraph()
+
+        # add nodes as there could be isolates (e.g. A->B->C intervening on B
+        # makes A an isolate)
+        for node, states in self._cpds.items():
+            sample_state = next(iter(states.values()))
+            parents = next(iter(sample_state.keys()))
+            g.add_node(node)
+
+            for parent, _ in parents:
+                g.add_edge(parent, node)
+
+        # remove nodes in subgraphs which do not contain the intervention node
+        for sub_graph in nx.weakly_connected_components(g):
+            if var not in sub_graph:
+                for node in sub_graph:
+                    self._upstream_cpds[node] = self._cpds[node]
+                    self._cpds.pop(node)
