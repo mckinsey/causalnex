@@ -131,7 +131,7 @@ class BBN:
         jt.initialize_potentials(assignments, self, kwds)
 
         jt.propagate()
-        marginals = dict()
+        marginals = {}
         normalizers = defaultdict(float)
 
         for node in self.nodes:
@@ -158,7 +158,7 @@ class BBN:
         """query is a dict of currently evidenced
         variables and is none by default."""
         samples = []
-        result_cache = dict()
+        result_cache = {}
         # We need to add evidence variables to the sample...
         while len(samples) < n:
             sample = dict(query)
@@ -203,7 +203,7 @@ class JoinTree(UndirectedGraph):
     def initialize_potentials(self, assignments, bbn, evidence={}):
         # Step 1, assign 1 to each cluster and sepset
         for node in self.nodes:
-            tt = dict()
+            tt = {}
 
             vals = []
             variables = node.variable_names
@@ -229,7 +229,7 @@ class JoinTree(UndirectedGraph):
         # assigned to the clusters...
 
         for clique, bbn_nodes in assignments.items():
-            tt = dict()
+            tt = {}
             vals = []
             variables = list(clique.variable_names)
             variables.sort()
@@ -284,7 +284,7 @@ class JoinTree(UndirectedGraph):
         return likelihood
 
     def assign_clusters(self, bbn):
-        assignments_by_family = dict()
+        assignments_by_family = {}
         assignments_by_clique = defaultdict(list)
         assigned = set()
         for node in bbn.nodes:
@@ -577,7 +577,7 @@ class JoinTreeCliqueNode(UndirectedNode):
             sepset.name,
             target.name,
         )
-        tt = dict()
+        tt = {}
 
         for k, v in list(target.potential_tt.items()):
             # For each entry we multiply by
@@ -725,7 +725,7 @@ def build_bbn(*args, **kwds):
     variables = set()
     domains = kwds.get("domains", {})
     name = kwds.get("name")
-    factor_nodes = dict()
+    factor_nodes = {}
 
     if isinstance(args[0], list):
         # Assume the functions were all
@@ -776,7 +776,7 @@ def make_node_func(variable_name, conditions):
     # be firstly the parent variables
     # in alphabetical order, followed
     # always by the child variable
-    tt = dict()
+    tt = {}
     domain = set()
     for givens, conditionals in conditions:
         key = []
@@ -811,7 +811,7 @@ def make_node_func(variable_name, conditions):
 
 def build_bbn_from_conditionals(conds):
     node_funcs = []
-    domains = dict()
+    domains = {}
     for variable_name, cond_tt in list(conds.items()):
         node_func = make_node_func(variable_name, cond_tt)
         node_funcs.append(node_func)
@@ -822,7 +822,8 @@ def build_bbn_from_conditionals(conds):
 def make_undirected_copy(dag):
     """Returns an exact copy of the dag
     except that direction of edges are dropped."""
-    nodes = dict()
+    nodes = {}
+
     for node in dag.nodes:
         undirected_node = UndirectedNode(name=node.name)
         undirected_node.func = node.func

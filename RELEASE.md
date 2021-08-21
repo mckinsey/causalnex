@@ -7,6 +7,7 @@
 * Fix integer index type checking for timeseries data, as per #74 and #86
 * Fix infinite loop at `.query()` after a `.do_intervention()` that splits
   the graph into two or more subgraphs, as per #100, #45
+* Add GPU support to Pytorch implementation, as requested in #56 and #114
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms.

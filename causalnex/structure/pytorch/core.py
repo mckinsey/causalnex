@@ -64,6 +64,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         n_features: int,
         dist_types: List[DistTypeBase],
         use_bias: bool = False,
+        use_gpu: bool = True,
         hidden_layer_units: Iterable[int] = (0,),
         bounds: List[Tuple[int, int]] = None,
         lasso_beta: float = 0.0,
@@ -77,6 +78,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             n_features: number of input features.
             dist_types: list of data type objects used to fit the NOTEARS algorithm.
             use_bias: True to add the intercept to the model
+            use_gpu: use gpu if it is set to True and CUDA is available
             hidden_layer_units: An iterable where its length determine the number of layers used,
             and the numbers determine the number of nodes used for the layer in order.
             bounds: bound constraint for each parameter.
@@ -88,7 +90,15 @@ class NotearsMLP(nn.Module, BaseEstimator):
             Prevents the weights from being scaled above 1/nonlinear_clamp.
         """
         super().__init__()
-        self.device = torch.device("cpu")
+
+        avail_device = "cuda" if torch.cuda.is_available() and use_gpu else "cpu"
+        self.device = torch.device(avail_device)
+
+        self._logger.info(
+            "PyTorch backend for %s is running on '%s'",
+            self.__class__.__name__,
+            avail_device.upper(),
+        )
         self.lasso_beta = lasso_beta
         self.ridge_beta = ridge_beta
         self.nonlinear_clamp = nonlinear_clamp
@@ -99,12 +109,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
             if hidden_layer_units[0]
             else [n_features, 1]
         )
-
         # dag_layer: initial linear layer
         self.dag_layer = nn.Linear(
             self.dims[0], self.dims[0] * self.dims[1], bias=use_bias
         ).float()
+
+        self.dag_layer.to(self.device)  # Send DAG layer to device
         nn.init.zeros_(self.dag_layer.weight)
+
         if use_bias:
             nn.init.zeros_(self.dag_layer.bias)
 
@@ -116,6 +128,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             for input_features, output_features in zip(self.dims[1:-1], self.dims[2:])
         ]
         self._loc_lin_layer_weights = nn.ModuleList(layers)
+
         for layer in layers:
             layer.reset_parameters()
 
@@ -170,16 +183,16 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         x = self.dag_layer(x)  # [n, d * m1]
         x = x.view(-1, self.dims[0], self.dims[1])  # [n, d, m1]
+
         for output_dim, layer in zip(self.dims[1:], self.loc_lin_layer_weights):
             x = torch.sigmoid(x)  # [n, d, m1]
-
             x = nn.LayerNorm(
                 output_dim,
                 eps=self.nonlinear_clamp,
                 elementwise_affine=True,
             )(x)
-
             x = layer(x)  # [n, d, m2]
+
         x = x.squeeze(dim=2)  # [n, d]
         return x
 
@@ -232,6 +245,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     ):
         """
         Fit NOTEARS MLP model using the input data x
+
         Args:
             x: 2d numpy array input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
             max_iter: max number of dual ascent steps during optimisation.
@@ -366,11 +380,10 @@ class NotearsMLP(nn.Module, BaseEstimator):
             optimizer.zero_grad()
 
             n_features = X.shape[1]
-
             X_hat = self(X)
             h_val = self._h_func()
-
             loss = 0.0
+
             # sum the losses across all dist types
             for dist_type in self.dist_types:
                 loss = loss + dist_type.loss(X, X_hat)
@@ -387,9 +400,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
             flat_grad = _get_flat_grad(params)
             return loss, flat_grad.astype("float64")
 
-        optimizer = torch.optim.Optimizer(self.parameters(), dict())
+        optimizer = torch.optim.Optimizer(self.parameters(), {})
         params = optimizer.param_groups[0]["params"]
-
         flat_params = _get_flat_params(params)
         bounds = _get_flat_bounds(params)
 
@@ -403,9 +415,9 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 jac=True,
                 bounds=bounds,
             )
-
             _update_params_from_flat(params, sol.x)
             h_new = self._h_func().item()
+
             if h_new > 0.25 * h:
                 rho *= 10
         alpha += rho * h_new

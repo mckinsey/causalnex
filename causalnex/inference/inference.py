@@ -146,7 +146,7 @@ class InferenceEngine:
         bbn_results = (
             self._bbn.query(**observations) if observations else self._bbn.query()
         )
-        results = {node: dict() for node in self._cpds}
+        results = {node: {} for node in self._cpds}
 
         for (node, state), prob in bbn_results.items():
             results[node][state] = prob
@@ -375,7 +375,7 @@ class InferenceEngine:
         Returns:
             Dictionary of node functions
         """
-        node_functions = dict()
+        node_functions = {}
 
         for node, states in self._cpds.items():
             # since we only need condition names, which are consistent across all states,
