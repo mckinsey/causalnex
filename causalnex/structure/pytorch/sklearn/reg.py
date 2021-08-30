@@ -86,8 +86,8 @@ class DAGRegressor(RegressorMixin, DAGBase):
         """
 
         # store the protected attr _target_dist_type
-        if self._target_dist_type is None:
-            self._target_dist_type = "cont"
+        if self.target_dist_type is None:
+            self.target_dist_type = "cont"
 
         # fit the NOTEARS model
         super().fit(X, y)

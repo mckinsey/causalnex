@@ -408,3 +408,72 @@ class TestInferenceEngineDiscrete:
         assert single_0 == results_parallel[0]
         assert single_1 == results_parallel[1]
         assert single_2 == results_parallel[2]
+
+    def test_query_after_do_intervention_has_split_graph(self, chain_network):
+        """
+        chain network: a → b → c → d → e
+
+        test 1.
+        - do intervention on node c generates 2 graphs (a → b) and (c → d → e)
+        - assert the query can be run (it used to hang before)
+        - assert rest_do works
+        """
+        ie = InferenceEngine(chain_network)
+        original_margs = ie.query()
+
+        var = "c"
+        state_dict = {0: 1.0, 1: 0.0}
+        ie.do_intervention(var, state_dict)
+        # assert the intervention node has indeed the right state
+        assert ie.query()[var][0] == state_dict[0]
+        assert ie.query()[var][1] == state_dict[1]
+
+        # assert the upstream nodes have the default marginals (no info
+        # propagates in the upstream graph)
+        assert ie.query()["a"][0] == original_margs["a"][0]
+        assert ie.query()["a"][1] == original_margs["a"][1]
+        assert ie.query()["b"][0] == original_margs["b"][0]
+        assert ie.query()["b"][1] == original_margs["b"][1]
+
+        # assert the _cpds of the upstream nodes are stored correctly
+        orig_cpds = ie._cpds_original  # pylint: disable=protected-access
+        upstream_cpds = ie._upstream_cpds  # pylint: disable=protected-access
+        assert orig_cpds["a"] == upstream_cpds["a"]
+        assert orig_cpds["b"] == upstream_cpds["b"]
+
+        ie.reset_do(var)
+        reset_margs = ie.query()
+
+        for node in original_margs.keys():
+            dict_left = original_margs[node]
+            dict_right = reset_margs[node]
+            for (kl, kr) in zip(dict_left.keys(), dict_right.keys()):
+                assert math.isclose(dict_left[kl], dict_right[kr])
+
+        # repeating above tests intervening on b, so that there is one single
+        # isolate
+        var_b = "b"
+        state_dict_b = {0: 1.0, 1: 0.0}
+        ie.do_intervention(var_b, state_dict_b)
+        # assert the intervention node has indeed the right state
+        assert ie.query()[var_b][0] == state_dict[0]
+        assert ie.query()[var_b][1] == state_dict[1]
+
+        # assert the upstream nodes have the default marginals (no info
+        # propagates in the upstream graph)
+        assert ie.query()["a"][0] == original_margs["a"][0]
+        assert ie.query()["a"][1] == original_margs["a"][1]
+
+        # assert the _cpds of the upstream nodes are stored correctly
+        orig_cpds = ie._cpds_original  # pylint: disable=protected-access
+        upstream_cpds = ie._upstream_cpds  # pylint: disable=protected-access
+        assert orig_cpds["a"] == upstream_cpds["a"]
+
+        ie.reset_do(var_b)
+        reset_margs = ie.query()
+
+        for node in original_margs.keys():
+            dict_left = original_margs[node]
+            dict_right = reset_margs[node]
+            for (kl, kr) in zip(dict_left.keys(), dict_right.keys()):
+                assert math.isclose(dict_left[kl], dict_right[kr])

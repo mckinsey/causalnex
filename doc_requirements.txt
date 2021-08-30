@@ -1,5 +1,6 @@
 click>=7.0, <8.0
 ipykernel>=4.8.1, <5.0
+jinja2>=2.3, <3.0
 jupyter_client>=5.1, <7.0
 nbconvert>=5.0, <6.0
 nbsphinx==0.4.2

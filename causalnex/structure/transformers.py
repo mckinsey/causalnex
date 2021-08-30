@@ -201,7 +201,7 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
                     "Index for dataframe must be provided in increasing order"
                 )
 
-            if t.index.dtype != int:
+            if not t.index.is_integer():
                 raise TypeError("Index must be integers")
 
             if self.columns is not None:

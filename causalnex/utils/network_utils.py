@@ -26,7 +26,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module contains the helpfer functions for interacting with Bayesian Network
+This module contains the helper functions for interacting with Bayesian Network
 """
 
 from copy import deepcopy

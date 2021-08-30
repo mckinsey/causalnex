@@ -243,6 +243,16 @@ class TestDAGRegressor:
         # assert that the sign of the coefficient is positive for both nonlinear and linear cases
         assert coef_["true_feat"] > 0
 
+    def test_sklearn_compatibility_reg(self):
+        reg = DAGRegressor(
+            alpha=0.0,
+            fit_intercept=True,
+            dependent_target=True,
+            hidden_layer_units=[0],
+            standardize=True,
+        )
+        reg.get_params(deep=True)
+
     @pytest.mark.parametrize(
         "standardize",
         [
@@ -406,7 +416,7 @@ class TestDAGClassifier:
         assert feature_importances_.iloc[1, 0] > 0
         assert feature_importances_.iloc[2, 0] > 0
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_binary(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
@@ -422,7 +432,7 @@ class TestDAGClassifier:
         assert isinstance(y_pred_proba[0, 0], np.float64)
         assert len(y_pred_proba.shape) == 2
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_categorical(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
@@ -462,6 +472,16 @@ class TestDAGClassifier:
         X = np.random.normal(size=(100, 2))
         clf.fit(X, y)
         clf.predict(X)
+
+    def test_sklearn_compatibility_clf(self):
+        clf = DAGClassifier(
+            alpha=0.0,
+            fit_intercept=True,
+            dependent_target=True,
+            hidden_layer_units=[0],
+            standardize=True,
+        )
+        clf.get_params(deep=True)
 
 
 @pytest.mark.parametrize("hidden_layer_units", [None, [1], [5], [5, 3], [10, 10]])

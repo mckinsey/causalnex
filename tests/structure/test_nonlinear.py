@@ -26,7 +26,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch.nn as nn
+from torch import nn
 
 from causalnex.structure.pytorch.nonlinear import LocallyConnected
 

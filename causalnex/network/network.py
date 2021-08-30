@@ -245,9 +245,9 @@ class BayesianNetwork:
         Returns:
             Conditional Probability Distributions of each node within the Bayesian Network.
         """
-        cpds = dict()
-        for cpd in self._model.cpds:
+        cpds = {}
 
+        for cpd in self._model.cpds:
             iterables = [
                 sorted(self._node_states[var].keys()) for var in cpd.variables[1:]
             ]

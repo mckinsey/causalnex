@@ -32,7 +32,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from pgmpy.models import BayesianModel
+from sklearn.datasets import load_iris
 
+from causalnex.discretiser import Discretiser
 from causalnex.network import BayesianNetwork
 from causalnex.structure import StructureModel
 from causalnex.structure.notears import from_pandas
@@ -1034,3 +1036,71 @@ def adjacency_mat_num_stability() -> np.ndarray:
         ]
     )
     return W
+
+
+@pytest.fixture
+def iris_test_data() -> pd.DataFrame:
+    """
+    Iris dataset to test sklearn wrappers
+    """
+    iris = load_iris()
+    X, y = iris["data"], iris["target"]
+    names = iris["feature_names"]
+    df = pd.DataFrame(X, columns=names)
+    df["type"] = y
+    df["sepal length (cm)"] = Discretiser(
+        method="quantile", num_buckets=3
+    ).fit_transform(df["sepal length (cm)"].values)
+
+    return df
+
+
+@pytest.fixture
+def iris_edge_list():
+    """
+    Edge list to construct bayesian network for iris data
+    """
+    edge_list = [
+        ("sepal width (cm)", "sepal length (cm)"),
+        ("petal length (cm)", "sepal length (cm)"),
+        ("petal length (cm)", "sepal width (cm)"),
+        ("petal width (cm)", "petal length (cm)"),
+        ("type", "sepal width (cm)"),
+        ("type", "petal width (cm)"),
+    ]
+
+    return edge_list
+
+
+@pytest.fixture
+def chain_network() -> BayesianNetwork:
+    """
+    This Bayesian Model structure to test do interventions that split graph
+    into subgraphs.
+
+    a → b → c → d → e
+
+    """
+
+    n = 50
+    nodes_names = list("abcde")
+    random_binary_matrix = (
+        np.random.randint(10, size=(n, len(nodes_names))) > 6
+    ).astype(int)
+    df = pd.DataFrame(data=random_binary_matrix, columns=nodes_names)
+
+    model = StructureModel()
+    model.add_edges_from(
+        [
+            ("a", "b"),
+            ("b", "c"),
+            ("c", "d"),
+            ("d", "e"),
+        ]
+    )
+
+    chain_bn = BayesianNetwork(model)
+    chain_bn = chain_bn.fit_node_states(df)
+    chain_bn = chain_bn.fit_cpds(df, method="BayesianEstimator", bayes_prior="K2")
+
+    return chain_bn

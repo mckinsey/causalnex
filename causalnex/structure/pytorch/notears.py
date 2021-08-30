@@ -58,6 +58,7 @@ def from_numpy(
     tabu_edges: List[Tuple[int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
+    use_gpu: bool = True,
     **kwargs
 ) -> StructureModel:
     """
@@ -75,7 +76,6 @@ def from_numpy(
 
     Args:
         X: 2d input data, axis=0 is data rows, axis=1 is data columns. Data must be row oriented.
-
         dist_type_schema: The dist type schema corresponding to the passed in data X.
         It maps the positional column in X to the string alias of a dist type.
         A list of alias names can be found in ``dist_type/__init__.py``.
@@ -102,19 +102,21 @@ def from_numpy(
 
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
 
+        use_gpu: use gpu if it is set to True and CUDA is available.
+
         **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
         StructureModel: a graph of conditional dependencies between data variables.
 
     Raises:
-        ValueError: If X does not contain data.
         ValueError: If schema does not correspond to columns.
     """
     # n examples, d properties
     if not X.size:
         raise ValueError("Input data X is empty, cannot learn any structure")
     logging.info("Learning structure using 'NOTEARS' optimisation.")
+
     # Check array for NaN or inf values
     check_array(X)
 
@@ -173,7 +175,6 @@ def from_numpy(
         for _ in range(hidden_layer_bnds)
         for i in range(d)
     ]
-
     model = NotearsMLP(
         n_features=d,
         dist_types=dist_types,
@@ -182,11 +183,12 @@ def from_numpy(
         ridge_beta=ridge_beta,
         bounds=bnds,
         use_bias=use_bias,
-        **kwargs
+        use_gpu=use_gpu,
+        **kwargs,
     )
-
     model.fit(X, max_iter=max_iter)
     sm = StructureModel(model.adj)
+
     if w_threshold:
         sm.remove_edges_below_threshold(w_threshold)
 
@@ -239,6 +241,7 @@ def from_pandas(
     tabu_edges: List[Tuple[str, str]] = None,
     tabu_parent_nodes: List[str] = None,
     tabu_child_nodes: List[str] = None,
+    use_gpu: bool = True,
     **kwargs
 ) -> StructureModel:
     """
@@ -290,6 +293,8 @@ def from_pandas(
 
         tabu_child_nodes: list of nodes banned from being a child of any other nodes.
 
+        use_gpu: use gpu if it is set to True and CUDA is available
+
         **kwargs: additional arguments for NOTEARS MLP model
 
     Returns:
@@ -307,7 +312,6 @@ def from_pandas(
         if dist_type_schema is None
         else {X.columns.get_loc(col): alias for col, alias in dist_type_schema.items()}
     )
-
     non_numeric_cols = data.select_dtypes(exclude="number").columns
 
     if len(non_numeric_cols) > 0:
@@ -340,7 +344,8 @@ def from_pandas(
         tabu_edges=tabu_edges,
         tabu_parent_nodes=tabu_parent_nodes,
         tabu_child_nodes=tabu_child_nodes,
-        **kwargs
+        use_gpu=use_gpu,
+        **kwargs,
     )
 
     # set comprehension to ensure only unique dist types are extraced
