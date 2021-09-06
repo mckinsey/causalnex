@@ -59,7 +59,7 @@ def from_numpy(
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
     use_gpu: bool = True,
-    **kwargs
+    **kwargs,
 ) -> StructureModel:
     """
     Learn the `StructureModel`, the graph structure with lasso regularisation
@@ -125,9 +125,7 @@ def from_numpy(
         # make sure that there is one provided key per column
         if set(range(X.shape[1])).symmetric_difference(set(dist_type_schema.keys())):
             raise ValueError(
-                "Difference indices and expected indices. Got {} schema".format(
-                    dist_type_schema
-                )
+                f"Difference indices and expected indices. Got {dist_type_schema} schema"
             )
 
     # if dist_type_schema is None, assume all columns are continuous, else init the alias mapped object
@@ -242,7 +240,7 @@ def from_pandas(
     tabu_parent_nodes: List[str] = None,
     tabu_child_nodes: List[str] = None,
     use_gpu: bool = True,
-    **kwargs
+    **kwargs,
 ) -> StructureModel:
     """
     Learn the `StructureModel`, the graph structure describing conditional dependencies between variables
@@ -317,9 +315,7 @@ def from_pandas(
     if len(non_numeric_cols) > 0:
         raise ValueError(
             "All columns must have numeric data. "
-            "Consider mapping the following columns to int {non_numeric_cols}".format(
-                non_numeric_cols=non_numeric_cols
-            )
+            f"Consider mapping the following columns to int {non_numeric_cols}"
         )
 
     col_idx = {c: i for i, c in enumerate(data.columns)}

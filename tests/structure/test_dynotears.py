@@ -119,13 +119,13 @@ class TestFromNumpyDynotears:
             data_dynotears_p1["X"], data_dynotears_p1["Y"], w_threshold=0.2
         )
         w_edges = [
-            ("{i}_lag0".format(i=i), "{j}_lag0".format(j=j))
+            (f"{i}_lag0", f"{j}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p1["W"][i, j] != 0
         ]
         a_edges = [
-            ("{i_1}_lag{i_2}".format(i_1=i % 5, i_2=1 + i // 5), "{j}_lag0".format(j=j))
+            (f"{i % 5}_lag{1 + i // 5}", f"{j}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p1["A"][i, j] != 0
@@ -148,13 +148,13 @@ class TestFromNumpyDynotears:
             data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=0.25
         )
         w_edges = [
-            ("{i}_lag0".format(i=i), "{j}_lag0".format(j=j))
+            (f"{i}_lag0", f"{j}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p2["W"][i, j] != 0
         ]
         a_edges = [
-            ("{i_1}_lag{i_2}".format(i_1=i % 5, i_2=1 + i // 5), "{j}_lag0".format(j=j))
+            (f"{i % 5}_lag{1 + i // 5}", f"{j}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p2["A"][i, j] != 0
@@ -244,9 +244,7 @@ class TestFromNumpyDynotears:
             data_dynotears_p2["Y"],
         )
         assert sorted(sm.nodes) == [
-            "{var}_lag{l_val}".format(var=var, l_val=l_val)
-            for var in range(5)
-            for l_val in range(3)
+            f"{var}_lag{l_val}" for var in range(5) for l_val in range(3)
         ]
 
     def test_isolated_nodes_exist(self, data_dynotears_p2):
@@ -397,15 +395,15 @@ class TestFromPandasDynotears:
         )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
-            ("{i}_lag0".format(i=map_[i]), "{j}_lag0".format(j=map_[j]))
+            (f"{map_[i]}_lag0", f"{map_[j]}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p1["W"][i, j] != 0
         ]
         a_edges = [
             (
-                "{i_1}_lag{i_2}".format(i_1=map_[i % 5], i_2=1 + i // 5),
-                "{j}_lag0".format(j=map_[j]),
+                f"{map_[i % 5]}_lag{1 + i // 5}",
+                f"{map_[j]}_lag0",
             )
             for i in range(5)
             for j in range(5)
@@ -436,15 +434,15 @@ class TestFromPandasDynotears:
         )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
-            ("{i}_lag0".format(i=map_[i]), "{j}_lag0".format(j=map_[j]))
+            (f"{map_[i]}_lag0", f"{map_[j]}_lag0")
             for i in range(5)
             for j in range(5)
             if data_dynotears_p2["W"][i, j] != 0
         ]
         a_edges = [
             (
-                "{i_1}_lag{i_2}".format(i_1=map_[i % 5], i_2=1 + i // 5),
-                "{j}_lag0".format(j=map_[j]),
+                f"{map_[i % 5]}_lag{1 + i // 5}",
+                f"{map_[j]}_lag0",
             )
             for i in range(5)
             for j in range(5)
@@ -537,7 +535,7 @@ class TestFromPandasDynotears:
             w_threshold=0.4,
         )
         assert sorted(sm.nodes) == [
-            "{var}_lag{l_val}".format(var=var, l_val=l_val)
+            f"{var}_lag{l_val}"
             for var in ["a", "b", "c", "d", "e"]
             for l_val in range(3)
         ]

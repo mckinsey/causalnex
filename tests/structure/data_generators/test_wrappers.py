@@ -560,7 +560,7 @@ class TestGenerateCategoricalData:
         cols = []
         for node in graph.nodes():
             for cat in range(n_categories):
-                cols.append("{}_{}".format(node, cat))
+                cols.append(f"{node}_{cat}")
         assert np.array_equal(data, df[cols].values)
 
     @pytest.mark.parametrize(
@@ -712,7 +712,7 @@ class TestGenerateStructureDynamic:
         g = generate_structure_dynamic(num_nodes, p, degree_intra, degree_inter)
         assert np.all(
             [
-                "{var}_lag{l_val}".format(var=var, l_val=l_val) in g.nodes
+                f"{var}_lag{l_val}" in g.nodes
                 for l_val in range(p + 1)
                 for var in range(num_nodes)
             ]
@@ -776,7 +776,7 @@ class TestGenerateStructureDynamic:
         g = generate_structure_dynamic(num_nodes, p, 4, 4, graph_type_inter="full")
         lagged_edges = sorted((u, v) for u, v in g.edges if int(u.split("_lag")[1]) > 0)
         assert lagged_edges == sorted(
-            ("{v}_lag{l_}".format(v=v_f, l_=l_), "{v}_lag0".format(v=v_t))
+            (f"{v_f}_lag{l_}", f"{v_t}_lag0")
             for l_ in range(1, p + 1)
             for v_f in range(num_nodes)  # var from
             for v_t in range(num_nodes)  # var to

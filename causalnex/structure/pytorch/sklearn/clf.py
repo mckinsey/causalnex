@@ -105,7 +105,7 @@ class DAGClassifier(ClassifierMixin, DAGBase):
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: {}".format(self.classes_[0])
+                f" class: {self.classes_[0]}"
             )
 
         # store the protected attr _target_dist_type

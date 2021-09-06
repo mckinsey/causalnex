@@ -55,11 +55,7 @@ def _validate_origin(origin: str) -> None:
     allowed = {"unknown", "learned", "expert"}
 
     if origin not in allowed:
-        raise ValueError(
-            "Unknown origin: must be one of {allowed} - got `{origin}`.".format(
-                allowed=allowed, origin=origin
-            )
-        )
+        raise ValueError(f"Unknown origin: must be one of {allowed} - got `{origin}`.")
 
 
 class StructureModel(nx.DiGraph):
@@ -158,7 +154,7 @@ class StructureModel(nx.DiGraph):
         self,
         ebunch_to_add: Union[Set[tuple], List[tuple]],
         origin: str = "unknown",
-        **attr
+        **attr,
     ):  # pylint: disable=W0221
         """
         Adds a bunch of causal relationships, u -> v.
@@ -198,7 +194,7 @@ class StructureModel(nx.DiGraph):
         ebunch_to_add: Union[Set[tuple], List[tuple]],
         weight: str = "weight",
         origin: str = "unknown",
-        **attr
+        **attr,
     ):  # pylint: disable=W0221
         """
         Adds a bunch of weighted causal relationships, u -> v.
@@ -291,7 +287,7 @@ class StructureModel(nx.DiGraph):
                 if node in subgraph.nodes:
                     return subgraph
 
-        raise NodeNotFound("Node {node} not found in the graph.".format(node=node))
+        raise NodeNotFound(f"Node {node} not found in the graph.")
 
     def threshold_till_dag(self):
         """

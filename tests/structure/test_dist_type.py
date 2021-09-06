@@ -334,7 +334,7 @@ class TestDistTypeClasses:
     )
     def test_update_idx_col(self, dist_type, X):
         """ Test to ensure that first column is always preserved """
-        idx_col_original = {i: "{}".format(i) for i in range(X.shape[1])}
+        idx_col_original = {i: f"{i}" for i in range(X.shape[1])}
         dist_types = [dist_type(idx=idx) for idx in np.arange(X.shape[1])]
         for dt in dist_types:
             X = dt.preprocess_X(X)
