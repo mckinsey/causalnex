@@ -12,7 +12,7 @@
     {% set meta = {} %}
 {% endif %}
 
-{% if github_url is defined %}
+{% if meta is not none and github_url is defined %}
     {% set _dummy = meta.update({'github_url': github_url}) %}
 {% endif %}
 
