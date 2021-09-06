@@ -747,6 +747,103 @@ class TestFitLatentCPDs:
             bn.fit_latent_cpds("d", lv_states, df)
 
 
+class TestSetCPD:
+    """Test behaviour of adding a self-defined cpd"""
+
+    def test_set_cpd(self, bn, good_cpd):
+        """The CPD of the target node should be the same as the self-defined table after adding"""
+
+        bn.set_cpd("b", good_cpd)
+        assert bn.cpds["b"].values.tolist() == good_cpd.values.tolist()
+
+    def test_set_other_cpd(self, bn, good_cpd):
+        """The CPD of nodes other than the target node should not be affected"""
+
+        cpd = bn.cpds["a"].values.tolist()
+        bn.set_cpd("b", good_cpd)
+        cpd_after_adding = bn.cpds["a"].values.tolist()
+
+        assert all(
+            val == val_after_adding
+            for val, val_after_adding in zip(*(cpd, cpd_after_adding))
+        )
+
+    def test_set_cpd_to_non_existent_node(self, bn, good_cpd):
+        """Should raise error if adding a cpd to a non-existing node in Bayesian Network"""
+
+        with pytest.raises(
+            ValueError,
+            match=r'Non-existing node "test"',
+        ):
+            bn.set_cpd("test", good_cpd)
+
+    def test_set_bad_cpd(self, bn, bad_cpd):
+        """Should raise error if it the prpbability values do not sum up to 1 in the table"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Sum or integral of conditional probabilites for node b is not equal to 1.",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_no_overwritten_after_setting_bad_cpd(self, bn, bad_cpd):
+        """The cpd of bn won't be overwritten if adding a bad cpd"""
+
+        original_cpd = bn.cpds["b"].values.tolist()
+
+        try:
+            bn.set_cpd("b", bad_cpd)
+        except ValueError:
+            assert bn.cpds["b"].values.tolist() == original_cpd
+
+    def test_bad_node_index(self, bn, good_cpd):
+        """Should raise an error when setting bad node index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.index.name = "test"
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_node_states_index(self, bn, good_cpd):
+        """Should raise an error when setting bad node states index"""
+
+        bad_cpd = good_cpd.reindex([1, 2, 3])
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_parent_node_index(self, bn, good_cpd):
+        """Should raise an error when setting bad parent node index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.columns = bad_cpd.columns.rename("test", level=1)
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_parent_node_states_index(self, bn, good_cpd):
+        """Should raise an error when setting bad parent node states index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.columns.set_levels(["test1", "test2"], level=0, inplace=True)
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+
 class TestCPDsProperty:
     """Test behaviour of the CPDs property"""
 
@@ -798,7 +895,6 @@ class TestStructure:
         """The structure retrieved should be the same"""
 
         sm = StructureModel()
-
         sm.add_weighted_edges_from([(1, 2, 2.0)], origin="unknown")
         sm.add_weighted_edges_from([(1, 3, 1.0)], origin="learned")
         sm.add_weighted_edges_from([(3, 5, 0.7)], origin="expert")
@@ -809,7 +905,6 @@ class TestStructure:
 
         assert set(sm.edges.data("origin")) == set(sm_from_bn.edges.data("origin"))
         assert set(sm.edges.data("weight")) == set(sm_from_bn.edges.data("weight"))
-
         assert set(sm.nodes) == set(sm_from_bn.nodes)
 
     def test_set_structure(self):

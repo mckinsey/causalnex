@@ -26,6 +26,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 from typing import Dict
 
 import numpy as np
@@ -487,9 +488,37 @@ def test_data_c_likelihood(train_data_discrete_cpds) -> pd.DataFrame:
 
 @pytest.fixture
 def bn(train_data_idx, train_data_discrete) -> BayesianNetwork:
+    """Perform structure learning and CPD estimation"""
     return BayesianNetwork(
         from_pandas(train_data_idx, w_threshold=0.3)
     ).fit_node_states_and_cpds(train_data_discrete)
+
+
+@pytest.fixture
+def empty_cpd() -> pd.DataFrame:
+    """Create an empty CPD table"""
+    parents = {"d": {True, False}, "e": {True, False}}
+    tuples = tuple(itertools.product(*[tuple(states) for _, states in parents.items()]))
+    index = pd.MultiIndex.from_tuples(tuples, names=list(parents.keys()))
+    df = pd.DataFrame(np.NaN, index=["x", "y", "z"], columns=index)
+    df.index.name = "b"
+    return df
+
+
+@pytest.fixture
+def good_cpd(empty_cpd) -> pd.DataFrame:
+    """Create a bad CPD table which does not satisfy probability distribution properties"""
+    df = empty_cpd
+    df.loc[:] = [[0.2, 1.0, 0.4, 0.1], [0.7, 0.0, 0.0, 0.1], [0.1, 0.0, 0.6, 0.8]]
+    return df
+
+
+@pytest.fixture
+def bad_cpd(empty_cpd) -> pd.DataFrame:
+    """Create a bad CPD table which does not satisfy probability distribution properties"""
+    df = empty_cpd
+    df.loc[:] = [[0.2, 1.0, 0.4, 0.1], [0.7, 2.0, 3.0, 0.1], [0.3, 1.0, 0.6, 5.8]]
+    return df
 
 
 @pytest.fixture()
@@ -1011,7 +1040,6 @@ def data_dynotears_p3() -> Dict[str, np.ndarray]:
             ]
         ),
     }
-
     data["Y"] = np.array(
         [list(y1) + list(y2) for y1, y2 in zip(data["Y_1"], data["Y_2"])]
     )
@@ -1025,7 +1053,6 @@ def adjacency_mat_num_stability() -> np.ndarray:
     """
     Adjacency matrix for training structure learning algorithms
     """
-
     W = np.array(
         [
             [0.0, 0.0, 0.0, 0.0, 0.0],
@@ -1051,7 +1078,6 @@ def iris_test_data() -> pd.DataFrame:
     df["sepal length (cm)"] = Discretiser(
         method="quantile", num_buckets=3
     ).fit_transform(df["sepal length (cm)"].values)
-
     return df
 
 
@@ -1068,7 +1094,6 @@ def iris_edge_list():
         ("type", "sepal width (cm)"),
         ("type", "petal width (cm)"),
     ]
-
     return edge_list
 
 
@@ -1079,9 +1104,7 @@ def chain_network() -> BayesianNetwork:
     into subgraphs.
 
     a → b → c → d → e
-
     """
-
     n = 50
     nodes_names = list("abcde")
     random_binary_matrix = (
@@ -1098,9 +1121,7 @@ def chain_network() -> BayesianNetwork:
             ("d", "e"),
         ]
     )
-
     chain_bn = BayesianNetwork(model)
     chain_bn = chain_bn.fit_node_states(df)
     chain_bn = chain_bn.fit_cpds(df, method="BayesianEstimator", bayes_prior="K2")
-
     return chain_bn

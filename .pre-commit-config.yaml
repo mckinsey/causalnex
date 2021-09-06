@@ -13,13 +13,12 @@ repos:
         stages: [commit, manual]
         exclude: ^docs/source/03_tutorial
     -   id: check-yaml  # Checks yaml files for parseable syntax.
-#        exclude:
     -   id: check-json  # Checks json files for parseable syntax.
     -   id: check-added-large-files
+        exclude: ^docs/source/03_tutorial
     -   id: check-case-conflict  # Check for files that would conflict in case-insensitive filesystems
     -   id: check-merge-conflict  # Check for files that contain merge conflict strings.
     -   id: debug-statements  # Check for debugger imports and py37+ `breakpoint()` calls in python source.
-#        exclude:
     -   id: detect-private-key  # Detects the presence of private keys
     -   id: requirements-txt-fixer  # Sorts entries in requirements.txt
     -   id: flake8

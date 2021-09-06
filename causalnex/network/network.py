@@ -32,12 +32,14 @@ This module contains the implementation of ``BayesianNetwork``.
 describing causal relationships between variables and their distribution in a factorised way.
 """
 
+import copy
 import re
 from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import pandas as pd
 from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
+from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.models import BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
@@ -272,6 +274,59 @@ class BayesianNetwork:
             cpds[cpd.variable].columns = cols
 
         return cpds
+
+    def set_cpd(self, node: str, df: pd.DataFrame) -> "BayesianNetwork":
+        """
+        Provide self-defined CPD to Bayesian Network
+
+        Args:
+            node: the node to add self-defined cpd.
+            df: self-defined cpd in pandas DataFrame format.
+
+        Returns:
+            self
+
+        Raises:
+            IndexError: if the index names of the pandas DataFrame does not match the expected DataFrame.
+            ValueError: if node does not exist in Bayesian Network or a bad cpd table is provided.
+        """
+        if node not in self.nodes:
+            raise ValueError(f'Non-existing node "{node}"')
+
+        # Check Table
+        true_parents = {
+            parent_node: self.node_states[parent_node]
+            for parent_node in self._structure.predecessors(node)
+        }
+        table_parents = {
+            name: set(df.columns.levels[i].values)
+            for i, name in enumerate(df.columns.names)
+        }
+        if not (
+            set(df.index.values) == self.node_states[node]
+            and true_parents == table_parents
+            and df.index.name == node
+        ):
+            raise IndexError("Wrong index values. Please check your indices")
+
+        sorted_df = df.reindex(sorted(df.columns), axis=1)
+        node_card = len(self.node_states[node])
+        evidence, evidence_card = zip(
+            *[(key, len(table_parents[key])) for key in sorted(table_parents.keys())]
+        )
+        tabular_cpd = TabularCPD(
+            node,
+            node_card,
+            sorted_df.values,
+            evidence=evidence,
+            evidence_card=evidence_card,
+        )
+        model_copy = copy.deepcopy(self._model)
+        model_copy.add_cpds(tabular_cpd)
+        model_copy.check_model()
+
+        self._model = model_copy
+        return self
 
     def fit_node_states(self, df: pd.DataFrame) -> "BayesianNetwork":
         """
