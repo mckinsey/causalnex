@@ -47,6 +47,7 @@ class TestInferenceEngineIdx:
     def test_create_inference_with_bad_variable_names_fails(
         self, train_model, train_data_idx
     ):
+        """Test creation of InferenceEngine with bad variable names"""
 
         model = StructureModel()
         model.add_edges_from(
@@ -63,6 +64,28 @@ class TestInferenceEngineIdx:
 
         with pytest.raises(ValueError, match="Variable names must match.*"):
             InferenceEngine(bn)
+
+    def test_invalid_observations(self, train_model, train_data_idx):
+        """Test with invalid observations type"""
+
+        bn = BayesianNetwork(train_model)
+        bn.fit_node_states(train_data_idx).fit_cpds(train_data_idx)
+        ie = InferenceEngine(bn)
+
+        with pytest.raises(
+            TypeError, match="Expecting observations to be a dict, list or None"
+        ):
+            ie.query("123")
+
+        with pytest.raises(
+            TypeError, match="Expecting observations to be a dict, list or None"
+        ):
+            ie.query({"123", "abc"})
+
+        with pytest.raises(
+            TypeError, match="Expecting observations to be a dict, list or None"
+        ):
+            ie.query(("123", "abc"))
 
     def test_empty_query_returns_marginals(
         self, train_model, train_data_idx, train_data_idx_marginals
@@ -437,7 +460,7 @@ class TestInferenceEngineDiscrete:
 
         # assert the _cpds of the upstream nodes are stored correctly
         orig_cpds = ie._cpds_original  # pylint: disable=protected-access
-        upstream_cpds = ie._upstream_cpds  # pylint: disable=protected-access
+        upstream_cpds = ie._detached_cpds  # pylint: disable=protected-access
         assert orig_cpds["a"] == upstream_cpds["a"]
         assert orig_cpds["b"] == upstream_cpds["b"]
 
@@ -466,7 +489,7 @@ class TestInferenceEngineDiscrete:
 
         # assert the _cpds of the upstream nodes are stored correctly
         orig_cpds = ie._cpds_original  # pylint: disable=protected-access
-        upstream_cpds = ie._upstream_cpds  # pylint: disable=protected-access
+        upstream_cpds = ie._detached_cpds  # pylint: disable=protected-access
         assert orig_cpds["a"] == upstream_cpds["a"]
 
         ie.reset_do(var_b)
