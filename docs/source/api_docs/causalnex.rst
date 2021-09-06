@@ -16,6 +16,7 @@ causalnex
       causalnex.structure
       causalnex.plots
       causalnex.discretiser
+      causalnex.estimator
       causalnex.network
       causalnex.evaluation
       causalnex.inference

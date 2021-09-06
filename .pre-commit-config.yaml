@@ -11,6 +11,7 @@ repos:
         stages: [commit, manual]
     -   id: end-of-file-fixer
         stages: [commit, manual]
+        exclude: ^docs/source/03_tutorial
     -   id: check-yaml  # Checks yaml files for parseable syntax.
 #        exclude:
     -   id: check-json  # Checks json files for parseable syntax.

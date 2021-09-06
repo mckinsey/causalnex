@@ -1,0 +1,24 @@
+digraph{
+	// splines=curved;
+	ratio=fill;
+	size="3,2!"
+	dpi=200
+	a[regular=true];
+	b[regular=true];
+	c[regular=true];
+	d[regular=true];
+	e[regular=true];
+	f[regular=true];
+	g[regular=true];
+	h[regular=true];
+	Z[regular=true];
+	Z -> e;
+	Z -> f;
+	Z -> g;
+	Z -> h;
+
+	a -> Z;
+	b -> Z;
+	c -> Z;
+	d -> Z;
+}

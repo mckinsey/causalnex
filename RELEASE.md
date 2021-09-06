@@ -1,12 +1,13 @@
 # Upcoming release
 
-# Release 0.10.1
+# Release 0.11.0
+* Add expectation-maximisation (EM) algorithm to learn with latent variables
+* Fix infinite loop at `.query()` after a `.do_intervention()` that splits
+  the graph into two or more subgraphs, as per #100, #45
 * Fix decision tree and mdlp discretisations bug when input data is shuffled
 * Fix broken URLs in FAQ documentation, as per #113 and #125
 * Add a link to `PyGraphviz` installation guide under the installation prerequisites
 * Fix integer index type checking for timeseries data, as per #74 and #86
-* Fix infinite loop at `.query()` after a `.do_intervention()` that splits
-  the graph into two or more subgraphs, as per #100, #45
 * Add GPU support to Pytorch implementation, as requested in #56 and #114
 
 # Release 0.10.0

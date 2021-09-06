@@ -1,0 +1,12 @@
+digraph{
+	// ratio=fill;
+	// size="3,2!"
+	dpi=100
+
+	a[regular=true];
+	b[regular=true];
+	subgraph name {
+		rank=same
+		a -> b;
+	}
+}
