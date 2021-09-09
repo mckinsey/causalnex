@@ -129,16 +129,14 @@ class BayesianNetwork:
 
         if n_components > 1:
             raise ValueError(
-                "The given structure has {n_components} separated graph components. "
-                "Please make sure it has only one.".format(n_components=n_components)
+                f"The given structure has {n_components} separated graph components. "
+                "Please make sure it has only one."
             )
 
         if not nx.is_directed_acyclic_graph(structure):
             cycle = nx.find_cycle(structure)
             raise ValueError(
-                "The given structure is not acyclic. Please review the following cycle: {cycle}".format(
-                    cycle=cycle
-                )
+                f"The given structure is not acyclic. Please review the following cycle: {cycle}"
             )
 
         # _node_states is a Dict in the form `dict: {node: dict: {state: index}}`.
@@ -202,16 +200,14 @@ class BayesianNetwork:
         if missing_feature:
             raise KeyError(
                 "The data does not cover all the features found in the Bayesian Network. "
-                "Please check the following features: {nodes}".format(
-                    nodes=missing_feature
-                )
+                f"Please check the following features: {missing_feature}"
             )
 
         self._node_states = {}
 
         for node, states in nodes.items():
             if any(pd.isnull(list(states))):
-                raise ValueError("node '{node}' contains None state".format(node=node))
+                raise ValueError(f"node '{node}' contains None state")
 
             self._node_states[node] = {v: k for k, v in enumerate(sorted(states))}
 
@@ -614,9 +610,7 @@ class BayesianNetwork:
         parents = sorted(self._model.get_parents(node))
         cpd = self.cpds[node]
 
-        transformed_data[
-            "{node}_prediction".format(node=node)
-        ] = transformed_data.apply(
+        transformed_data[f"{node}_prediction"] = transformed_data.apply(
             lambda row: cpd[tuple(row[parent] for parent in parents)].idxmax()
             if parents
             else cpd[""].idxmax(),
@@ -698,15 +692,11 @@ class BayesianNetwork:
             return cpd.at[s, ""]
 
         for state in self.node_states[node]:
-            transformed_data[
-                "{n}_{s}".format(n=node, s=state)
-            ] = transformed_data.apply(
+            transformed_data[f"{node}_{state}"] = transformed_data.apply(
                 lambda row, st=state: lookup_probability(row, st), axis=1
             )
 
-        return transformed_data[
-            ["{n}_{s}".format(n=node, s=state) for state in self.node_states[node]]
-        ]
+        return transformed_data[[f"{node}_{state}" for state in self.node_states[node]]]
 
     def _predict_probability_from_incomplete_data(
         self,
@@ -739,7 +729,7 @@ class BayesianNetwork:
 
         # keep only probabilities for the node we are interested in
         cols = []
-        pattern = re.compile("^{node}_[0-9]+$".format(node=node))
+        pattern = re.compile(f"^{node}_[0-9]+$")
 
         # disabled open pylint issue (https://github.com/PyCQA/pylint/issues/2962)
         for col in probability.columns:

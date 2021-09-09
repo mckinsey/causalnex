@@ -118,8 +118,7 @@ class BBN:
                 raise VariableNotInGraphError(k)
             domain = self.domains.get(k, (True, False))
             if v not in domain:
-                s = "{}={}".format(k, v)
-                raise VariableValueNotInDomainError(s)
+                raise VariableValueNotInDomainError(f"{k}={v}")
         return True
 
     def query(self, **kwds):

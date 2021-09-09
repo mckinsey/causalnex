@@ -236,7 +236,7 @@ class EMSingleLatentVariable:  # pylint: disable=too-many-arguments, too-many-in
                     for idx, cols, val in updates:
                         sufficient_stats[cols][idx] += val
             else:
-                results = Parallel(n_jobs=self.n_jobs)(
+                results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
                     delayed(self._update_sufficient_stats)(chunk_df["_lookup_"])
                     for chunk_df in chunk_data(node_mb_data, self.n_jobs * 2)
                 )

@@ -185,7 +185,7 @@ def get_correct_cpds(
 
 
 class TestEMJobs:
-    @pytest.mark.parametrize("n_jobs", [1, 3])
+    @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_no_missing_data(self, n_jobs):
         """If all data for the latent variable is provided, the result is the same as runing bn.fit_cpds"""
         df, sm, node_states, true_lv_values = naive_bayes_plus_parents(
@@ -205,7 +205,7 @@ class TestEMJobs:
         )
         assert max_error == 0
 
-    @pytest.mark.parametrize("n_jobs", [1, 3])
+    @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_missing_data(self, n_jobs):
         """Test EM algorithm given some "missing" data """
         df, sm, node_states, true_lv_values = naive_bayes_plus_parents(
@@ -231,7 +231,7 @@ class TestEMJobs:
         assert max_error < 0.02
         assert rmse_error < 1e-2
 
-    @pytest.mark.parametrize("n_jobs", [1, 3])
+    @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_no_parents(self, n_jobs):
         """Test EM algorithm on pure naive Bayes structure without parents"""
         df, sm, node_states, true_lv_values = naive_bayes_plus_parents(
@@ -252,7 +252,7 @@ class TestEMJobs:
         assert max_error < 0.02
         assert rmse_error < 1e-2
 
-    @pytest.mark.parametrize("n_jobs", [1, 3])
+    @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_likelihood_always_go_up(self, n_jobs):
         """Test convergence properties of EM algorithm"""
         df, sm, node_states, _ = naive_bayes_plus_parents(

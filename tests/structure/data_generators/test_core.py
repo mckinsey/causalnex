@@ -183,11 +183,11 @@ class TestMixedDataGen:
         assert df[2].nunique() == 2
 
         # test categorical:
-        for col in ["1_{}".format(i) for i in range(3)]:
+        for col in [f"1_{i}" for i in range(3)]:
             assert df[col].nunique() == 2
         assert len([x for x in df.columns if isinstance(x, str) and "1_" in x]) == 3
 
-        for col in ["5_{}".format(i) for i in range(5)]:
+        for col in [f"5_{i}" for i in range(5)]:
             assert df[col].nunique() == 2
         assert len([x for x in df.columns if isinstance(x, str) and "5_" in x]) == 5
 
@@ -313,10 +313,10 @@ class TestMixedDataGen:
 
         schema = {
             "0": "binary",
-            "1": "categorical:{}".format(n_categories),
+            "1": f"categorical:{n_categories}",
             "2": "binary",
             "4": "continuous",
-            "5": "categorical:{}".format(n_categories),
+            "5": f"categorical:{n_categories}",
             "6": "count",
         }
 
@@ -341,12 +341,12 @@ class TestMixedDataGen:
         # to avoid small values)
         c, _ = max(
             [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
+                (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
+                for i in range(n_categories)
             ],
             key=operator.itemgetter(1),
         )
-        joint_proba, factored_proba = calculate_proba(df, "0", "1_{}".format(c))
+        joint_proba, factored_proba = calculate_proba(df, "0", f"1_{c}")
         assert not np.isclose(joint_proba, factored_proba, rtol=0, atol=atol)
         # 2 -> 4
         assert not np.isclose(
@@ -365,12 +365,12 @@ class TestMixedDataGen:
         # categorical
         c, _ = max(
             [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
+                (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
+                for i in range(n_categories)
             ],
             key=operator.itemgetter(1),
         )
-        joint_proba, factored_proba = calculate_proba(df, "0", "5_{}".format(c))
+        joint_proba, factored_proba = calculate_proba(df, "0", f"5_{c}")
         assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
         # binary
@@ -380,21 +380,19 @@ class TestMixedDataGen:
         # categorical
         c, _ = max(
             [
-                (c, np.abs(df["1_{}".format(c)].mean() - 1 / n_categories))
-                for c in range(n_categories)
+                (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
+                for i in range(n_categories)
             ],
             key=operator.itemgetter(1),
         )
         d, _ = max(
             [
-                (d, np.abs(df["5_{}".format(d)].mean() - 1 / n_categories))
+                (d, np.abs(df[f"5_{d}"].mean() - 1 / n_categories))
                 for d in range(n_categories)
             ],
             key=operator.itemgetter(1),
         )
-        joint_proba, factored_proba = calculate_proba(
-            df, "1_{}".format(d), "5_{}".format(c)
-        )
+        joint_proba, factored_proba = calculate_proba(df, f"1_{d}", f"5_{c}")
         assert np.isclose(joint_proba, factored_proba, rtol=tol, atol=0)
 
         # continuous
@@ -530,11 +528,11 @@ class TestNonlinearGenerator:
         assert df[2].nunique() == 2
 
         # test categorical:
-        for col in ["1_{}".format(i) for i in range(3)]:
+        for col in [f"1_{i}" for i in range(3)]:
             assert df[col].nunique() == 2
         assert len([x for x in df.columns if isinstance(x, str) and "1_" in x]) == 3
 
-        for col in ["5_{}".format(i) for i in range(5)]:
+        for col in [f"5_{i}" for i in range(5)]:
             assert df[col].nunique() == 2
         assert len([x for x in df.columns if isinstance(x, str) and "5_" in x]) == 5
 

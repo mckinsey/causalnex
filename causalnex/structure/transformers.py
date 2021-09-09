@@ -140,15 +140,11 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
         return X, Xlags
 
     def _concat_lags(self, X: np.ndarray, Xlags: np.ndarray) -> pd.DataFrame:
-        df_x = pd.DataFrame(
-            X, columns=["{col}_lag0".format(col=col) for col in self.columns]
-        )
+        df_x = pd.DataFrame(X, columns=[f"{col}_lag0" for col in self.columns])
         df_xlags = pd.DataFrame(
             Xlags,
             columns=[
-                "{col}_lag{l_}".format(col=col, l_=l_)
-                for l_ in range(1, self.p + 1)
-                for col in self.columns
+                f"{col}_lag{l_}" for l_ in range(1, self.p + 1) for col in self.columns
             ],
         )
         return pd.concat([df_x, df_xlags], axis=1)
@@ -186,9 +182,7 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
             if not non_numeric_cols.empty:
                 raise ValueError(
                     "All columns must have numeric data. Consider mapping the "
-                    "following columns to int: {non_numeric_cols}".format(
-                        non_numeric_cols=list(non_numeric_cols)
-                    )
+                    f"following columns to int: {list(non_numeric_cols)}"
                 )
 
             if (not np.all(df.columns == t.columns)) or (
@@ -208,8 +202,8 @@ class DynamicDataTransformer(BaseEstimator, TransformerMixin):
                 missing_cols = [c for c in self.columns if c not in t.columns]
                 if missing_cols:
                     raise ValueError(
-                        "We should provide all necessary columns in the time series."
-                        " Columns not provided: {col}".format(col=missing_cols)
+                        "We should provide all necessary columns in the time series. "
+                        f"Columns not provided: {missing_cols}"
                     )
 
     @staticmethod

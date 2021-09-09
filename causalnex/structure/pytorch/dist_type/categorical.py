@@ -277,7 +277,7 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
             Updated column name.
         """
         if catidx:
-            return "{}{}".format(colname, catidx)
+            return f"{colname}{catidx}"
         return colname
 
     def update_idx_col(self, idx_col: Dict[int, str]) -> Dict[int, str]:

@@ -10,11 +10,12 @@
 * Add a link to `PyGraphviz` installation guide under the installation prerequisites
 * Fix integer index type checking for timeseries data, as per #74 and #86
 * Add GPU support to Pytorch implementation, as requested in #56 and #114
+* Add an example for structure model exporting into first causalnex tutorial, as per #124 and #129
 
 # Release 0.10.0
-* Add supervised discretisation strategies using Decision Tree and MDLP algorithms.
-* Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN.
-* Fixes cyclical import of `causalnex.plots`, as per #106.
+* Add supervised discretisation strategies using Decision Tree and MDLP algorithms
+* Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN
+* Fixes cyclical import of `causalnex.plots`, as per #106
 * Add utility function to extract Markov blanket from a Bayesian Network
 * Support receiving a list of inputs for `InferenceEngine` with a multiprocessing option
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms
