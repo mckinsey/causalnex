@@ -87,9 +87,9 @@ If a random variable has parents in the BN then the CPD represents \\(P(\text{va
 probability of that variable given its parents. In the case, when
 the random variable has no parents it simply represents \\(P(\text{variable}) \\) i.e. the probability of that variable.
 
-Even though we are interested in the joint distribution of the variables in the graph, Bayes' rule requires to only specify the conditional distributions of each variable given its parents.
+Even though we are interested in the joint distribution of the variables in the graph, Bayes' rule requires us to only specify the conditional distributions of each variable given its parents.
 
-> The links between variables in BNs encode dependency not necessarily causality. In this package we are mostly interested in the case where BNs are causal. Hence, the edge between nodes should be seen as *cause -> effect* relationship.
+> The links between variables in Bayesian Networks encode dependency but not necessarily causality. In this package we are mostly interested in the case where Bayesian Networks are causal. Hence, the edge between nodes should be seen as a *cause -> effect* relationship.
 
 Let's consider an example of a simple Bayesian network shown in figure below. It shows how the actions of customer relationship managers (emails sent and meetings held) affect the bank's income.
 
@@ -102,11 +102,11 @@ New sales and the number of meetings with a customer directly affect the bank's 
 two drivers are not independent but the number of meetings also influences
 whether a new sale takes place. In addition, system prompts indirectly influence
 the bank's income through the generation of new sales. This example
-shows that BNs are able to capture complex relationships between variables and represent dependencies between
-drivers and include drivers that do not affect the target directly.
+shows that BNs are able to capture complex relationships between variables, represent dependencies between
+drivers, and include drivers that do not affect the target directly.
 
 
-**Steps for working with a Bayesian Network**
+#### Steps for working with a Bayesian Network
 
 BN models are built in a multi-step process before they can be used for analysis.
 
@@ -117,9 +117,9 @@ BN models are built in a multi-step process before they can be used for analysis
 CausalNex supports structure learning from continuous data, and expert opinion. CausalNex supports likelihood estimation and prediction/inference from discrete data. A `Discretiser` class is provided to help discretising continuous data in a meaningful way.
 
 
-> Since BNs themselves are not inherently causal models, the structure learning algorithms on their own merely learn that there are dependencies between variables. A useful approach to the problem is to first group the features into themes and constrain the search space to respect how themes of variables relate. If there is further domain knowledge available, it can be used as additional constraints before learning a graph algorithmically.
+> Since BNs themselves are not inherently causal models, the structure learning algorithms on their own merely learn that there are dependencies between variables. A useful approach to the problem is to first group the features into themes and constrain the search space to inspect how themes of variables relate. If there is further domain knowledge available, it can be used as additional constraints before learning a graph algorithmically.
 
-**What can we use Bayesian Networks for?**
+#### What can we use Bayesian Networks for?
 
 The probabilities of variables in Bayesian Networks update as observations are added to the model.
 This is useful for inference or counterfactuals, and for predictive analytics.
@@ -130,7 +130,7 @@ Metrics can help us understand the strength of relationships between variables.
 
 ### 2.3 Advantages and Drawbacks of Bayesian Networks
 
-**Advantages**
+#### Advantages
 
 - Bayesian Networks offer a graphical representation that is reasonably interpretable and easily explainable;
 - Relationships captured between variables in a Bayesian Network are more complex yet hopefully more informative than a conventional model;
@@ -138,22 +138,22 @@ Metrics can help us understand the strength of relationships between variables.
 - Multiple metrics can used to measure the significance of relationships and help identify the effect of specific actions;
 - Offer a mechanism of suggesting counterfactual actions and combine actions without aggressive independence assumptions.
 
-**Drawbacks**
+#### Drawbacks
 
 - Granularity of modelling may have to be lower. However, this may either not be necessary, or can be run in tangent to other techniques that provide accuracy
 but are less interpretable;
 - Computational complexity is higher. However, this can be offset with careful feature selection and a less granular discretisation policy, but at the expense of predictive power;
 - This is (unfortunately) not a way of fully automating Causal Inference.
 
-## 3. `BayesianNetwork`
+## 3. The `BayesianNetwork` Class
 
 The `BayesianNetwork` class is the central class for the causal inference analysis in the package.
-It is built on top of the `StructureModel`, which is an extension of `networkx.DiGraph`
+It is built on top of the `StructureModel` class, which is an extension of `networkx.DiGraph`
 
 `StructureModel` represents a causal graph, a DAG of the respective BN and holds directed edges, describing
 a _cause -> effect_ relationship. In order to define the `BayesianNetwork`, users should provide a relevant `StructureModel`.
 
-> Cycles are permitted within a `StructureModel`. However, only **acyclic connected** `StructureModel` are allowed in the construction of `BayesianNetwork`;  isolated nodes are not allowed.
+> Cycles are permitted within a `StructureModel`. However, only **acyclic connected** `StructureModel` objects are allowed in the construction of `BayesianNetwork`;  isolated nodes are not allowed.
 
 ### 3.1 Defining the DAG with `StructureModel`
 
@@ -186,8 +186,11 @@ For instance, users can define a causal model **fully manually**, e.g., using th
 Or, users can learn the network structure **automatically** from the data using the [`NOTEARS`](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) algorithm. Moreover, if there is domain knowledge available,
 it can be used as **additional constraints** before learning a graph algorithmically.
 
-> Recently published [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) algorithm for learning DAGs from data based on a continuous optimisation problem
-allowed to overcome the challenges of combinatorial optimisation giving a new impulse to the usage of BNs in the machine learning applications.
+> [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) 
+> is a recently published algorithm for learning DAGs from data,
+> framed as a continuous optimisation problem.
+> It allowed us to overcome the challenges of combinatorial optimisation,
+> giving a new impetus to the usage of BNs in machine learning applications.
 
 ```python
     from causalnex.structure.notears import from_pandas
@@ -203,7 +206,7 @@ allowed to overcome the challenges of combinatorial optimisation giving a new im
     sm_with_tabu_parents = from_pandas(data, tabu_child_nodes=["d", "e"])
 ```
 
-Finally, the output of the algorithm should be **inspected** and **adjusted**, if required,
+Finally, the output of the algorithm should be **inspected**, and **adjusted** if required,
 by a domain expert. This is a targeted effort to encode important domain knowledge in models, and avoid spurious relationships.
 
 ```python
@@ -216,13 +219,13 @@ by a domain expert. This is a targeted effort to encode important domain knowled
     sm.add_edge("a", "e", origin="expert")
 ```
 
-> When defining the structure model, we recommend to use the **entire** dataset **without** discretisation of continuous variables.
+> When defining the structure model, we recommend using the **entire** dataset **without** discretisation of continuous variables.
 
 ### 3.2 Likelihood Estimation and Predictions with `BayesianNetwork`
 
 Once the graph has been determined, the `BayesianNetwork` can be initialised and the conditional probability distributions of the variables can be learned from the data.
 
-Maximum likelihood or Bayesian parameter estimation can be used for CPDs learning.
+Maximum likelihood or Bayesian parameter estimation can be used for learning CPDs.
 > When learning CPDs of the BN,
 > - The dicscretised data should be used (either high or low granularity of features and target variables can be used);
 > - Overfitting and underfitting of CPDs can be avoided with an appropriate train/test split of the data.
