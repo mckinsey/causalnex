@@ -537,7 +537,7 @@ class TestStructureModelGetTargetSubgraph:
 
         with pytest.raises(
             NodeNotFound,
-            match="Node {node} not found in the graph".format(node=target_node),
+            match=f"Node {target_node} not found in the graph",
         ):
             sm.get_target_subgraph(target_node)
 

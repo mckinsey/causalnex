@@ -101,57 +101,40 @@ class Discretiser(BaseEstimator, TransformerMixin):
 
         if self.method not in allowed_methods:
             raise ValueError(
-                "{0} is not a recognised method. Use one of: {1}".format(
-                    self.method, " ".join(allowed_methods)
-                )
+                f"{self.method} is not a recognised method. "
+                f"Use one of: {' '.join(allowed_methods)}"
             )
         if self.method in {"uniform", "quantile"} and num_buckets is None:
-            raise ValueError(
-                "{0} method expects {1}".format(self.method, "num_buckets")
-            )
+            raise ValueError(f"{self.method} method expects num_buckets")
 
         if self.method == "outlier" and outlier_percentile is None:
-            raise ValueError(
-                "{0} method expects {1}".format(self.method, "outlier_percentile")
-            )
+            raise ValueError(f"{self.method} method expects outlier_percentile")
 
         if outlier_percentile is not None and not 0 <= outlier_percentile < 0.5:
-            raise ValueError(
-                "{0} must be between 0 and 0.5".format("outlier_percentile")
-            )
+            raise ValueError("outlier_percentile must be between 0 and 0.5")
 
         if self.method == "fixed" and numeric_split_points is None:
-            raise ValueError(
-                "{0} method expects {1}".format(self.method, "numeric_split_points")
-            )
+            raise ValueError(f"{self.method} method expects numeric_split_points")
 
         if (
             numeric_split_points is not None
             and sorted(numeric_split_points) != numeric_split_points
         ):
-            raise ValueError(
-                "{0} must be monotonically increasing".format("numeric_split_points")
-            )
+            raise ValueError("numeric_split_points must be monotonically increasing")
 
         if self.method == "percentiles" and percentile_split_points is None:
-            raise ValueError(
-                "{0} method expects {1}".format(self.method, "percentile_split_points")
-            )
+            raise ValueError(f"{self.method} method expects percentile_split_points")
 
         if percentile_split_points is not None and not all(
             0 <= p <= 1 for p in percentile_split_points
         ):
-            raise ValueError(
-                "{0} must be between 0 and 1".format("percentile_split_points")
-            )
+            raise ValueError("percentile_split_points must be between 0 and 1")
 
         if (
             percentile_split_points is not None
             and sorted(percentile_split_points) != percentile_split_points
         ):
-            raise ValueError(
-                "{0} must be monotonically increasing".format("percentile_split_points")
-            )
+            raise ValueError("percentile_split_points must be monotonically increasing")
 
         if self.method == "fixed":
             self.numeric_split_points = numeric_split_points

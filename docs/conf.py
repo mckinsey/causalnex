@@ -22,9 +22,7 @@ from inspect import getmembers, isclass, isfunction
 from pathlib import Path
 from typing import List
 
-import patchy
 from click import secho, style
-from sphinx.ext.autosummary.generate import generate_autosummary_docs
 
 from causalnex import __version__ as release
 
@@ -446,60 +444,3 @@ except Exception as e:
     )
 
 fix_module_paths()
-
-patchy.patch(
-    generate_autosummary_docs,
-    """\
-@@ -3,7 +3,7 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
-                               base_path=None, builder=None, template_dir=None,
-                               imported_members=False, app=None):
-     # type: (List[unicode], unicode, unicode, Callable, Callable, unicode, Builder, unicode, bool, Any) -> None  # NOQA
--
-+    imported_members = True
-     showed_sources = list(sorted(sources))
-     if len(showed_sources) > 20:
-         showed_sources = showed_sources[:10] + ['...'] + showed_sources[-10:]
-""",
-)
-
-patchy.patch(
-    generate_autosummary_docs,
-    """\
-@@ -96,6 +96,21 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
-                           if x in include_public or not x.startswith('_')]
-                 return public, items
-
-+            import importlib
-+            def get_public_modules(obj, typ):
-+                # type: (Any, str) -> List[str]
-+                items = []  # type: List[str]
-+                for item in getattr(obj, '__all__', []):
-+                    try:
-+                        importlib.import_module(name + '.' + item)
-+                    except ImportError:
-+                        continue
-+                    finally:
-+                        if item in sys.modules:
-+                            sys.modules.pop(name + '.' + item)
-+                    items.append(name + '.' + item)
-+                return items
-+
-             ns = {}  # type: Dict[unicode, Any]
-""",
-)
-
-patchy.patch(
-    generate_autosummary_docs,
-    """\
-@@ -106,6 +106,9 @@ def generate_autosummary_docs(sources, output_dir=None, suffix='.rst',
-                     get_members(obj, 'class', imported=imported_members)
-                 ns['exceptions'], ns['all_exceptions'] = \\
-                     get_members(obj, 'exception', imported=imported_members)
-+                ns['public_modules'] = get_public_modules(obj, 'module')
-+                ns['functions'] = [m for m in ns['functions'] if not hasattr(obj, '__all__') or m in obj.__all__]
-+                ns['classes'] = [m for m in ns['classes'] if not hasattr(obj, '__all__') or m in obj.__all__]
-             elif doc.objtype == 'class':
-                 ns['members'] = dir(obj)
-                 ns['inherited_members'] = \\
-""",
-)

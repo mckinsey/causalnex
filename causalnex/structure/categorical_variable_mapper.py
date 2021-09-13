@@ -74,7 +74,7 @@ class VariableFeatureMapper:
         # dictionary: categorical feature to variable (C:1 mapping)
         self._cat_fte_var_dict = OrderedDict(
             [
-                ("{}_{}".format(cat_var, i), cat_var)
+                (f"{cat_var}_{i}", cat_var)
                 for cat_var, card in cat_card_dict.items()
                 for i in range(card)
             ]
@@ -130,11 +130,10 @@ class VariableFeatureMapper:
             ValueError: if the variable type is not supported
         """
         if data_type not in self.PERMISSIBLE_TYPES:
+            permissible_str = ", ".join(self.PERMISSIBLE_TYPES)
             raise ValueError(
-                "Unsupported variable type {}, ".format(data_type)
-                + "supported data types are: {}".format(
-                    ", ".join(valid_type for valid_type in self.PERMISSIBLE_TYPES)
-                )
+                f"Unsupported variable type {data_type}, "
+                f"supported data types are: {permissible_str}"
             )
         return self.variable_type_dict[data_type]
 
@@ -277,10 +276,9 @@ def validate_schema(
         ValueError: for missing cardinality for categorical variables
     """
     if not any(x in default_type for x in VariableFeatureMapper.PERMISSIBLE_TYPES):
+        permissible_str = ", ".join(VariableFeatureMapper.PERMISSIBLE_TYPES)
         raise ValueError(
-            "Unknown default data type. Supported data types are {}".format(
-                ", ".join(VariableFeatureMapper.PERMISSIBLE_TYPES)
-            )
+            f"Unknown default data type. Supported data types are {permissible_str}"
         )
 
     schema = {} if schema is None else schema
@@ -292,17 +290,15 @@ def validate_schema(
         any(t in x for t in VariableFeatureMapper.PERMISSIBLE_TYPES)
         for x in schema.values()
     ):
+        unknown_vars = [
+            k
+            for k, v in schema.items()
+            if v not in VariableFeatureMapper.PERMISSIBLE_TYPES
+        ]
+        permissible_str = ", ".join(VariableFeatureMapper.PERMISSIBLE_TYPES)
         raise ValueError(
-            "Unknown data type for variable(s) {}, ".format(
-                [
-                    k
-                    for k, v in schema.items()
-                    if v not in VariableFeatureMapper.PERMISSIBLE_TYPES
-                ]
-            )
-            + "Supported data types are {}".format(
-                ", ".join(VariableFeatureMapper.PERMISSIBLE_TYPES)
-            ),
+            f"Unknown data type for variable(s) {unknown_vars}, "
+            f"Supported data types are {permissible_str}"
         )
 
     missing_cardinality = {
@@ -313,10 +309,8 @@ def validate_schema(
 
     if missing_cardinality:
         raise ValueError(
-            "Missing cardinality for categorical variable(s) {}".format(
-                missing_cardinality
-            )
-            + " For example, specify the data type as `categorical:3` for a "
-            + "3-class categorical feature. Leading zeros are not allowed."
+            f"Missing cardinality for categorical variable(s) {missing_cardinality} "
+            "For example, specify the data type as `categorical:3` for a "
+            "3-class categorical feature. Leading zeros are not allowed."
         )
     return schema

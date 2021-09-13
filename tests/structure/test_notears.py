@@ -77,7 +77,7 @@ class TestFromPandas:
     def test_non_numeric_data_raises_error(self):
         """Only numeric data frames should be supported"""
 
-        with pytest.raises(ValueError, match="All columns must have numeric data.*"):
+        with pytest.raises(ValueError, match=r"All columns must have numeric data.*"):
             from_pandas(pd.DataFrame(data=["x"], columns=["a"]))
 
     def test_array_with_nan_raises_error(self):
@@ -87,7 +87,7 @@ class TestFromPandas:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_pandas(pd.DataFrame(data=[np.nan, 0], columns=["a"]))
 
@@ -99,7 +99,7 @@ class TestFromPandas:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_pandas(pd.DataFrame(data=[np.inf, 0], columns=["a"]))
 
@@ -224,7 +224,7 @@ class TestFromPandasLasso:
     def test_non_numeric_data_raises_error(self):
         """Only numeric data frames should be supported"""
 
-        with pytest.raises(ValueError, match="All columns must have numeric data.*"):
+        with pytest.raises(ValueError, match=r"All columns must have numeric data.*"):
             from_pandas_lasso(pd.DataFrame(data=["x"], columns=["a"]), 0.1)
 
     def test_array_with_nan_raises_error(self):
@@ -234,7 +234,7 @@ class TestFromPandasLasso:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_pandas_lasso(pd.DataFrame(data=[np.nan, 0], columns=["a"]), 0.1)
 
@@ -246,7 +246,7 @@ class TestFromPandasLasso:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_pandas_lasso(pd.DataFrame(data=[np.inf, 0], columns=["a"]), 0.1)
 
@@ -416,7 +416,7 @@ class TestFromNumpy:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_numpy(np.array([[0, np.nan]]))
 
@@ -428,7 +428,7 @@ class TestFromNumpy:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_numpy(np.array([[0, np.inf]]))
 
@@ -557,7 +557,7 @@ class TestFromNumpyLasso:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_numpy_lasso(np.array([[3, np.nan]]), 0.1)
 
@@ -569,7 +569,7 @@ class TestFromNumpyLasso:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains NaN, infinity or a value too large for *",
         ):
             from_numpy_lasso(np.array([[3, np.inf]]), 0.1)
 

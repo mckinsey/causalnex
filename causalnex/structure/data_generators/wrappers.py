@@ -352,7 +352,7 @@ def generate_categorical_dataframe(
     if kernel is None:
         return sem_generator(
             graph=sm,
-            default_type="categorical:{}".format(n_categories),
+            default_type=f"categorical:{n_categories}",
             n_samples=n_samples,
             distributions={"categorical": distribution},
             noise_std=noise_scale,
@@ -363,7 +363,7 @@ def generate_categorical_dataframe(
     return nonlinear_sem_generator(
         graph=sm,
         kernel=kernel,
-        default_type="categorical:{}".format(n_categories),
+        default_type=f"categorical:{n_categories}",
         n_samples=n_samples,
         distributions={"categorical": distribution},
         noise_std=noise_scale,
@@ -429,13 +429,10 @@ def generate_structure_dynamic(  # pylint: disable=too-many-arguments
     )
     res = StructureModel()
     res.add_nodes_from(sm_inter.nodes)
-    res.add_nodes_from(["{var}_lag0".format(var=u) for u in sm_intra.nodes])
+    res.add_nodes_from([f"{u}_lag0" for u in sm_intra.nodes])
     res.add_weighted_edges_from(sm_inter.edges.data("weight"))
     res.add_weighted_edges_from(
-        [
-            ("{var}_lag0".format(var=u), "{var}_lag0".format(var=v), w)
-            for u, v, w in sm_intra.edges.data("weight")
-        ]
+        [(f"{u}_lag0", f"{v}_lag0", w) for u, v, w in sm_intra.edges.data("weight")]
     )
     return res
 
@@ -471,9 +468,8 @@ def _generate_inter_structure(
     """
     if w_min > w_max:
         raise ValueError(
-            "Absolute minimum weight must be less than or equal to maximum weight: {} > {}".format(
-                w_min, w_max
-            )
+            "Absolute minimum weight must be less than or equal to maximum weight: "
+            f"{w_min} > {w_max}"
         )
 
     if graph_type == "erdos-renyi":
@@ -483,8 +479,8 @@ def _generate_inter_structure(
         b = np.ones([p * num_nodes, num_nodes])
     else:
         raise ValueError(
-            "Unknown inter-slice graph type `{n}`".format(n=graph_type)
-            + ". Valid types are 'erdos-renyi' and 'full'"
+            f"Unknown inter-slice graph type `{graph_type}`. "
+            "Valid types are 'erdos-renyi' and 'full'"
         )
     u = []
     for i in range(p):
@@ -500,13 +496,9 @@ def _generate_inter_structure(
     df = pd.DataFrame(
         a,
         index=[
-            "{var}_lag{l_val}".format(var=var, l_val=l_val)
-            for l_val in range(1, p + 1)
-            for var in range(num_nodes)
+            f"{var}_lag{l_val}" for l_val in range(1, p + 1) for var in range(num_nodes)
         ],
-        columns=[
-            "{var}_lag{l_val}".format(var=var, l_val=0) for var in range(num_nodes)
-        ],
+        columns=[f"{var}_lag0" for var in range(num_nodes)],
     )
     idxs, cols = list(df.index), list(df.columns)
     for i in idxs:
@@ -542,11 +534,7 @@ def generate_dataframe_dynamic(  # pylint: disable=R0914
     """
     s_types = ("linear-gauss", "linear-exp", "linear-gumbel")
     if sem_type not in s_types:
-        raise ValueError(
-            "unknown sem type {st}. Available types are: {sts}".format(
-                st=sem_type, sts=s_types
-            )
-        )
+        raise ValueError(f"unknown sem type {sem_type}. Available types are: {s_types}")
     intra_nodes = sorted(el for el in g.nodes if "_lag0" in el)
     inter_nodes = sorted(el for el in g.nodes if "_lag0" not in el)
     w_mat = nx.to_numpy_array(g, nodelist=intra_nodes)
