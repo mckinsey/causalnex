@@ -64,13 +64,13 @@ Use `all` for a full installation of dependencies (only the plotting right now):
 pip install "causalnex[all]"
 ```
 
-See more detailed installation instructions, including how to setup Python virtual environments, in our [installation guide](https://causalnex.readthedocs.io/en/latest/02_getting_started/02_install.html) and get started with our [tutorial](https://causalnex.readthedocs.io/en/latest/03_tutorial/03_tutorial.html).
+See more detailed installation instructions, including how to setup Python virtual environments, in our [installation guide](https://causalnex.readthedocs.io/en/latest/02_getting_started/02_install.html) and get started with our [tutorial](https://causalnex.readthedocs.io/en/latest/03_tutorial/01_first_tutorial.html).
 
 ## How do I use CausalNex?
 
 You can find the documentation for the latest stable release [here](https://causalnex.readthedocs.io/en/latest/). It explains:
 
-- An end-to-end [tutorial on how to use CausalNex](https://causalnex.readthedocs.io/en/latest/03_tutorial/03_tutorial.html)
+- An end-to-end [tutorial on how to use CausalNex](https://causalnex.readthedocs.io/en/latest/03_tutorial/01_first_tutorial.html)
 - The [main concepts and methods](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.html) in using Bayesian Networks for Causal Inference
 
 > Note: You can find the notebook and markdown files used to build the docs in [`docs/source`](docs/source).
