@@ -186,11 +186,7 @@ For instance, users can define a causal model **fully manually**, e.g., using th
 Or, users can learn the network structure **automatically** from the data using the [`NOTEARS`](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) algorithm. Moreover, if there is domain knowledge available,
 it can be used as **additional constraints** before learning a graph algorithmically.
 
-> [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) 
-> is a recently published algorithm for learning DAGs from data,
-> framed as a continuous optimisation problem.
-> It allowed us to overcome the challenges of combinatorial optimisation,
-> giving a new impetus to the usage of BNs in machine learning applications.
+> [NOTEARS](https://papers.nips.cc/paper/8157-dags-with-no-tears-continuous-optimization-for-structure-learning.pdf) is a recently published algorithm for learning DAGs from data, framed as a continuous optimisation problem. It allowed us to overcome the challenges of combinatorial optimisation, giving a new impetus to the usage of BNs in machine learning applications.
 
 ```python
     from causalnex.structure.notears import from_pandas
