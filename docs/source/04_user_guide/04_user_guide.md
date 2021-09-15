@@ -153,7 +153,7 @@ It is built on top of the `StructureModel` class, which is an extension of `netw
 `StructureModel` represents a causal graph, a DAG of the respective BN and holds directed edges, describing
 a _cause -> effect_ relationship. In order to define the `BayesianNetwork`, users should provide a relevant `StructureModel`.
 
-> Cycles are permitted within a `StructureModel`. However, only **acyclic connected** `StructureModel` objects are allowed in the construction of `BayesianNetwork`;  isolated nodes are not allowed.
+> Cycles are permitted within a `StructureModel` object. However, only **acyclic connected** `StructureModel` objects are allowed in the construction of `BayesianNetwork`;  isolated nodes are not allowed.
 
 ### 3.1 Defining the DAG with `StructureModel`
 
