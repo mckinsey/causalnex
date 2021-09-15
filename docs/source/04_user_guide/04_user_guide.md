@@ -221,7 +221,7 @@ by a domain expert. This is a targeted effort to encode important domain knowled
 
 Once the graph has been determined, the `BayesianNetwork` can be initialised and the conditional probability distributions of the variables can be learned from the data.
 
-Maximum likelihood or Bayesian parameter estimation can be used for learning CPDs.
+Maximum likelihood or Bayesian parameter estimation can be used for learning the CPDs.
 > When learning CPDs of the BN,
 > - The dicscretised data should be used (either high or low granularity of features and target variables can be used);
 > - Overfitting and underfitting of CPDs can be avoided with an appropriate train/test split of the data.
