@@ -52,7 +52,6 @@ utils:
     command: make test
 
   build_docs: &build_docs
-    # NOTE: doesn't work on python 3.5
     name: Build documentation
     command: make build-docs
 
