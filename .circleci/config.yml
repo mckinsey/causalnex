@@ -44,7 +44,7 @@ utils:
       pre-commit install --install-hooks
       pre-commit install --hook-type pre-push
   linters: &linters
-    name: Run pylint and flake8
+    name: Run linters and auto-formatters
     command: make lint
 
   unit_tests: &unit_tests
