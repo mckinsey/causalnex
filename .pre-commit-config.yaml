@@ -39,7 +39,7 @@ repos:
     # https://github.com/PyCQA/pylint/issues/618
     # The first set of pylint checks if for local pre-commit, it only runs on the files changed.
     -   id: pylint-quick-causalnex
-        name: "Quick PyLint on causalnex/*"
+        name: "Quick Pylint on causalnex/*"
         language: system
         types: [file, python]
         files: ^causalnex/
@@ -47,7 +47,7 @@ repos:
         entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn
         stages: [commit]
     -   id: pylint-quick-tests
-        name: "Quick PyLint on tests/*"
+        name: "Quick Pylint on tests/*"
         language: system
         types: [file, python]
         files: ^tests/
@@ -56,14 +56,14 @@ repos:
 
     # The same pylint checks, but running on all files. It's for manual run with `make lint`
     -   id: pylint-causalnex
-        name: "PyLint on causalnex/*"
+        name: "Pylint on causalnex/*"
         language: system
         pass_filenames: false
         stages: [manual]
         entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn causalnex
         exclude: ^causalnex/ebaybbn
     -   id: pylint-tests
-        name: "PyLint on tests/*"
+        name: "Pylint on tests/*"
         language: system
         pass_filenames: false
         stages: [manual]
