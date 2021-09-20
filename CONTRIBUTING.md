@@ -120,7 +120,7 @@ make install-pre-commit
 
 All checks run by our CI / CD servers can be run locally on your computer.
 
-#### PEP-8 Standards (`pylint` and `flake8`)
+#### Linters and auto-formatters
 
 ```bash
 make lint
