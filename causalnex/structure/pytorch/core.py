@@ -131,6 +131,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         for layer in layers:
             layer.reset_parameters()
+            layer.to(self.device)
 
         # set the bounds as an attribute on the weights object
         self.dag_layer.weight.bounds = bounds
@@ -187,9 +188,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         for output_dim, layer in zip(self.dims[1:], self.loc_lin_layer_weights):
             x = torch.sigmoid(x)  # [n, d, m1]
             x = nn.LayerNorm(
-                output_dim,
-                eps=self.nonlinear_clamp,
-                elementwise_affine=True,
+                output_dim, eps=self.nonlinear_clamp, elementwise_affine=True,
             )(x)
             x = layer(x)  # [n, d, m2]
 
@@ -357,8 +356,10 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 flat_params: parameters in the form of flatten vector
             """
             offset = 0
-            flat_params_torch = torch.from_numpy(flat_params).to(
-                torch.get_default_dtype()
+            flat_params_torch = (
+                torch.from_numpy(flat_params)
+                .to(torch.get_default_dtype())
+                .to(self.device)
             )
             for p in params:
                 n_params = p.numel()
@@ -409,11 +410,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         while (rho < rho_max) and (h_new > 0.25 * h or h_new == np.inf):
             # Magic
             sol = sopt.minimize(
-                _func,
-                flat_params,
-                method="L-BFGS-B",
-                jac=True,
-                bounds=bounds,
+                _func, flat_params, method="L-BFGS-B", jac=True, bounds=bounds,
             )
             _update_params_from_flat(params, sol.x)
             h_new = self._h_func().item()
