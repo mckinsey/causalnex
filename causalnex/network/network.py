@@ -415,8 +415,7 @@ class BayesianNetwork:
             valid_bayes_priors = ["BDeu", "K2"]
             if bayes_prior not in valid_bayes_priors:
                 raise ValueError(
-                    "unrecognised bayes_prior, please use one of: "
-                    f"{', '.join(valid_bayes_priors)}"
+                    f"unrecognised bayes_prior, please use one of {valid_bayes_priors}"
                 )
 
             self._model.fit(
