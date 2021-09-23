@@ -428,7 +428,7 @@ class BayesianNetwork:
         else:
             valid_methods = ["MaximumLikelihoodEstimator", "BayesianEstimator"]
             raise ValueError(
-                f"unrecognised method, please use one of: {', '.join(valid_methods)}"
+                f"unrecognised method, please use one of {valid_methods}"
             )
 
         return self
