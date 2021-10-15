@@ -224,7 +224,7 @@ class TestFromPandas:
             from_pandas(pd.DataFrame(data=data, columns=["a"]))
 
     def test_f1score_generated_binary(self):
-        """ Binary strucutre learned should have good f1 score """
+        """Binary strucutre learned should have good f1 score"""
         np.random.seed(10)
         sm = generate_structure(5, 2.0)
         df = generate_binary_dataframe(
@@ -253,7 +253,7 @@ class TestFromPandas:
         assert f1_score > 0.8
 
     def test_f1score_generated_poisson(self):
-        """ Poisson strucutre learned should have good f1 score """
+        """Poisson strucutre learned should have good f1 score"""
         np.random.seed(10)
         sm = generate_structure(5, 3.0)
         df = generate_count_dataframe(
@@ -484,7 +484,7 @@ class TestFromNumpy:
             from_numpy(np.array([data]))
 
     def test_f1score_generated_binary(self):
-        """ Binary structure learned should have good f1 score """
+        """Binary structure learned should have good f1 score"""
         np.random.seed(10)
         sm = generate_structure(5, 2.0)
         df = generate_binary_data(sm, 1000, intercept=False, noise_scale=0.1, seed=10)
@@ -511,7 +511,7 @@ class TestFromNumpy:
         assert f1_score > 0.8
 
     def test_f1score_generated_poisson(self):
-        """ Poisson structure learned should have good f1 score """
+        """Poisson structure learned should have good f1 score"""
         np.random.seed(10)
         sm = generate_structure(5, 3.0)
         df = generate_count_dataframe(

@@ -927,7 +927,7 @@ class TestStructure:
 
 
 class TestMarkovBlanket:
-    """Test behavior of Markov Blanket """
+    """Test behavior of Markov Blanket"""
 
     def test_elements(self, bn_train_model):
         """Check if all elements are included"""
@@ -942,7 +942,7 @@ class TestMarkovBlanket:
         assert parents_of_children <= set(blanket.nodes)
 
     def test_connection(self, bn_train_model):
-        """Check if edges are correct """
+        """Check if edges are correct"""
 
         blanket = get_markov_blanket(bn_train_model, "a")
         assert blanket.structure.has_edge("b", "a")
