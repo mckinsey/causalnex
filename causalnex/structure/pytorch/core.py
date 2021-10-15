@@ -371,7 +371,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             for p in params:
                 n_params = p.numel()
                 # view_as to avoid deprecated pointwise semantics
-                p.data = flat_params_torch[offset : offset + n_params].view_as(p.data)
+                p.data = flat_params_torch[offset:offset + n_params].view_as(p.data)
                 offset += n_params
 
         def _func(flat_params: np.ndarray) -> Tuple[float, np.ndarray]:
