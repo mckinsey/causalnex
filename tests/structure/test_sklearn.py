@@ -44,7 +44,7 @@ from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
 
 
 class TestDAGSklearn:
-    """ Tests aspects common to both DAGRegressor and DAGClassifier """
+    """Tests aspects common to both DAGRegressor and DAGClassifier"""
 
     @pytest.mark.parametrize("model", [DAGRegressor, DAGClassifier])
     @pytest.mark.parametrize(

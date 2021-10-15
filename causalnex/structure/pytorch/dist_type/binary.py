@@ -37,7 +37,7 @@ from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
 
 class DistTypeBinary(DistTypeBase):
-    """ Class defining binary distribution type functionality """
+    """Class defining binary distribution type functionality"""
 
     def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
         """

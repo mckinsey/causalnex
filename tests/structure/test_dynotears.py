@@ -256,7 +256,7 @@ class TestFromNumpyDynotears:
         assert len(sm.nodes) == 15
 
     def test_edges_contain_weight(self, data_dynotears_p2):
-        """Edges must contain the 'weight' from the adjacent table """
+        """Edges must contain the 'weight' from the adjacent table"""
         sm = from_numpy_dynamic(data_dynotears_p2["X"], data_dynotears_p2["Y"])
         assert np.all(
             [
@@ -266,7 +266,7 @@ class TestFromNumpyDynotears:
         )
 
     def test_certain_relationships_get_near_certain_weight(self):
-        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one """
+        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one"""
 
         np.random.seed(17)
         data = pd.DataFrame(
@@ -281,7 +281,7 @@ class TestFromNumpyDynotears:
         assert 0.99 < edge <= 1.01
 
     def test_inverse_relationships_get_negative_weight(self):
-        """If a == -b always, ther should be an edge a->b or b->a with coefficient close to minus one """
+        """If a == -b always, ther should be an edge a->b or b->a with coefficient close to minus one"""
 
         np.random.seed(17)
         data = pd.DataFrame(
@@ -552,7 +552,7 @@ class TestFromPandasDynotears:
         assert len(sm.nodes) == 15
 
     def test_edges_contain_weight(self, data_dynotears_p3):
-        """Edges must contain the 'weight' from the adjacent table """
+        """Edges must contain the 'weight' from the adjacent table"""
         sm = from_pandas_dynamic(
             pd.DataFrame(data_dynotears_p3["X"], columns=["a", "b", "c", "d", "e"]),
             p=3,
@@ -565,7 +565,7 @@ class TestFromPandasDynotears:
         )
 
     def test_certain_relationships_get_near_certain_weight(self):
-        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one """
+        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one"""
 
         np.random.seed(17)
         data = pd.DataFrame(
@@ -580,7 +580,7 @@ class TestFromPandasDynotears:
         assert 0.99 < edge <= 1.01
 
     def test_inverse_relationships_get_negative_weight(self):
-        """If a == -b always, there should be an edge a->b or b->a with coefficient close to minus one """
+        """If a == -b always, there should be an edge a->b or b->a with coefficient close to minus one"""
 
         np.random.seed(17)
         data = pd.DataFrame(

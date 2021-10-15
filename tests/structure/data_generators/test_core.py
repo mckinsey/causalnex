@@ -70,7 +70,7 @@ def schema():
 class TestGenerateStructure:
     @pytest.mark.parametrize("graph_type", ["erdos-renyi", "barabasi-albert", "full"])
     def test_is_dag_graph_type(self, graph_type):
-        """ Tests that the generated graph is a dag for all graph types. """
+        """Tests that the generated graph is a dag for all graph types."""
         degree, d_nodes = 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         assert is_directed_acyclic_graph(sm)
@@ -82,7 +82,7 @@ class TestGenerateStructure:
         assert nx.is_directed_acyclic_graph(sm)
 
     def test_bad_graph_type(self):
-        """ Test that a value other than "erdos-renyi", "barabasi-albert", "full" throws ValueError """
+        """Test that a value other than "erdos-renyi", "barabasi-albert", "full" throws ValueError"""
         graph_type = "invalid"
         degree, d_nodes = 4, 10
         with pytest.raises(
@@ -94,7 +94,7 @@ class TestGenerateStructure:
 
     @pytest.mark.parametrize("num_nodes,degree", [(5, 2), (10, 3), (15, 5)])
     def test_expected_num_nodes(self, num_nodes, degree):
-        """ Test that generated structure has expected number of nodes = num_nodes """
+        """Test that generated structure has expected number of nodes = num_nodes"""
         sm = generate_structure(num_nodes, degree)
         assert len(sm.nodes) == num_nodes
 
@@ -103,7 +103,7 @@ class TestGenerateStructure:
         [(5, 2, (1, 2)), (10, 3, (100, 200)), (15, 5, (1.0, 1.0))],
     )
     def test_weight_range(self, num_nodes, degree, w_range):
-        """ Test that w_range is respected in output """
+        """Test that w_range is respected in output"""
         w_min = w_range[0]
         w_max = w_range[1]
         sm = generate_structure(num_nodes, degree, w_min=w_min, w_max=w_max)
@@ -112,12 +112,12 @@ class TestGenerateStructure:
 
     @pytest.mark.parametrize("num_nodes", [-1, 0, 1])
     def test_num_nodes_exception(self, num_nodes):
-        """ Check a single node graph can't be generated """
+        """Check a single node graph can't be generated"""
         with pytest.raises(ValueError, match="DAG must have at least 2 nodes"):
             generate_structure(num_nodes, 1)
 
     def test_min_max_weights_exception(self):
-        """ Check that w_range is valid """
+        """Check that w_range is valid"""
         with pytest.raises(
             ValueError,
             match="Absolute minimum weight must be less than or equal to maximum weight",
@@ -125,14 +125,14 @@ class TestGenerateStructure:
             generate_structure(4, 1, w_min=0.5, w_max=0)
 
     def test_min_max_weights_equal(self):
-        """ If w_range (w, w) has w=w, check abs value of all weights respect this """
+        """If w_range (w, w) has w=w, check abs value of all weights respect this"""
         w = 1
         sm = generate_structure(4, 1, w_min=w, w_max=w)
         w_mat = nx.to_numpy_array(sm)
         assert np.all((w_mat == 0) | (w_mat == w) | (w_mat == -w))
 
     def test_erdos_renyi_degree_increases_edges(self):
-        """ Erdos-Renyi degree increases edges """
+        """Erdos-Renyi degree increases edges"""
         edge_counts = [
             max(
                 [
@@ -146,7 +146,7 @@ class TestGenerateStructure:
         assert edge_counts == sorted(edge_counts)
 
     def test_barabasi_albert_degree_increases_edges(self):
-        """ Barabasi-Albert degree increases edges """
+        """Barabasi-Albert degree increases edges"""
         edge_counts = [
             max(
                 [
@@ -160,7 +160,7 @@ class TestGenerateStructure:
         assert edge_counts == sorted(edge_counts)
 
     def test_full_network(self):
-        """ Fully connected network has expected edge counts """
+        """Fully connected network has expected edge counts"""
         sm = generate_structure(40, degree=0, graph_type="full")
 
         assert len(sm.edges) == (40 * 39) / 2

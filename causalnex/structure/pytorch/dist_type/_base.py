@@ -42,7 +42,7 @@ from causalnex.structure.structuremodel import StructureModel
 
 
 class DistTypeBase(metaclass=ABCMeta):
-    """ Base class defining the distribution default behavior and interface """
+    """Base class defining the distribution default behavior and interface"""
 
     def __init__(self, idx: int):
         """

@@ -36,7 +36,7 @@ from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
 
 class DistTypeContinuous(DistTypeBase):
-    """ Class defining continuous distribution type functionality """
+    """Class defining continuous distribution type functionality"""
 
     def loss(self, X: torch.Tensor, X_hat: torch.Tensor) -> torch.Tensor:
         """

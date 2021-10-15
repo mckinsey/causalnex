@@ -40,7 +40,7 @@ from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
 
 class DistTypeOrdinal(DistTypeBase):
-    """ Class defining ordinal distribution type functionality """
+    """Class defining ordinal distribution type functionality"""
 
     # log cumulative odds of original distro
     log_cum_odds = None

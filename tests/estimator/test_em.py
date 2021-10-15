@@ -207,7 +207,7 @@ class TestEMJobs:
 
     @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_missing_data(self, n_jobs):
-        """Test EM algorithm given some "missing" data """
+        """Test EM algorithm given some "missing" data"""
         df, sm, node_states, true_lv_values = naive_bayes_plus_parents(
             p_c=0.6,
             p_z=0.6,
