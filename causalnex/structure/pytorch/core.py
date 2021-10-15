@@ -149,6 +149,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def dag_layer_bias(self) -> Union[torch.Tensor, None]:
         """
         dag_layer bias is the bias of the first fully connected layer which determines the causal structure.
+        
         Returns:
             dag_layer bias if use_bias is True, otherwise None
         """
@@ -371,7 +372,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             for p in params:
                 n_params = p.numel()
                 # view_as to avoid deprecated pointwise semantics
-                p.data = flat_params_torch[offset:offset + n_params].view_as(p.data)
+                p.data = flat_params_torch[offset : offset + n_params].view_as(p.data)
                 offset += n_params
 
         def _func(flat_params: np.ndarray) -> Tuple[float, np.ndarray]:
