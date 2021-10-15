@@ -149,7 +149,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def dag_layer_bias(self) -> Union[torch.Tensor, None]:
         """
         dag_layer bias is the bias of the first fully connected layer which determines the causal structure.
-        
+
         Returns:
             dag_layer bias if use_bias is True, otherwise None
         """
@@ -159,7 +159,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def dag_layer_weight(self) -> torch.Tensor:
         """
         dag_layer weight is the weight of the first fully connected layer which determines the causal structure.
-        
+
         Returns:
             dag_layer weight
         """
@@ -169,7 +169,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def loc_lin_layer_weights(self) -> torch.Tensor:
         """
         loc_lin_layer weights are the weight of hidden layers after the first fully connected layer.
-        
+
         Returns:
             loc_lin_layer weights
         """
