@@ -34,7 +34,6 @@ import copy
 import inspect
 import re
 import types
-from collections import defaultdict
 from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 
 import networkx as nx
@@ -146,7 +145,7 @@ class InferenceEngine:
         bbn_results = (
             self._bbn.query(**observations) if observations else self._bbn.query()
         )
-        results = defaultdict(dict)
+        results = {node: {} for node in self._cpds}
 
         for (node, state), prob in bbn_results.items():
             results[node][state] = prob
@@ -184,24 +183,14 @@ class InferenceEngine:
         if observations is not None and not isinstance(observations, (dict, list)):
             raise TypeError("Expecting observations to be a dict, list or None")
 
-        # initialise baseline marginals if not done previously
-        if self._baseline_marginals is None:
-            self._baseline_marginals = self._single_query(None)
-
-        if observations is None:
-            # perform single query if there was a do-intervention before, else return baseline marginals
-            if self._detached_cpds:
-                result = self._single_query(None)
-            else:
-                result = self._baseline_marginals
-        elif isinstance(observations, dict):
-            result = self._single_query(observations)
-        else:
+        if isinstance(observations, list):
             if parallel:
                 with multiprocessing.Pool(num_cores) as p:
                     result = p.map(self._single_query, observations)
             else:
                 result = [self._single_query(obs) for obs in observations]
+        else:  # dictionary or None
+            result = self._single_query(observations)
 
         return result
 
@@ -262,6 +251,10 @@ class InferenceEngine:
                 "Do calculus cannot be applied because it would result in an isolate"
             )
 
+        # initialise baseline marginals if not done previously
+        if self._baseline_marginals is None:
+            self._baseline_marginals = self._single_query(None)
+
         if isinstance(state, int):
             state = {s: float(s == state) for s in self._cpds[node]}
 
@@ -280,8 +273,8 @@ class InferenceEngine:
         """
         self._cpds[observation] = self._cpds_original[observation]
 
-        for upstream_node, original_cpds in self._detached_cpds.items():
-            self._cpds[upstream_node] = original_cpds
+        for node, cpd in self._detached_cpds.items():
+            self._cpds[node] = cpd
 
         self._detached_cpds = {}
         self._generate_bbn()
