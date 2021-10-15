@@ -1,5 +1,3 @@
-# Upcoming release
-
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
 * Add a new tutorial on adding latent variable as well as identifying its candidate location
@@ -110,6 +108,7 @@ Bugfix to address readthedocs issue.
 The initial release of CausalNex.
 
 ## Thanks for supporting contributions
+
 CausalNex was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and
 [Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in
 inferring causality in their project work.
@@ -128,7 +127,8 @@ This work was later turned into a product thanks to the following contributors:
 , [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/)
 , [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/)
 , [Shuhei Ishida](https://www.linkedin.com/in/shuhei-i/)
-, [Francesca Sogaro](https://www.linkedin.com/in/francesca-sogaro/).
+, [Francesca Sogaro](https://www.linkedin.com/in/francesca-sogaro/)
+, [Deepyaman Datta](https://www.linkedin.com/in/deepyaman/).
 
 CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference
 and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered
