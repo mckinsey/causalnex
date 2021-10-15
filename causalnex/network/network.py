@@ -415,8 +415,7 @@ class BayesianNetwork:
             valid_bayes_priors = ["BDeu", "K2"]
             if bayes_prior not in valid_bayes_priors:
                 raise ValueError(
-                    "unrecognised bayes_prior, please use on of %s"
-                    % " ".join(valid_bayes_priors)
+                    f"unrecognised bayes_prior, please use one of {valid_bayes_priors}"
                 )
 
             self._model.fit(
@@ -428,9 +427,7 @@ class BayesianNetwork:
             )
         else:
             valid_methods = ["MaximumLikelihoodEstimator", "BayesianEstimator"]
-            raise ValueError(
-                "unrecognised method, please use on of %s" % " ".join(valid_methods)
-            )
+            raise ValueError(f"unrecognised method, please use one of {valid_methods}")
 
         return self
 
