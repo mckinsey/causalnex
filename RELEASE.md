@@ -2,6 +2,7 @@
 
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
+* Add a new tutorial on adding latent variable as well as identifying its candidate location
 * Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
   the graph into two or more subgraphs, as per #45 and #100
 * Allow users to provide self-defined CPD, as per #18 and #99
