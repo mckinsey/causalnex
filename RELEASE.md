@@ -1,6 +1,3 @@
-# Upcoming release
-* Fix linters (and documentation thereof) ✨
-
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
 * Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
