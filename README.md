@@ -83,6 +83,10 @@ Yes! We'd love you to join us and help us build CausalNex. Check out our [contri
 
 We use [SemVer](http://semver.org/) for versioning. The best way to upgrade safely is to check our [release notes](RELEASE.md) for any notable breaking changes.
 
+## How do I cite CausalNex?
+
+You may click "Cite this repository" under the "About" section of this repository to get the citation information in APA and BibTeX formats.
+
 ## What licence do you use?
 
 See our [LICENSE](LICENSE.md) for more detail.

@@ -42,7 +42,7 @@ from causalnex.structure.structuremodel import StructureModel
 
 
 class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
-    """ Class defining categorical distribution type functionality """
+    """Class defining categorical distribution type functionality"""
 
     # index group of categorical columns
     idx_group = None

@@ -344,7 +344,7 @@ class DAGBase(
 
     @property
     def intercept_(self) -> float:
-        """ The bias term from the target node """
+        """The bias term from the target node"""
         bias = self.graph_.nodes[self._target]["bias"]
         return 0.0 if bias is None else float(bias)
 
