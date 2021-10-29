@@ -30,7 +30,7 @@ import os
 import warnings
 from collections import defaultdict
 from time import time
-from typing import List, Set, Tuple, Union
+from typing import List, Tuple
 
 import dataframe_image
 import networkx as nx
@@ -38,7 +38,6 @@ import numpy as np
 import pandas as pd
 from IPython.core.display import display
 from IPython.display import Image
-from networkx.exception import NodeNotFound
 from sklearn import metrics
 from sklearn.model_selection import KFold
 
@@ -235,8 +234,8 @@ def predict_using_all_nodes(
     """
     # Extract columns of interest
     if markov_blanket:
-        target_blanket = get_markov_blanket(bn.structure, [target_var, lv_name])
-        cols_to_keep = list(target_blanket.nodes)
+        blanket = bn.structure.get_markov_blanket([target_var, lv_name])
+        cols_to_keep = blanket.nodes
     else:
         cols_to_keep = bn.nodes
 
@@ -275,49 +274,6 @@ def _build_ground_truth(
 
     # update ground truth column names to be correct, since we may have added missing columns
     return ground_truth[sorted(ground_truth.columns)]
-
-
-def get_markov_blanket(
-    sm: StructureModel,
-    nodes: Union[List, Set],
-) -> StructureModel:
-    """
-    Utility function to get markov blanket of specified target node(s)
-
-    Args:
-        bn: Bayesian network
-        target_nodes: Target node or list/set of target nodes
-
-    Returns:
-        Markov blanket of the target node(s)
-
-    Raises:
-        NodeNotFound: if one of the target nodes is not found in the graph
-    """
-    if not isinstance(nodes, (list, set)):
-        nodes = [nodes]
-
-    blanket_nodes = set()
-
-    for node in set(nodes):  # Ensure target nodes are unique
-        if node not in set(sm.nodes):
-            raise NodeNotFound(f"Node {node} not found in the graph.")
-
-        blanket_nodes.add(node)
-        blanket_nodes.update(sm.predecessors(node))
-
-        for child in sm.successors(node):
-            blanket_nodes.add(child)
-            blanket_nodes.update(sm.predecessors(child))
-
-    blanket = StructureModel()
-    blanket.add_nodes_from(blanket_nodes)
-
-    for u, v in sm.edges:
-        if u in blanket_nodes and v in blanket_nodes:
-            blanket.add_edge(u, v)
-
-    return blanket
 
 
 def get_avg_auc(
