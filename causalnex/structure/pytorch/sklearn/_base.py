@@ -141,8 +141,10 @@ class DAGBase(
             raise TypeError("fit_intercept should be a bool")
         if not isinstance(threshold, (int, float)):
             raise TypeError("threshold should be numeric")
+
         # supported types is a class attr in child class
         self._supported_types: str
+
         # defensive check
         if (target_dist_type not in self._supported_types) and (
             target_dist_type is not None
@@ -181,6 +183,7 @@ class DAGBase(
         # force X, y to DataFrame, Series for later calculations
         X = pd.DataFrame(X)
         y = pd.Series(y)
+
         # force name so that name != None (causes errors in notears)
         y.name = y.name or "__target"
 
@@ -341,7 +344,7 @@ class DAGBase(
 
     @property
     def intercept_(self) -> float:
-        """ The bias term from the target node """
+        """The bias term from the target node"""
         bias = self.graph_.nodes[self._target]["bias"]
         return 0.0 if bias is None else float(bias)
 
@@ -392,6 +395,7 @@ class DAGBase(
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+
             # get pygraphviz plot:
             viz = plot_structure(graph, **plt_kwargs)
 

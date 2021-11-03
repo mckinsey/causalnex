@@ -405,6 +405,7 @@ class TestStructureModelGetLargestSubgraph:
     )
     def test_get_largest_subgraph(self, test_input, expected):
         """Should be able to return the largest subgraph"""
+
         sm = StructureModel()
         sm.add_edges_from(test_input)
         largest_subgraph = sm.get_largest_subgraph()
@@ -438,11 +439,10 @@ class TestStructureModelGetLargestSubgraph:
 
     def test_isolates(self):
         """Should return None if the structure model only contains isolates"""
-        nodes = [1, 3, 5, 2, 7]
 
+        nodes = [1, 3, 5, 2, 7]
         sm = StructureModel()
         sm.add_nodes_from(nodes)
-
         assert sm.get_largest_subgraph() is None
 
     def test_isolates_nodes_and_edges(self):
@@ -490,6 +490,7 @@ class TestStructureModelGetTargetSubgraph:
     )
     def test_get_target_subgraph(self, target_node, test_input, expected):
         """Should be able to return the subgraph with the specified node"""
+
         sm = StructureModel()
         sm.add_edges_from(test_input)
         subgraph = sm.get_target_subgraph(target_node)
@@ -516,6 +517,7 @@ class TestStructureModelGetTargetSubgraph:
     )
     def test_get_subgraph_string(self, target_node, test_input, expected):
         """Should be able to return the subgraph with the specified node"""
+
         sm = StructureModel()
         sm.add_edges_from(test_input)
         subgraph = sm.get_target_subgraph(target_node)
@@ -537,18 +539,17 @@ class TestStructureModelGetTargetSubgraph:
 
         with pytest.raises(
             NodeNotFound,
-            match="Node {node} not found in the graph".format(node=target_node),
+            match=f"Node {target_node} not found in the graph",
         ):
             sm.get_target_subgraph(target_node)
 
     def test_isolates(self):
         """Should return an isolated node"""
-        nodes = [1, 3, 5, 2, 7]
 
+        nodes = [1, 3, 5, 2, 7]
         sm = StructureModel()
         sm.add_nodes_from(nodes)
         subgraph = sm.get_target_subgraph(1)
-
         expected_graph = StructureModel()
         expected_graph.add_node(1)
 
@@ -587,17 +588,18 @@ class TestStructureModelGetTargetSubgraph:
         }
         assert set(subgraph.edges.data("weight")) == {(1, 2, 2.0), (1, 3, 1.0)}
 
-    def test_instance(self):
+    def test_instance_type(self):
         """The subgraph returned should still be a StructureModel instance"""
+
         sm = StructureModel()
         sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
-
         subgraph = sm.get_target_subgraph(2)
 
         assert isinstance(subgraph, StructureModel)
 
     def test_get_target_subgraph_twice(self):
         """get_target_subgraph should be able to run more than once"""
+
         sm = StructureModel()
         sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
 
@@ -611,3 +613,142 @@ class TestStructureModelGetTargetSubgraph:
 
         assert set(subgraph.nodes) == set(expected_graph.nodes)
         assert set(subgraph.edges) == set(expected_graph.edges)
+
+
+class TestStructureModelGetMarkovBlanket:
+    @pytest.mark.parametrize(
+        "target_node, test_input, expected",
+        [
+            (1, [(0, 1), (1, 2), (1, 3), (4, 5)], [(0, 1), (1, 2), (1, 3)]),
+            (1, [(0, 1), (1, 2), (1, 3), (4, 3)], [(0, 1), (1, 2), (1, 3), (4, 3)]),
+            (3, [(3, 4), (3, 5), (6, 7)], [(3, 4), (3, 5)]),
+            (7, [(7, 8), (1, 2), (6, 7), (2, 3), (5, 8)], [(7, 8), (6, 7), (5, 8)]),
+        ],
+    )
+    def test_get_markov_blanket_single(self, target_node, test_input, expected):
+        """Should be able to return Markov blanket with the specified single node"""
+
+        sm = StructureModel()
+        sm.add_edges_from(test_input)
+        blanket = sm.get_markov_blanket(target_node)
+        expected_graph = StructureModel()
+        expected_graph.add_edges_from(expected)
+
+        assert set(blanket.nodes) == set(expected_graph.nodes)
+        assert set(blanket.edges) == set(expected_graph.edges)
+
+    @pytest.mark.parametrize(
+        "target_nodes, test_input, expected",
+        [
+            (
+                [1, 4],
+                [(0, 1), (1, 2), (1, 3), (4, 5)],
+                [(0, 1), (1, 2), (1, 3), (4, 5)],
+            ),
+            ([2, 4], [(0, 1), (1, 2), (1, 3), (4, 3)], [(1, 2), (1, 3), (4, 3)]),
+            ([3, 6], [(3, 4), (3, 5), (6, 7)], [(3, 4), (3, 5), (6, 7)]),
+            (
+                [2, 5],
+                [(7, 8), (1, 2), (6, 7), (2, 3), (5, 8)],
+                [(1, 2), (2, 3), (7, 8), (5, 8)],
+            ),
+        ],
+    )
+    def test_get_markov_blanket_multiple(self, target_nodes, test_input, expected):
+        """Should be able to return Markov blanket with the specified list of nodes"""
+
+        sm = StructureModel()
+        sm.add_edges_from(test_input)
+        blanket = sm.get_markov_blanket(target_nodes)
+        expected_graph = StructureModel()
+        expected_graph.add_edges_from(expected)
+
+        assert set(blanket.nodes) == set(expected_graph.nodes)
+        assert set(blanket.edges) == set(expected_graph.edges)
+
+    @pytest.mark.parametrize(
+        "target_node, test_input, expected",
+        [
+            (
+                "a",
+                [("a", "b"), ("a", "c"), ("c", "d"), ("e", "f")],
+                [("a", "b"), ("a", "c")],
+            ),
+            (
+                "g",
+                [("g", "h"), ("g", "z"), ("a", "b"), ("a", "c"), ("c", "d")],
+                [("g", "h"), ("g", "z")],
+            ),
+        ],
+    )
+    def test_get_markov_blanket_string(self, target_node, test_input, expected):
+        """Should be able to return the subgraph with the specified node"""
+
+        sm = StructureModel()
+        sm.add_edges_from(test_input)
+        blanket = sm.get_markov_blanket(target_node)
+        expected_graph = StructureModel()
+        expected_graph.add_edges_from(expected)
+
+        assert set(blanket.nodes) == set(expected_graph.nodes)
+        assert set(blanket.edges) == set(expected_graph.edges)
+
+    @pytest.mark.parametrize(
+        "target_node, test_input",
+        [
+            (7, [(0, 1), (1, 2), (1, 3), (4, 6)]),
+            (1, [(3, 4), (3, 5), (7, 6)]),
+            ([1, 7], [(0, 1), (1, 2), (1, 3), (4, 6)]),
+            ([8, 2], [(3, 4), (3, 5), (7, 6)]),
+        ],
+    )
+    def test_node_not_in_graph(self, target_node, test_input):
+        """Should raise an error if the target_node is not found in the graph"""
+
+        sm = StructureModel()
+        sm.add_edges_from(test_input)
+
+        with pytest.raises(
+            NodeNotFound,
+            match=f"Node {target_node} not found in the graph",
+        ):
+            sm.get_markov_blanket(target_node)
+
+    def test_isolates(self):
+        """Should return an isolated node"""
+
+        nodes = [1, 3, 5, 2, 7]
+        sm = StructureModel()
+        sm.add_nodes_from(nodes)
+        blanket = sm.get_markov_blanket(1)
+
+        expected_graph = StructureModel()
+        expected_graph.add_node(1)
+
+        assert set(blanket.nodes) == set(expected_graph.nodes)
+        assert set(blanket.edges) == set(expected_graph.edges)
+
+    def test_isolates_nodes_and_edges(self):
+        """Should be able to return the subgraph with the specified node"""
+
+        edges = [(0, 1), (1, 2), (1, 3), (5, 6), (4, 5)]
+        isolated_nodes = [7, 8, 9]
+        sm = StructureModel()
+        sm.add_edges_from(edges)
+        sm.add_nodes_from(isolated_nodes)
+        subgraph = sm.get_markov_blanket(5)
+        expected_edges = [(5, 6), (4, 5)]
+        expected_graph = StructureModel()
+        expected_graph.add_edges_from(expected_edges)
+
+        assert set(subgraph.nodes) == set(expected_graph.nodes)
+        assert set(subgraph.edges) == set(expected_graph.edges)
+
+    def test_instance_type(self):
+        """The subgraph returned should still be a StructureModel instance"""
+
+        sm = StructureModel()
+        sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
+        subgraph = sm.get_markov_blanket(2)
+
+        assert isinstance(subgraph, StructureModel)

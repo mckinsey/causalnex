@@ -83,7 +83,7 @@ class TestGenerateContinuousData:
         "distribution", ["gaussian", "normal", "student-t", "exponential", "gumbel"]
     )
     def test_returns_ndarray(self, distribution):
-        """ Return value is an ndarray - test over all sem_types """
+        """Return value is an ndarray - test over all sem_types"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         ndarray = generate_continuous_data(sm, distribution=distribution, n_samples=10)
@@ -99,7 +99,7 @@ class TestGenerateContinuousData:
 
     @pytest.mark.parametrize("num_nodes", [5, 10, 15])
     def test_number_of_nodes(self, num_nodes):
-        """ Length of each row in generated data equals num_nodes """
+        """Length of each row in generated data equals num_nodes"""
         graph = StructureModel()
         edges = [(n, n + 1, 1) for n in range(num_nodes - 1)]
         graph.add_weighted_edges_from(edges)
@@ -109,19 +109,19 @@ class TestGenerateContinuousData:
 
     @pytest.mark.parametrize("num_samples", [5, 10, 15])
     def test_number_of_samples(self, num_samples, graph):
-        """ Assert number of samples generated (rows) = num_samples """
+        """Assert number of samples generated (rows) = num_samples"""
         data = generate_continuous_data(graph, num_samples, "gaussian", 1, seed=10)
         assert len(data) == num_samples
 
     def test_linear_gauss_parent_dist(self, graph):
-        """ Anderson-Darling test for data coming from a particular distribution, for gaussian."""
+        """Anderson-Darling test for data coming from a particular distribution, for gaussian."""
         data = generate_continuous_data(graph, 1000000, "gaussian", 1, seed=10)
 
         stat, crit, sig = anderson(data[:, 0], "norm")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_normal_parent_dist(self, graph):
-        """ Anderson-Darling test for data coming from a particular distribution, for normal."""
+        """Anderson-Darling test for data coming from a particular distribution, for normal."""
         data = generate_continuous_data(
             graph, distribution="normal", n_samples=1000000, noise_scale=1, seed=10
         )
@@ -144,7 +144,7 @@ class TestGenerateContinuousData:
         assert p_val < 0.01
 
     def test_linear_exp_parent_dist(self, graph):
-        """ Anderson-Darling test for data coming from a particular distribution, for exponential."""
+        """Anderson-Darling test for data coming from a particular distribution, for exponential."""
         data = generate_continuous_data(
             graph, distribution="exponential", noise_scale=1, n_samples=100000, seed=10
         )
@@ -153,7 +153,7 @@ class TestGenerateContinuousData:
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_gumbel_parent_dist(self, graph):
-        """ Anderson-Darling test for data coming from a particular distribution, for gumbel."""
+        """Anderson-Darling test for data coming from a particular distribution, for gumbel."""
         data = generate_continuous_data(
             graph, distribution="gumbel", noise_scale=1, n_samples=100000, seed=10
         )
@@ -268,14 +268,14 @@ class TestGenerateContinuousData:
 class TestGenerateBinaryData:
     @pytest.mark.parametrize("distribution", ["probit", "normal", "logit"])
     def test_returns_ndarray(self, distribution):
-        """ Return value is an ndarray - test over all sem_types """
+        """Return value is an ndarray - test over all sem_types"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         ndarray = generate_binary_data(sm, distribution=distribution, n_samples=10)
         assert isinstance(ndarray, np.ndarray)
 
     def test_bad_distribution_type(self):
-        """ Test that invalid sem-type other than "probit", "normal", "logit" is not accepted """
+        """Test that invalid sem-type other than "probit", "normal", "logit" is not accepted"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         with pytest.raises(ValueError, match="Unknown binary distribution"):
@@ -283,7 +283,7 @@ class TestGenerateBinaryData:
 
     @pytest.mark.parametrize("num_nodes", [5, 10, 15])
     def test_number_of_nodes(self, num_nodes):
-        """ Length of each row in generated data equals num_nodes """
+        """Length of each row in generated data equals num_nodes"""
         graph = StructureModel()
         edges = [(n, n + 1, 1) for n in range(num_nodes - 1)]
         graph.add_weighted_edges_from(edges)
@@ -293,13 +293,13 @@ class TestGenerateBinaryData:
 
     @pytest.mark.parametrize("num_samples", [5, 10, 15])
     def test_number_of_samples(self, num_samples, graph):
-        """ Assert number of samples generated (rows) = num_samples """
+        """Assert number of samples generated (rows) = num_samples"""
         data = generate_binary_data(graph, num_samples, "logit", 1, seed=10)
         assert len(data) == num_samples
 
     @pytest.mark.parametrize("distribution", ["logit", "probit", "normal"])
     def test_baseline_probability_probit(self, graph, distribution):
-        """ Test whether probability centered around 50% if no intercept given"""
+        """Test whether probability centered around 50% if no intercept given"""
         graph = StructureModel()
         graph.add_nodes_from(["A"])
         data = generate_binary_data(
@@ -314,7 +314,7 @@ class TestGenerateBinaryData:
 
     @pytest.mark.parametrize("distribution", ["logit", "probit", "normal"])
     def test_intercept_probability_logit(self, graph, distribution):
-        """ Test whether probability is not centered around 50% when using an intercept"""
+        """Test whether probability is not centered around 50% when using an intercept"""
         graph = StructureModel()
         graph.add_nodes_from(["A"])
         data = generate_binary_data(
@@ -461,7 +461,7 @@ class TestGenerateBinaryData:
 class TestGenerateCategoricalData:
     @pytest.mark.parametrize("distribution", ["probit", "normal", "logit", "gumbel"])
     def test_returns_dataframe(self, distribution):
-        """ Return value is an ndarray - test over all sem_types """
+        """Return value is an ndarray - test over all sem_types"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         ndarray = generate_categorical_dataframe(
@@ -470,7 +470,7 @@ class TestGenerateCategoricalData:
         assert isinstance(ndarray, pd.DataFrame)
 
     def test_bad_distribution_type(self):
-        """ Test that invalid sem-type other than "probit", "normal", "logit", "gumbel" is not accepted """
+        """Test that invalid sem-type other than "probit", "normal", "logit", "gumbel" is not accepted"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure(d_nodes, degree, graph_type)
         with pytest.raises(ValueError, match="Unknown categorical distribution"):
@@ -482,7 +482,7 @@ class TestGenerateCategoricalData:
         "num_nodes,n_categories", list(product([5, 10, 15], [3, 5, 7]))
     )
     def test_number_of_columns(self, num_nodes, n_categories):
-        """ Length of dataframe is in the correct shape"""
+        """Length of dataframe is in the correct shape"""
         graph = StructureModel()
         edges = [(n, n + 1, 1) for n in range(num_nodes - 1)]
         graph.add_weighted_edges_from(edges)
@@ -494,7 +494,7 @@ class TestGenerateCategoricalData:
 
     @pytest.mark.parametrize("num_samples", [5, 10, 15])
     def test_number_of_samples(self, num_samples, graph):
-        """ Assert number of samples generated (rows) = num_samples """
+        """Assert number of samples generated (rows) = num_samples"""
         data = generate_categorical_dataframe(graph, num_samples, "logit", 1, seed=10)
         assert len(data) == num_samples
 
@@ -503,7 +503,7 @@ class TestGenerateCategoricalData:
         list(product(["logit", "probit", "normal", "gumbel"], [3, 5, 7])),
     )
     def test_baseline_probability(self, graph, distribution, n_categories):
-        """ Test whether probability centered around 50% if no intercept given"""
+        """Test whether probability centered around 50% if no intercept given"""
         graph = StructureModel()
         graph.add_nodes_from(["A"])
         data = generate_categorical_dataframe(
@@ -560,7 +560,7 @@ class TestGenerateCategoricalData:
         cols = []
         for node in graph.nodes():
             for cat in range(n_categories):
-                cols.append("{}_{}".format(node, cat))
+                cols.append(f"{node}_{cat}")
         assert np.array_equal(data, df[cols].values)
 
     @pytest.mark.parametrize(
@@ -568,7 +568,7 @@ class TestGenerateCategoricalData:
         list(product(["logit", "probit", "normal", "gumbel"], [3, 5, 7])),
     )
     def test_intercept_probability(self, graph, distribution, n_categories):
-        """ Test whether probability is not centered around 50% when using an intercept"""
+        """Test whether probability is not centered around 50% when using an intercept"""
         graph = StructureModel()
         graph.add_nodes_from(["A"])
         data = generate_categorical_dataframe(
@@ -712,7 +712,7 @@ class TestGenerateStructureDynamic:
         g = generate_structure_dynamic(num_nodes, p, degree_intra, degree_inter)
         assert np.all(
             [
-                "{var}_lag{l_val}".format(var=var, l_val=l_val) in g.nodes
+                f"{var}_lag{l_val}" in g.nodes
                 for l_val in range(p + 1)
                 for var in range(num_nodes)
             ]
@@ -776,7 +776,7 @@ class TestGenerateStructureDynamic:
         g = generate_structure_dynamic(num_nodes, p, 4, 4, graph_type_inter="full")
         lagged_edges = sorted((u, v) for u, v in g.edges if int(u.split("_lag")[1]) > 0)
         assert lagged_edges == sorted(
-            ("{v}_lag{l_}".format(v=v_f, l_=l_), "{v}_lag0".format(v=v_t))
+            (f"{v_f}_lag{l_}", f"{v_t}_lag0")
             for l_ in range(1, p + 1)
             for v_f in range(num_nodes)  # var from
             for v_t in range(num_nodes)  # var to
@@ -788,14 +788,14 @@ class TestGenerateDataframeDynamic:
         "sem_type", ["linear-gauss", "linear-exp", "linear-gumbel"]
     )
     def test_returns_dateframe(self, sem_type):
-        """ Return value is an ndarray - test over all sem_types """
+        """Return value is an ndarray - test over all sem_types"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
         data = generate_dataframe_dynamic(sm, sem_type=sem_type, n_samples=10)
         assert isinstance(data, pd.DataFrame)
 
     def test_bad_sem_type(self):
-        """ Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted """
+        """Test that invalid sem-type other than "linear-gauss", "linear-exp", "linear-gumbel" is not accepted"""
         graph_type, degree, d_nodes = "erdos-renyi", 4, 10
         sm = generate_structure_dynamic(d_nodes, 2, degree, degree, graph_type)
         with pytest.raises(

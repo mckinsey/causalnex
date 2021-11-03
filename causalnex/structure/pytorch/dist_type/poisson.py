@@ -31,13 +31,13 @@
 """
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 from causalnex.structure.pytorch.dist_type._base import DistTypeBase
 
 
 class DistTypePoisson(DistTypeBase):
-    """ Class defining poisson distribution type functionality """
+    """Class defining poisson distribution type functionality"""
 
     def preprocess_X(self, X: np.ndarray, fit_transform: bool = True) -> np.ndarray:
         """

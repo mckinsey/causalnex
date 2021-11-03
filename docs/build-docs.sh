@@ -41,4 +41,14 @@ rm -rf docs/build
 mkdir docs/build/
 cp -r docs/_templates docs/conf.py docs/build/
 
-sphinx-build -v -c docs/ -Ea -j auto -D language=en docs/build/ docs/build/html
+echo "$(dirname ""${BASH_SOURCE[0]}"")"
+
+# Convert latent files into jpg
+for f in $(dirname "${BASH_SOURCE[0]}")/source/03_tutorial/supporting_files/latent/*.dot
+do
+  echo "Converting $f into jpg"
+  dot -Tjpg $f -o "$(dirname "${BASH_SOURCE[0]}")/source/03_tutorial/supporting_files/$(basename "$f" .dot).jpg"
+done
+
+# Build Sphinx documentation
+sphinx-build -v -c docs/ -Ea -D language=en docs/build/ docs/build/html

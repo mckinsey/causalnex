@@ -32,10 +32,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from causalnex.evaluation import classification_report, roc_auc
+from causalnex.inference import InferenceEngine
 from causalnex.network import BayesianNetwork
 from causalnex.structure import StructureModel
 from causalnex.structure.notears import from_pandas
-from causalnex.utils.network_utils import get_markov_blanket
+
+from .estimator.test_em import naive_bayes_plus_parents
 
 
 class TestFitNodeStates:
@@ -471,6 +474,7 @@ class TestPredictProbabilityMaximumLikelihoodEstimator:
         self, bn, train_data_discrete, test_data_c_discrete, test_data_c_likelihood
     ):
         """Probabilities should return exactly correct on a hand computable scenario"""
+
         bn.fit_cpds(train_data_discrete)
         probability = bn.predict_probability(test_data_c_discrete, "c")
 
@@ -550,7 +554,7 @@ class TestPredictProbabilityBayesianEstimator:
 class TestFitNodesStatesAndCPDs:
     """Test behaviour of helper function"""
 
-    def test_behaves_same_as_seperate_calls(self, train_data_idx, train_data_discrete):
+    def test_behaves_same_as_separate_calls(self, train_data_idx, train_data_discrete):
         bn1 = BayesianNetwork(from_pandas(train_data_idx, w_threshold=0.3))
         bn2 = BayesianNetwork(from_pandas(train_data_idx, w_threshold=0.3))
 
@@ -565,8 +569,278 @@ class TestFitNodesStatesAndCPDs:
 
         assert cpds1.keys() == cpds2.keys()
 
-        for k in cpds1:
-            assert cpds1[k].equals(cpds2[k])
+        for k, df in cpds1.items():
+            assert df.equals(cpds2[k])
+
+
+class TestLatentVariable:
+    @staticmethod
+    def mean_absolute_error(cpds_a, cpds_b):
+        """Compute the absolute error among each single parameter and average them out"""
+
+        mae = 0
+        n_param = 0
+
+        for node in cpds_a.keys():
+            err = np.abs(cpds_a[node] - cpds_b[node]).values
+            mae += np.sum(err)
+            n_param += err.shape[0] * err.shape[1]
+
+        return mae / n_param
+
+    def test_em_algorithm(self):  # pylint: disable=too-many-locals
+        """
+        Test if `BayesianNetwork` works with EM algorithm.
+        We use a naive bayes + parents + an extra node not related to the latent variable.
+        """
+
+        # p0   p1  p2
+        #   \  |  /
+        #      z
+        #   /  |  \
+        # c0  c1  c2
+        # |
+        # cc0
+        np.random.seed(22)
+
+        data, sm, _, true_lv_values = naive_bayes_plus_parents(
+            percentage_not_missing=0.1,
+            samples=1000,
+            p_z=0.7,
+            p_c=0.7,
+        )
+        data["cc_0"] = np.where(
+            np.random.random(len(data)) < 0.5, data["c_0"], (data["c_0"] + 1) % 3
+        )
+        data.drop(columns=["z"], inplace=True)
+
+        complete_data = data.copy(deep=True)
+        complete_data["z"] = true_lv_values
+
+        # Baseline model: the structure of the figure trained with complete data. We try to reproduce it
+        complete_bn = BayesianNetwork(
+            StructureModel(list(sm.edges) + [("c_0", "cc_0")])
+        )
+        complete_bn.fit_node_states_and_cpds(complete_data)
+
+        # BN without latent variable: All `p`s are connected to all `c`s + `c0` ->`cc0`
+        sm_no_lv = StructureModel(
+            [(f"p_{p}", f"c_{c}") for p in range(3) for c in range(3)]
+            + [("c_0", "cc_0")]
+        )
+        bn = BayesianNetwork(sm_no_lv)
+        bn.fit_node_states(data)
+        bn.fit_cpds(data)
+
+        # TEST 1: cc_0 does not depend on the latent variable so:
+        assert np.all(bn.cpds["cc_0"] == complete_bn.cpds["cc_0"])
+
+        # BN with latent variable
+        # When we add the latent variable, we add the edges in the image above
+        # and remove the connection among `p`s and `c`s
+        edges_to_add = list(sm.edges)
+        edges_to_remove = [(f"p_{p}", f"c_{c}") for p in range(3) for c in range(3)]
+        bn.add_node("z", edges_to_add, edges_to_remove)
+        bn.fit_latent_cpds("z", [0, 1, 2], data, stopping_delta=0.001)
+
+        # TEST 2: cc_0 CPD should remain untouched by the EM algorithm
+        assert np.all(bn.cpds["cc_0"] == complete_bn.cpds["cc_0"])
+
+        # TEST 3: We should recover the correct CPDs quite accurately
+        assert bn.cpds.keys() == complete_bn.cpds.keys()
+        assert self.mean_absolute_error(bn.cpds, complete_bn.cpds) < 0.01
+
+        # TEST 4: Inference over recovered CPDs should be also accurate
+        eng = InferenceEngine(bn)
+        query = eng.query()
+        n_rows = complete_data.shape[0]
+
+        for node in query:
+            assert (
+                np.abs(query[node][0] - sum(complete_data[node] == 0) / n_rows) < 1e-2
+            )
+            assert (
+                np.abs(query[node][1] - sum(complete_data[node] == 1) / n_rows) < 1e-2
+            )
+
+        # TEST 5: Inference using predict and predict_probability functions
+        report = classification_report(bn, complete_data, "z")
+        _, auc = roc_auc(bn, complete_data, "z")
+        complete_report = classification_report(complete_bn, complete_data, "z")
+        _, complete_auc = roc_auc(complete_bn, complete_data, "z")
+
+        for category, metrics in report.items():
+            if isinstance(metrics, dict):
+                for key, val in metrics.items():
+                    assert np.abs(val - complete_report[category][key]) < 1e-2
+            else:
+                assert np.abs(metrics - complete_report[category]) < 1e-2
+
+        assert np.abs(auc - complete_auc) < 1e-2
+
+
+class TestAddNode:
+    def test_add_node_not_in_edges_to_add(self):
+        """An error should be raised if the latent variable is NOT part of the edges to add"""
+
+        with pytest.raises(
+            ValueError,
+            match="Should only add edges containing node 'd'",
+        ):
+            _, sm, _, _ = naive_bayes_plus_parents()
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+            bn.add_node("d", [("a", "z"), ("b", "z")], [])
+
+    def test_add_node_in_edges_to_remove(self):
+        """An error should be raised if the latent variable is part of the edges to remove"""
+
+        with pytest.raises(
+            ValueError,
+            match="Should only remove edges NOT containing node 'd'",
+        ):
+            _, sm, _, _ = naive_bayes_plus_parents()
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+            bn.add_node("d", [], [("a", "d"), ("b", "d")])
+
+
+class TestFitLatentCPDs:
+    @pytest.mark.parametrize("lv_name", [None, [], set(), {}, tuple(), 123, {}])
+    def test_fit_invalid_lv_name(self, lv_name):
+        """An error should be raised if the latent variable is of an invalid type"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Invalid latent variable name *",
+        ):
+            df, sm, _, _ = naive_bayes_plus_parents()
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+            bn.fit_latent_cpds(lv_name, [0, 1, 2], df)
+
+    def test_fit_lv_not_added(self):
+        """An error should be raised if the latent variable is not added to the network yet"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Latent variable 'd' not added to the network",
+        ):
+            df, sm, _, _ = naive_bayes_plus_parents()
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+            bn.fit_latent_cpds("d", [0, 1, 2], df)
+
+    @pytest.mark.parametrize("lv_states", [None, [], set(), {}])
+    def test_fit_invalid_lv_states(self, lv_states):
+        """An error should be raised if the latent variable has invalid states"""
+
+        with pytest.raises(
+            ValueError,
+            match="Latent variable 'd' contains no states",
+        ):
+            df, sm, _, _ = naive_bayes_plus_parents()
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+            bn.add_node("d", [("z", "d")], [])
+            bn.fit_latent_cpds("d", lv_states, df)
+
+
+class TestSetCPD:
+    """Test behaviour of adding a self-defined cpd"""
+
+    def test_set_cpd(self, bn, good_cpd):
+        """The CPD of the target node should be the same as the self-defined table after adding"""
+
+        bn.set_cpd("b", good_cpd)
+        assert bn.cpds["b"].values.tolist() == good_cpd.values.tolist()
+
+    def test_set_other_cpd(self, bn, good_cpd):
+        """The CPD of nodes other than the target node should not be affected"""
+
+        cpd = bn.cpds["a"].values.tolist()
+        bn.set_cpd("b", good_cpd)
+        cpd_after_adding = bn.cpds["a"].values.tolist()
+
+        assert all(
+            val == val_after_adding
+            for val, val_after_adding in zip(*(cpd, cpd_after_adding))
+        )
+
+    def test_set_cpd_to_non_existent_node(self, bn, good_cpd):
+        """Should raise error if adding a cpd to a non-existing node in Bayesian Network"""
+
+        with pytest.raises(
+            ValueError,
+            match=r'Non-existing node "test"',
+        ):
+            bn.set_cpd("test", good_cpd)
+
+    def test_set_bad_cpd(self, bn, bad_cpd):
+        """Should raise error if it the prpbability values do not sum up to 1 in the table"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Sum or integral of conditional probabilites for node b is not equal to 1.",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_no_overwritten_after_setting_bad_cpd(self, bn, bad_cpd):
+        """The cpd of bn won't be overwritten if adding a bad cpd"""
+
+        original_cpd = bn.cpds["b"].values.tolist()
+
+        try:
+            bn.set_cpd("b", bad_cpd)
+        except ValueError:
+            assert bn.cpds["b"].values.tolist() == original_cpd
+
+    def test_bad_node_index(self, bn, good_cpd):
+        """Should raise an error when setting bad node index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.index.name = "test"
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_node_states_index(self, bn, good_cpd):
+        """Should raise an error when setting bad node states index"""
+
+        bad_cpd = good_cpd.reindex([1, 2, 3])
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_parent_node_index(self, bn, good_cpd):
+        """Should raise an error when setting bad parent node index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.columns = bad_cpd.columns.rename("test", level=1)
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
+
+    def test_bad_parent_node_states_index(self, bn, good_cpd):
+        """Should raise an error when setting bad parent node states index"""
+
+        bad_cpd = good_cpd
+        bad_cpd.columns.set_levels(["test1", "test2"], level=0, inplace=True)
+
+        with pytest.raises(
+            IndexError,
+            match=r"Wrong index values. Please check your indices",
+        ):
+            bn.set_cpd("b", bad_cpd)
 
 
 class TestCPDsProperty:
@@ -620,7 +894,6 @@ class TestStructure:
         """The structure retrieved should be the same"""
 
         sm = StructureModel()
-
         sm.add_weighted_edges_from([(1, 2, 2.0)], origin="unknown")
         sm.add_weighted_edges_from([(1, 3, 1.0)], origin="learned")
         sm.add_weighted_edges_from([(3, 5, 0.7)], origin="expert")
@@ -631,7 +904,6 @@ class TestStructure:
 
         assert set(sm.edges.data("origin")) == set(sm_from_bn.edges.data("origin"))
         assert set(sm.edges.data("weight")) == set(sm_from_bn.edges.data("weight"))
-
         assert set(sm.nodes) == set(sm_from_bn.nodes)
 
     def test_set_structure(self):
@@ -651,34 +923,3 @@ class TestStructure:
 
         with pytest.raises(AttributeError, match=r"can't set attribute"):
             bn.structure = new_sm
-
-
-class TestMarkovBlanket:
-    """Test behavior of Markov Blanket """
-
-    def test_elements(self, bn_train_model):
-        """ check if all elements are included"""
-        blanket = get_markov_blanket(bn_train_model, "a")
-        parents_of_node = {"b", "d"}
-        children_of_node = {"f"}
-        parents_of_children = {"e"}
-
-        assert parents_of_node <= set(blanket.nodes)
-        assert children_of_node <= set(blanket.nodes)
-        assert parents_of_children <= set(blanket.nodes)
-
-    def test_connection(self, bn_train_model):
-        """ Check if edges are correct """
-        blanket = get_markov_blanket(bn_train_model, "a")
-        assert blanket.structure.has_edge("b", "a")
-        assert blanket.structure.has_edge("d", "a")
-        assert blanket.structure.has_edge("a", "f")
-        assert blanket.structure.has_edge("e", "f")
-        assert blanket.structure.has_edge("e", "b")
-
-    def test_invalid_node(self, bn_train_model):
-        with pytest.raises(
-            KeyError,
-            match="is not found in the network",
-        ):
-            get_markov_blanket(bn_train_model, "invalid")

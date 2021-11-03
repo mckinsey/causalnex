@@ -296,3 +296,37 @@ class TestBayesianCPDs:
                 discretiser_alg=discretiser_alg,
                 discretiser_kwargs=supervised_param,
             )
+
+    def test_shuffled_data(self, iris_test_data, iris_edge_list):
+        df = iris_test_data.copy()
+        df = df.sample(frac=0.5, random_state=2020)
+        ground_truth = np.array(
+            [
+                [2, 0, 1, 2, 2, 1, 2, 0, 0, 0, 2, 1, 0, 2, 2],
+                [0, 1, 2, 2, 0, 0, 1, 2, 0, 2, 1, 1, 2, 0, 0],
+                [2, 0, 0, 0, 2, 0, 0, 1, 0, 1, 0, 2, 1, 0, 2],
+                [2, 1, 2, 2, 0, 0, 1, 1, 0, 2, 1, 2, 2, 1, 1],
+                [0, 0, 0, 0, 1, 2, 0, 0, 1, 2, 2, 0, 0, 2, 0],
+            ]
+        )
+        supervised_param = {
+            "sepal width (cm)": {"max_depth": 2, "random_state": 2020},
+            "petal length (cm)": {"max_depth": 2, "random_state": 2020},
+            "petal width (cm)": {"max_depth": 2, "random_state": 2020},
+        }
+
+        label = df["sepal length (cm)"]
+        df.drop(["sepal length (cm)"], axis=1, inplace=True)
+        clf = BayesianNetworkClassifier(
+            iris_edge_list,
+            discretiser_kwargs=supervised_param,
+            discretiser_alg={
+                "sepal width (cm)": "tree",
+                "petal length (cm)": "tree",
+                "petal width (cm)": "tree",
+            },
+        )
+        clf.fit(df, label)
+        output = clf.predict(df)
+        assert np.isnan(output).sum() == 0
+        assert (ground_truth == output.reshape(5, 15)).all()

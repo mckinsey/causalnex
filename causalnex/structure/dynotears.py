@@ -126,11 +126,7 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
 
     sm = StructureModel()
     sm.add_nodes_from(
-        [
-            "{var}_lag{l_val}".format(var=var, l_val=l_val)
-            for l_val in range(p + 1)
-            for var in col_idx.keys()
-        ]
+        [f"{var}_lag{l_val}" for var in col_idx.keys() for l_val in range(p + 1)]
     )
     sm.add_weighted_edges_from(
         [
@@ -158,7 +154,7 @@ def _format_name_from_pandas(idx_col: Dict[int, str], from_numpy_node: str) -> s
         nodes in from_pandas_dynamic format
     """
     idx, lag_val = from_numpy_node.split("_lag")
-    return "{var}_lag{l_val}".format(var=idx_col[int(idx)], l_val=lag_val)
+    return f"{idx_col[int(idx)]}_lag{lag_val}"
 
 
 def from_numpy_dynamic(  # pylint: disable=too-many-arguments
@@ -277,7 +273,7 @@ def _matrices_to_structure_model(
     """
     sm = StructureModel()
     lag_cols = [
-        "{var}_lag{l_val}".format(var=var, l_val=l_val)
+        f"{var}_lag{l_val}"
         for l_val in range(1 + (a_est.shape[0] // a_est.shape[1]))
         for var in range(a_est.shape[1])
     ]

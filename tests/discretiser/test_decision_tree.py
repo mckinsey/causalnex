@@ -415,3 +415,37 @@ class TestDecisionTree:
         assert (
             output_df["petal width (cm)"].values.reshape(-1, 15) == petal_width
         ).all()
+
+    def test_transform_shuffled_indices(self, get_iris_data):
+        data = get_iris_data.copy(deep=True)
+        ground_truth = np.array(
+            [
+                [0, 0, 1, 0, 1],
+                [0, 0, 0, 0, 0],
+                [0, 1, 1, 2, 1],
+                [2, 1, 1, 0, 1],
+                [1, 2, 1, 0, 2],
+                [2, 2, 2, 0, 0],
+                [1, 1, 0, 2, 2],
+                [1, 2, 0, 2, 2],
+                [2, 2, 0, 1, 2],
+                [1, 1, 2, 1, 1],
+            ]
+        )
+
+        sample_data = data[["sepal length (cm)", "target"]].sample(
+            50, random_state=2021
+        )
+        dt_single = DecisionTreeSupervisedDiscretiserMethod(
+            tree_params={"max_depth": 2},
+            mode="single",
+        )
+        dt_single.fit(
+            feat_names=["sepal length (cm)"],
+            dataframe=sample_data,
+            target_continuous=False,
+            target="target",
+        )
+        discretiser_output = dt_single.transform(sample_data[["sepal length (cm)"]])
+        assert discretiser_output.isnull().values.sum() == 0
+        assert (ground_truth == discretiser_output.values.reshape(10, 5)).all()

@@ -1,0 +1,10 @@
+digraph{
+	// ratio=fill;
+	// size="3,2!"
+	dpi=100
+	a[regular=true];
+	b[regular=true];
+	Z[regular=true];
+	Z -> a;
+	Z -> b;
+}

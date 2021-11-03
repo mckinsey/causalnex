@@ -59,10 +59,11 @@ Welcome to CausalNex's API docs and tutorials!
    :maxdepth: 2
    :caption: Tutorial
 
-   03_tutorial/03_tutorial.md
-   03_tutorial/dist_schema_tutorial.md
-   03_tutorial/plotting_tutorial.md
-   03_tutorial/sklearn_tutorial.md
+   03_tutorial/01_first_tutorial.md
+   03_tutorial/02_dist_schema_tutorial.md
+   03_tutorial/03_plotting_tutorial.md
+   03_tutorial/04_sklearn_tutorial.md
+   03_tutorial/05_latent_variable_tutorial.md
 
 .. toctree::
    :maxdepth: 2

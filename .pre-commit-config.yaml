@@ -8,17 +8,15 @@ repos:
     rev: v2.2.3
     hooks:
     -   id: trailing-whitespace
-        stages: [commit, manual]
     -   id: end-of-file-fixer
-        stages: [commit, manual]
+        exclude: ^docs/source/03_tutorial
     -   id: check-yaml  # Checks yaml files for parseable syntax.
-#        exclude:
     -   id: check-json  # Checks json files for parseable syntax.
     -   id: check-added-large-files
+        exclude: ^docs/source/03_tutorial
     -   id: check-case-conflict  # Check for files that would conflict in case-insensitive filesystems
     -   id: check-merge-conflict  # Check for files that contain merge conflict strings.
     -   id: debug-statements  # Check for debugger imports and py37+ `breakpoint()` calls in python source.
-#        exclude:
     -   id: detect-private-key  # Detects the presence of private keys
     -   id: requirements-txt-fixer  # Sorts entries in requirements.txt
     -   id: flake8
@@ -41,7 +39,7 @@ repos:
     # https://github.com/PyCQA/pylint/issues/618
     # The first set of pylint checks if for local pre-commit, it only runs on the files changed.
     -   id: pylint-quick-causalnex
-        name: "Quick PyLint on causalnex/*"
+        name: "Quick Pylint on causalnex/*"
         language: system
         types: [file, python]
         files: ^causalnex/
@@ -49,7 +47,7 @@ repos:
         entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn
         stages: [commit]
     -   id: pylint-quick-tests
-        name: "Quick PyLint on tests/*"
+        name: "Quick Pylint on tests/*"
         language: system
         types: [file, python]
         files: ^tests/
@@ -58,14 +56,14 @@ repos:
 
     # The same pylint checks, but running on all files. It's for manual run with `make lint`
     -   id: pylint-causalnex
-        name: "PyLint on causalnex/*"
+        name: "Pylint on causalnex/*"
         language: system
         pass_filenames: false
         stages: [manual]
         entry: pylint --disable=unnecessary-pass,cyclic-import --ignore=ebaybbn causalnex
         exclude: ^causalnex/ebaybbn
     -   id: pylint-tests
-        name: "PyLint on tests/*"
+        name: "Pylint on tests/*"
         language: system
         pass_filenames: false
         stages: [manual]
