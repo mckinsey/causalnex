@@ -116,7 +116,7 @@ class TestFromNumpyDynotears:
         """
 
         sm = from_numpy_dynamic(
-            data_dynotears_p1["X"], data_dynotears_p1["Y"], w_threshold=0.2
+            data_dynotears_p1["X"], data_dynotears_p1["Y"], tau_w=0.2
         )
         w_edges = [
             (f"{i}_lag0", f"{j}_lag0")
@@ -145,7 +145,7 @@ class TestFromNumpyDynotears:
         """
 
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=0.25
+            data_dynotears_p2["X"], data_dynotears_p2["Y"], tau_w=0.25
         )
         w_edges = [
             (f"{i}_lag0", f"{j}_lag0")
@@ -250,7 +250,7 @@ class TestFromNumpyDynotears:
     def test_isolated_nodes_exist(self, data_dynotears_p2):
         """Isolated nodes should still be in the learned structure"""
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=1
+            data_dynotears_p2["X"], data_dynotears_p2["Y"], tau_w=1
         )
         assert len(sm.edges) == 2
         assert len(sm.nodes) == 15
@@ -273,7 +273,7 @@ class TestFromNumpyDynotears:
             [[np.sqrt(el), np.sqrt(el)] for el in np.random.choice(100, size=500)],
             columns=["a", "b"],
         )
-        sm = from_numpy_dynamic(data.values[1:], data.values[:-1], w_threshold=0.1)
+        sm = from_numpy_dynamic(data.values[1:], data.values[:-1], tau_w=0.1)
         edge = (
             sm.get_edge_data("1_lag0", "0_lag0") or sm.get_edge_data("0_lag0", "1_lag0")
         )["weight"]
@@ -287,7 +287,7 @@ class TestFromNumpyDynotears:
         data = pd.DataFrame(
             [[el, -el] for el in np.random.choice(100, size=500)], columns=["a", "b"]
         )
-        sm = from_numpy_dynamic(data.values[1:], data.values[:-1], w_threshold=0.1)
+        sm = from_numpy_dynamic(data.values[1:], data.values[:-1], tau_w=0.1)
         edge = (
             sm.get_edge_data("1_lag0", "0_lag0") or sm.get_edge_data("0_lag0", "1_lag0")
         )["weight"]
@@ -299,20 +299,20 @@ class TestFromNumpyDynotears:
         """
 
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=0.05
+            data_dynotears_p2["X"], data_dynotears_p2["Y"], tau_w=0.05
         )
         assert nx.algorithms.is_directed_acyclic_graph(sm)
 
     def test_tabu_edges_on_non_existing_edges_do_nothing(self, data_dynotears_p2):
         """If tabu edges do not exist in the original unconstrained network then nothing changes"""
         sm = from_numpy_dynamic(
-            data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=0.2
+            data_dynotears_p2["X"], data_dynotears_p2["Y"], tau_w=0.2
         )
 
         sm_2 = from_numpy_dynamic(
             data_dynotears_p2["X"],
             data_dynotears_p2["Y"],
-            w_threshold=0.2,
+            tau_w=0.2,
             tabu_edges=[(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 0, 3)],
         )
         assert set(sm_2.edges) == set(sm.edges)
@@ -391,7 +391,7 @@ class TestFromPandasDynotears:
         sm = from_pandas_dynamic(
             df,
             p=1,
-            w_threshold=0.2,
+            tau_w=0.2,
         )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
@@ -430,7 +430,7 @@ class TestFromPandasDynotears:
         sm = from_pandas_dynamic(
             df,
             p=2,
-            w_threshold=0.25,
+            tau_w=0.25,
         )
         map_ = dict(zip(range(5), ["a", "b", "c", "d", "e"]))
         w_edges = [
@@ -532,7 +532,7 @@ class TestFromPandasDynotears:
         sm = from_pandas_dynamic(
             pd.DataFrame(data_dynotears_p2["X"], columns=["a", "b", "c", "d", "e"]),
             p=2,
-            w_threshold=0.4,
+            tau_w=0.4,
         )
         assert sorted(sm.nodes) == [
             f"{var}_lag{l_val}"
@@ -547,7 +547,7 @@ class TestFromPandasDynotears:
         df.loc[-2, :] = data_dynotears_p2["Y"][0, 5:10]
         df = df.sort_index()
 
-        sm = from_pandas_dynamic(df, p=2, w_threshold=1)
+        sm = from_pandas_dynamic(df, p=2, tau_w=1)
         assert len(sm.edges) == 2
         assert len(sm.nodes) == 15
 
@@ -572,7 +572,7 @@ class TestFromPandasDynotears:
             [[np.sqrt(el), np.sqrt(el)] for el in np.random.choice(100, size=500)],
             columns=["a", "b"],
         )
-        sm = from_pandas_dynamic(data, p=1, w_threshold=0.1)
+        sm = from_pandas_dynamic(data, p=1, tau_w=0.1)
         edge = (
             sm.get_edge_data("b_lag0", "a_lag0") or sm.get_edge_data("a_lag0", "b_lag0")
         )["weight"]
@@ -586,7 +586,7 @@ class TestFromPandasDynotears:
         data = pd.DataFrame(
             [[el, -el] for el in np.random.choice(100, size=500)], columns=["a", "b"]
         )
-        sm = from_pandas_dynamic(data, p=1, w_threshold=0.1)
+        sm = from_pandas_dynamic(data, p=1, tau_w=0.1)
         edge = (
             sm.get_edge_data("b_lag0", "a_lag0") or sm.get_edge_data("a_lag0", "b_lag0")
         )["weight"]
@@ -599,7 +599,7 @@ class TestFromPandasDynotears:
         sm = from_pandas_dynamic(
             pd.DataFrame(data_dynotears_p2["X"], columns=["a", "b", "c", "d", "e"]),
             p=2,
-            w_threshold=0.05,
+            tau_w=0.05,
         )
         assert nx.algorithms.is_directed_acyclic_graph(sm)
 
@@ -613,12 +613,12 @@ class TestFromPandasDynotears:
         sm = from_pandas_dynamic(
             df,
             p=2,
-            w_threshold=0.2,
+            tau_w=0.2,
         )
         sm_2 = from_pandas_dynamic(
             df,
             p=2,
-            w_threshold=0.2,
+            tau_w=0.2,
             tabu_edges=[(0, "a", "a"), (0, "a", "b"), (0, "a", "c"), (0, "a", "d")],
         )
         assert set(sm_2.edges) == set(sm.edges)
@@ -636,9 +636,9 @@ class TestFromPandasDynotears:
         df_ = df.copy()
         df_.index = range(100, 152)
         df = pd.concat([df, df_])
-        sm = from_pandas_dynamic(df, p=2, w_threshold=0.05)
-        sm_1 = from_pandas_dynamic([df], p=2, w_threshold=0.05)
-        sm_2 = from_pandas_dynamic([df, df], p=2, w_threshold=0.05)
+        sm = from_pandas_dynamic(df, p=2, tau_w=0.05)
+        sm_1 = from_pandas_dynamic([df], p=2, tau_w=0.05)
+        sm_2 = from_pandas_dynamic([df, df], p=2, tau_w=0.05)
 
         assert list(sm_2.edges) == list(sm_1.edges)
         assert list(sm.edges) == list(sm_1.edges)
@@ -664,8 +664,9 @@ class TestFromPandasDynotears:
             index=np.arange(200, 300),
         )
 
-        sm = from_pandas_dynamic(pd.concat([df, df_2], axis=0), p=2, w_threshold=0.05)
-        sm_1 = from_pandas_dynamic([df, df_2], p=2, w_threshold=0.05)
+        sm = from_pandas_dynamic(pd.concat([df, df_2], axis=0), p=2, tau_w=0.05)
+        sm_1 = from_pandas_dynamic([df, df_2], p=2, tau_w
+                                   =0.05)
 
         assert [(u, v, round(w, 3)) for u, v, w in sm_1.edges(data="weight")] == [
             (u, v, round(w, 3)) for u, v, w in sm.edges(data="weight")
