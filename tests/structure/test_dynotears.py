@@ -665,8 +665,7 @@ class TestFromPandasDynotears:
         )
 
         sm = from_pandas_dynamic(pd.concat([df, df_2], axis=0), p=2, tau_w=0.05)
-        sm_1 = from_pandas_dynamic([df, df_2], p=2, tau_w
-                                   =0.05)
+        sm_1 = from_pandas_dynamic([df, df_2], p=2, tau_w=0.05)
 
         assert [(u, v, round(w, 3)) for u, v, w in sm_1.edges(data="weight")] == [
             (u, v, round(w, 3)) for u, v, w in sm.edges(data="weight")
