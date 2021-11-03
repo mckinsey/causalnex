@@ -4,6 +4,7 @@
 * Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
   the graph into two or more subgraphs, as per #45 and #100
 * Allow users to provide self-defined CPD, as per #18 and #99
+* Generalise the utility function to get Markov blanket and incorporate it within `StructureModel` (cf. #136)
 * Fix decision tree and mdlp discretisations bug when input data is shuffled
 * Fix broken URLs in FAQ documentation, as per #113 and #125
 * Add a link to `PyGraphviz` installation guide under the installation prerequisites
