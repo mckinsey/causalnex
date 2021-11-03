@@ -130,5 +130,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-__test__.py
-.gitignore
