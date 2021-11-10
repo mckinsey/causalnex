@@ -11,6 +11,7 @@
 * Fix integer index type checking for timeseries data, as per #74 and #86
 * Add GPU support to Pytorch implementation, as requested in #56 and #114
 * Add an example for structure model exporting into first causalnex tutorial, as per #124 and #129
+* Fix bug where inputs to the DAGRegressor/Classifier yielded different predictions between float and int dtypes, as per #140
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms
