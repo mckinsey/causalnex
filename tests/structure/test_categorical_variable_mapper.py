@@ -167,7 +167,7 @@ class TestVariableFeatureMapper:
         mapper = VariableFeatureMapper(schema=schema)
 
         assert all(
-            x in schema.keys()
+            x in schema
             for x in mapper.get_var_of_type(
                 data_type=data_type.split(":")[0]
                 if "categorical" in data_type

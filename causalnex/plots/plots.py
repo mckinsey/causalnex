@@ -180,7 +180,7 @@ def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
     ]
 
     return ":".join(
-        ["%s;%.2f" % (gradient_colors[i], (1 / (steps + 1))) for i in range(steps + 1)]
+        [f"{gradient_colors[i]};{1 / (steps + 1):.2f}" for i in range(steps + 1)]
     )
 
 
@@ -195,7 +195,7 @@ def _add_attributes(
 
     # shift labels to be above nodes
     for node in _sm.nodes:
-        _sm.nodes[node]["label"] = "%s\n\n " % node
+        _sm.nodes[node]["label"] = f"{node}\n\n "
 
     # apply node attributes (start with default, then apply any custom)
     _all_node_attr = {**NODE_STYLE.NORMAL}

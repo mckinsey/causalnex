@@ -34,15 +34,15 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
 from sklearn.preprocessing import OneHotEncoder
+from torch import nn
 
 from causalnex.structure.pytorch.dist_type._base import DistTypeBase, ExpandColumnsMixin
 from causalnex.structure.structuremodel import StructureModel
 
 
 class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
-    """ Class defining categorical distribution type functionality """
+    """Class defining categorical distribution type functionality"""
 
     # index group of categorical columns
     idx_group = None
@@ -277,7 +277,7 @@ class DistTypeCategorical(ExpandColumnsMixin, DistTypeBase):
             Updated column name.
         """
         if catidx:
-            return "{}{}".format(colname, catidx)
+            return f"{colname}{catidx}"
         return colname
 
     def update_idx_col(self, idx_col: Dict[int, str]) -> Dict[int, str]:

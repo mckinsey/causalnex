@@ -235,9 +235,7 @@ def from_pandas(
     if len(non_numeric_cols) > 0:
         raise ValueError(
             "All columns must have numeric data. "
-            "Consider mapping the following columns to int {non_numeric_cols}".format(
-                non_numeric_cols=non_numeric_cols
-            )
+            f"Consider mapping the following columns to int {non_numeric_cols}"
         )
 
     col_idx = {c: i for i, c in enumerate(data.columns)}
@@ -317,9 +315,7 @@ def from_pandas_lasso(
     if not non_numeric_cols.empty:
         raise ValueError(
             "All columns must have numeric data. "
-            "Consider mapping the following columns to int {non_numeric_cols}".format(
-                non_numeric_cols=non_numeric_cols
-            )
+            f"Consider mapping the following columns to int {non_numeric_cols}"
         )
 
     col_idx = {c: i for i, c in enumerate(data.columns)}
@@ -578,6 +574,7 @@ def _assert_all_finite(X: np.ndarray):
         ValueError: If X contains NaN or Infinity
     """
 
-    msg_err = "Input contains NaN, infinity or a value too large for {!r}."
     if not np.isfinite(X).all():
-        raise ValueError(msg_err.format(X.dtype))
+        raise ValueError(
+            f"Input contains NaN, infinity or a value too large for {X.dtype}."
+        )

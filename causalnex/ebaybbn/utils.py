@@ -52,7 +52,6 @@ def get_args(func):
     an argspec, so we add a argspec
     attribute at creation time.
     """
-
     if hasattr(func, "argspec"):
         return func.argspec
     # return inspect.getargspec(func).args
@@ -84,7 +83,7 @@ def get_original_factors(factors):
     factor that introduces the variable
     iteratively.
     """
-    original_factors = dict()
+    original_factors = {}
     while len(original_factors) < len(factors):
         for factor in factors:
             args = get_args(factor)

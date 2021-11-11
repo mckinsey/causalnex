@@ -44,7 +44,7 @@ utils:
       pre-commit install --install-hooks
       pre-commit install --hook-type pre-push
   linters: &linters
-    name: Run pylint and flake8
+    name: Run linters and auto-formatters
     command: make lint
 
   unit_tests: &unit_tests
@@ -52,7 +52,6 @@ utils:
     command: make test
 
   build_docs: &build_docs
-    # NOTE: doesn't work on python 3.5
     name: Build documentation
     command: make build-docs
 

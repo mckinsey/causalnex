@@ -1,0 +1,38 @@
+digraph{
+	splines=curved;
+	ratio=fill;
+	size="3,2!"
+	dpi=200
+	a[regular=true];
+	b[regular=true];
+	c[regular=true];
+	d[regular=true];
+	e[regular=true];
+	f[regular=true];
+	g[regular=true];
+	h[regular=true];
+	Z[regular=true];
+	Z -> e;
+	Z -> f;
+	Z -> g;
+	Z -> h;
+	a -> e[color=red];
+	d -> h[color=red];
+
+	a -> Z;
+	b -> Z;
+	c -> Z;
+	d -> Z;
+
+	subgraph ch {
+		rank=same
+		e -> f[color=red];
+		f -> g[color=red];
+		g -> h[color=red];
+		e -> h[color=red];
+		f -> h[color=red];
+		e -> g[color=red];
+
+	}
+
+}

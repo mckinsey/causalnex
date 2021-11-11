@@ -32,16 +32,19 @@ This module contains the implementation of ``BayesianNetwork``.
 describing causal relationships between variables and their distribution in a factorised way.
 """
 
+import copy
 import re
-from copy import deepcopy
-from typing import Dict, Hashable, List, Set, Tuple
+from typing import Dict, Hashable, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import pandas as pd
 from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
+from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.models import BayesianModel
 
+from causalnex.estimator.em import EMSingleLatentVariable
 from causalnex.structure import StructureModel
+from causalnex.utils.pgmpy_utils import pd_to_tabular_cpd
 
 
 class BayesianNetwork:
@@ -126,22 +129,20 @@ class BayesianNetwork:
 
         if n_components > 1:
             raise ValueError(
-                "The given structure has {n_components} separated graph components. "
-                "Please make sure it has only one.".format(n_components=n_components)
+                f"The given structure has {n_components} separated graph components. "
+                "Please make sure it has only one."
             )
 
         if not nx.is_directed_acyclic_graph(structure):
             cycle = nx.find_cycle(structure)
             raise ValueError(
-                "The given structure is not acyclic. Please review the following cycle: {cycle}".format(
-                    cycle=cycle
-                )
+                f"The given structure is not acyclic. Please review the following cycle: {cycle}"
             )
 
         # _node_states is a Dict in the form `dict: {node: dict: {state: index}}`.
         # Underlying libraries expect all states to be integers from zero, and
         # thus this dict is used to convert from state -> idx, and then back from idx -> state as required
-        self._node_states = None  # type: Dict[str: Dict[Hashable, int]]
+        self._node_states = {}  # type: Dict[str: Dict[Hashable, int]]
         self._structure = structure
 
         # _model is a pgmpy Bayesian Model.
@@ -195,20 +196,20 @@ class BayesianNetwork:
             KeyError: if a node is missing.
         """
         missing_feature = set(self.nodes).difference(set(nodes.keys()))
+
         if missing_feature:
             raise KeyError(
                 "The data does not cover all the features found in the Bayesian Network. "
-                "Please check the following features: {nodes}".format(
-                    nodes=missing_feature
-                )
+                f"Please check the following features: {missing_feature}"
             )
+
+        self._node_states = {}
 
         for node, states in nodes.items():
             if any(pd.isnull(list(states))):
-                raise ValueError("node '{node}' contains None state".format(node=node))
-        self._node_states = {
-            n: {v: k for k, v in enumerate(sorted(nodes[n]))} for n in nodes
-        }
+                raise ValueError(f"node '{node}' contains None state")
+
+            self._node_states[node] = {v: k for k, v in enumerate(sorted(states))}
 
     @property
     def edges(self) -> List[Tuple[str, str]]:
@@ -245,15 +246,17 @@ class BayesianNetwork:
         Returns:
             Conditional Probability Distributions of each node within the Bayesian Network.
         """
-        cpds = dict()
-        for cpd in self._model.cpds:
+        cpds = {}
 
-            iterables = [
-                sorted(self._node_states[var].keys()) for var in cpd.variables[1:]
-            ]
+        for cpd in self._model.cpds:
+            names = cpd.variables[1:]
             cols = [""]
-            if iterables:
-                cols = pd.MultiIndex.from_product(iterables, names=cpd.variables[1:])
+
+            if names:
+                cols = pd.MultiIndex.from_product(
+                    [sorted(self._node_states[var].keys()) for var in names],
+                    names=names,
+                )
 
             cpds[cpd.variable] = pd.DataFrame(
                 cpd.values.reshape(
@@ -267,6 +270,59 @@ class BayesianNetwork:
             cpds[cpd.variable].columns = cols
 
         return cpds
+
+    def set_cpd(self, node: str, df: pd.DataFrame) -> "BayesianNetwork":
+        """
+        Provide self-defined CPD to Bayesian Network
+
+        Args:
+            node: the node to add self-defined cpd.
+            df: self-defined cpd in pandas DataFrame format.
+
+        Returns:
+            self
+
+        Raises:
+            IndexError: if the index names of the pandas DataFrame does not match the expected DataFrame.
+            ValueError: if node does not exist in Bayesian Network or a bad cpd table is provided.
+        """
+        if node not in self.nodes:
+            raise ValueError(f'Non-existing node "{node}"')
+
+        # Check Table
+        true_parents = {
+            parent_node: self.node_states[parent_node]
+            for parent_node in self._structure.predecessors(node)
+        }
+        table_parents = {
+            name: set(df.columns.levels[i].values)
+            for i, name in enumerate(df.columns.names)
+        }
+        if not (
+            set(df.index.values) == self.node_states[node]
+            and true_parents == table_parents
+            and df.index.name == node
+        ):
+            raise IndexError("Wrong index values. Please check your indices")
+
+        sorted_df = df.reindex(sorted(df.columns), axis=1)
+        node_card = len(self.node_states[node])
+        evidence, evidence_card = zip(
+            *[(key, len(table_parents[key])) for key in sorted(table_parents.keys())]
+        )
+        tabular_cpd = TabularCPD(
+            node,
+            node_card,
+            sorted_df.values,
+            evidence=evidence,
+            evidence_card=evidence_card,
+        )
+        model_copy = copy.deepcopy(self._model)
+        model_copy.add_cpds(tabular_cpd)
+        model_copy.check_model()
+
+        self._model = model_copy
+        return self
 
     def fit_node_states(self, df: pd.DataFrame) -> "BayesianNetwork":
         """
@@ -284,11 +340,12 @@ class BayesianNetwork:
             ValueError: if dataframe contains any missing data.
         """
         self.node_states = {c: set(df[c].unique()) for c in df.columns}
-
         return self
 
     def _state_to_index(
-        self, df: pd.DataFrame, nodes: List[str] = None
+        self,
+        df: pd.DataFrame,
+        nodes: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Transforms all values in df to an integer, as defined by the mapping from fit_node_states.
@@ -303,11 +360,12 @@ class BayesianNetwork:
         Raises:
             ValueError: if nodes have not been fit, or if column names do not match node names.
         """
-
         df.is_copy = False
         cols = nodes if nodes else df.columns
+
         for col in cols:
             df[col] = df[col].map(self._node_states[col])
+
         df.is_copy = True
         return df
 
@@ -315,8 +373,8 @@ class BayesianNetwork:
         self,
         data: pd.DataFrame,
         method: str = "MaximumLikelihoodEstimator",
-        bayes_prior: str = None,
-        equivalent_sample_size: int = None,
+        bayes_prior: Optional[str] = None,
+        equivalent_sample_size: Optional[int] = None,
     ) -> "BayesianNetwork":
         """
         Learn conditional probability distributions for all nodes in the Bayesian Network, conditioned on
@@ -340,9 +398,7 @@ class BayesianNetwork:
 
         Raises:
             ValueError: if an invalid method or bayes_prior is specified.
-
         """
-
         state_names = {k: list(v.values()) for k, v in self._node_states.items()}
 
         transformed_data = data.copy(deep=True)  # type: pd.DataFrame
@@ -359,8 +415,7 @@ class BayesianNetwork:
             valid_bayes_priors = ["BDeu", "K2"]
             if bayes_prior not in valid_bayes_priors:
                 raise ValueError(
-                    "unrecognised bayes_prior, please use on of %s"
-                    % " ".join(valid_bayes_priors)
+                    f"unrecognised bayes_prior, please use one of {valid_bayes_priors}"
                 )
 
             self._model.fit(
@@ -372,9 +427,7 @@ class BayesianNetwork:
             )
         else:
             valid_methods = ["MaximumLikelihoodEstimator", "BayesianEstimator"]
-            raise ValueError(
-                "unrecognised method, please use on of %s" % " ".join(valid_methods)
-            )
+            raise ValueError(f"unrecognised method, please use one of {valid_methods}")
 
         return self
 
@@ -382,8 +435,8 @@ class BayesianNetwork:
         self,
         data: pd.DataFrame,
         method: str = "MaximumLikelihoodEstimator",
-        bayes_prior: str = None,
-        equivalent_sample_size: int = None,
+        bayes_prior: Optional[str] = None,
+        equivalent_sample_size: Optional[int] = None,
     ) -> "BayesianNetwork":
         """
         Call `fit_node_states` and then `fit_cpds`.
@@ -404,10 +457,116 @@ class BayesianNetwork:
         Returns:
             self
         """
-
         return self.fit_node_states(data).fit_cpds(
             data, method, bayes_prior, equivalent_sample_size
         )
+
+    def add_node(
+        self,
+        node: str,
+        edges_to_add: List[Tuple[str, str]],
+        edges_to_remove: List[Tuple[str, str]],
+    ) -> "BayesianNetwork":
+        """
+        Adding a latent variable to the structure model, as well as its corresponding edges
+
+        Args:
+            node: Name of the node
+            edges_to_add: which edges to add to the structure
+            edges_to_remove: which edges to remove from the structure
+
+        Returns:
+            self
+
+        Raises:
+            ValueError: If lv_name exists in the network or
+                if `edges_to_add` include edges NOT containing the latent variable or
+                if `edges_to_remove` include edges containing the latent variable
+        """
+        if any(node not in edges for edges in edges_to_add):
+            raise ValueError(f"Should only add edges containing node '{node}'")
+        if any(node in edges for edges in edges_to_remove):
+            raise ValueError(f"Should only remove edges NOT containing node '{node}'")
+
+        self._structure.add_edges_from(edges_to_add)
+        self._structure.remove_edges_from(edges_to_remove)
+        self._model.add_edges_from(edges_to_add)
+        self._model.remove_edges_from(edges_to_remove)
+
+        return self
+
+    def fit_latent_cpds(  # pylint: disable=too-many-arguments
+        self,
+        lv_name: str,
+        lv_states: List,
+        data: pd.DataFrame,
+        box_constraints: Optional[Dict[str, Tuple[pd.DataFrame, pd.DataFrame]]] = None,
+        priors: Optional[Dict[str, pd.DataFrame]] = None,
+        initial_params: Union[str, Dict[str, pd.DataFrame]] = "random",
+        non_missing_data_factor: int = 1,
+        n_runs: int = 20,
+        stopping_delta: float = 0.0,
+    ) -> "BayesianNetwork":
+        """
+        This runs the EM algorithm to estimate the CPDs of latent variables and their corresponding Markov blanket
+
+        Args:
+            lv_name: Latent variable name
+            lv_states: the states the LV can assume
+            data: dataframe, must contain all variables in the Markov Blanket of the latent variable. Include one column
+                with the latent variable name, filled with np.nan for missing info about LV.
+                If some data is present about the LV, create complete columns.
+            n_runs: max number of EM alternations
+            stopping_delta: if max difference in current - last iteration CPDS < stopping_delta => convergence reached
+            initial_params: way to initialise parameters. Can be:
+                - "random": random values (default)
+                - "avg": uniform distributions everywhere. Not advised, as it may be the a stationary point on itself
+                - if provide a dictionary of dataframes, this will be used as the initialisation
+            box_constraints: minimum and maximum values for each model parameter. Specified with a dictionary mapping:
+                - Node
+                - two dataframes, in order: Min(P(Node|Par(Node))) and Max(P(Node|Par(Node)))
+            priors: priors, provided as a mapping Node -> dataframe with Dirichilet priors for P(Node|Par(Node))
+            non_missing_data_factor:
+                This is a weight added to the non-missing data samples. The effect is as if the amount of data provided
+                was bigger. Empirically, helps to set the factor to 10 if the non missing data is ~1% of the dataset
+
+        Returns:
+            self
+
+        Raises:
+            ValueError: if the latent variable is not a string or
+                if the latent variable cannot be found in the network or
+                if the latent variable is present/observed in the data
+                if the latent variable states are empty
+        """
+        if not isinstance(lv_name, str):
+            raise ValueError(f"Invalid latent variable name '{lv_name}'")
+        if lv_name not in self._structure:
+            raise ValueError(f"Latent variable '{lv_name}' not added to the network")
+        if not isinstance(lv_states, list) or len(lv_states) == 0:
+            raise ValueError(f"Latent variable '{lv_name}' contains no states")
+
+        # Register states for the latent variable
+        self._node_states[lv_name] = {v: k for k, v in enumerate(sorted(lv_states))}
+
+        # Run EM algorithm
+        estimator = EMSingleLatentVariable(
+            sm=self.structure,
+            data=data,
+            lv_name=lv_name,
+            node_states={n: sorted(s) for n, s in self.node_states.items()},
+            initial_params=initial_params,
+            box_constraints=box_constraints,
+            priors=priors,
+            non_missing_data_factor=non_missing_data_factor,
+        )
+        estimator.run(n_runs=n_runs, stopping_delta=stopping_delta)
+
+        # Add CPDs into the model
+        tab_cpds = [pd_to_tabular_cpd(el) for el in estimator.cpds.values()]
+        self._model.add_cpds(*tab_cpds)
+
+        return self
 
     def predict(self, data: pd.DataFrame, node: str) -> pd.DataFrame:
         """
@@ -420,17 +579,18 @@ class BayesianNetwork:
         Returns:
             A dataframe of predictions, containing a single column name {node}_prediction.
         """
-
         if all(parent in data.columns for parent in self._model.get_parents(node)):
             return self._predict_from_complete_data(data, node)
 
         return self._predict_from_incomplete_data(data, node)
 
     def _predict_from_complete_data(
-        self, data: pd.DataFrame, node: str
+        self,
+        data: pd.DataFrame,
+        node: str,
     ) -> pd.DataFrame:
         """
-        Predicts state of node given all parents of node exist within data.
+        Predict state of node given all parents of node exist within data.
         This method inspects the CPD of node directly, since all parent states are known.
         This avoids traversing the full network to compute marginals.
         This method is fast.
@@ -447,9 +607,7 @@ class BayesianNetwork:
         parents = sorted(self._model.get_parents(node))
         cpd = self.cpds[node]
 
-        transformed_data[
-            "{node}_prediction".format(node=node)
-        ] = transformed_data.apply(
+        transformed_data[f"{node}_prediction"] = transformed_data.apply(
             lambda row: cpd[tuple(row[parent] for parent in parents)].idxmax()
             if parents
             else cpd[""].idxmax(),
@@ -458,10 +616,12 @@ class BayesianNetwork:
         return transformed_data[[node + "_prediction"]]
 
     def _predict_from_incomplete_data(
-        self, data: pd.DataFrame, node: str
+        self,
+        data: pd.DataFrame,
+        node: str,
     ) -> pd.DataFrame:
         """
-        Predicts state of node when some parents of node do not exist within data.
+        Predict state of node when some parents of node do not exist within data.
         This method uses the pgmpy predict function, which predicts the most likely state for every node
         that is not contained within data.
         With incomplete data, pgmpy goes beyond parents in the network to determine the most likely predictions.
@@ -474,15 +634,11 @@ class BayesianNetwork:
         Returns:
             A dataframe of predictions, containing a single column name {node}_prediction.
         """
-
-        transformed_data = deepcopy(data)  # type: pd.DataFrame
+        transformed_data = data.copy(deep=True)  # type: pd.DataFrame
         self._state_to_index(transformed_data)
-
-        # transformed_data.is_copy()
 
         # pgmpy will predict all missing data, so drop column we want to predict
         transformed_data = transformed_data.drop(columns=[node])
-
         predictions = self._model.predict(transformed_data)[[node]]
 
         return predictions.rename(columns={node: node + "_prediction"})
@@ -498,14 +654,15 @@ class BayesianNetwork:
         Returns:
             A dataframe of predicted probabilities, contained one column per possible state, named {node}_{state}.
         """
-
         if all(parent in data.columns for parent in self._model.get_parents(node)):
             return self._predict_probability_from_complete_data(data, node)
 
         return self._predict_probability_from_incomplete_data(data, node)
 
     def _predict_probability_from_complete_data(
-        self, data: pd.DataFrame, node: str
+        self,
+        data: pd.DataFrame,
+        node: str,
     ) -> pd.DataFrame:
         """
         Predict the probability of each possible state of a node, based on some input data.
@@ -532,18 +689,16 @@ class BayesianNetwork:
             return cpd.at[s, ""]
 
         for state in self.node_states[node]:
-            transformed_data[
-                "{n}_{s}".format(n=node, s=state)
-            ] = transformed_data.apply(
+            transformed_data[f"{node}_{state}"] = transformed_data.apply(
                 lambda row, st=state: lookup_probability(row, st), axis=1
             )
 
-        return transformed_data[
-            ["{n}_{s}".format(n=node, s=state) for state in self.node_states[node]]
-        ]
+        return transformed_data[[f"{node}_{state}" for state in self.node_states[node]]]
 
     def _predict_probability_from_incomplete_data(
-        self, data: pd.DataFrame, node: str
+        self,
+        data: pd.DataFrame,
+        node: str,
     ) -> pd.DataFrame:
         """
         Predict the probability of each possible state of a node, based on some input data.
@@ -571,12 +726,13 @@ class BayesianNetwork:
 
         # keep only probabilities for the node we are interested in
         cols = []
-        pattern = re.compile("^{node}_[0-9]+$".format(node=node))
+        pattern = re.compile(f"^{node}_[0-9]+$")
+
         # disabled open pylint issue (https://github.com/PyCQA/pylint/issues/2962)
         for col in probability.columns:
             if pattern.match(col):
                 cols.append(col)
+
         probability = probability[cols]
         probability.columns = cols
-
         return probability

@@ -38,7 +38,7 @@ This code is modified from this git repo: https://github.com/xunzheng/notears
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 # Problem in pytorch 1.6 (_forward_unimplemented), fixed in next release:

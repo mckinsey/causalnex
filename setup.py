@@ -55,12 +55,9 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     readme = f.read()
 
 extras_require = {
-    "plot": [
-        "pygraphviz>=1.5, <2.0",
-    ],
+    "plot": ["pygraphviz>=1.5, <2.0"],
     "discretiser": ["mdlp-discretization~=0.3.3"],
 }
-
 extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
 
 setup(

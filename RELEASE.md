@@ -1,9 +1,22 @@
-# Upcoming release
+# Release 0.11.0
+* Add expectation-maximisation (EM) algorithm to learn with latent variables
+* Add a new tutorial on adding latent variable as well as identifying its candidate location
+* Allow users to provide self-defined CPD, as per #18 and #99
+* Generalise the utility function to get Markov blanket and incorporate it within `StructureModel` (cf. #136)
+* Add a link to `PyGraphviz` installation guide under the installation prerequisites
+* Add GPU support to Pytorch implementation, as requested in #56 and #114 (some issues remain)
+* Add an example for structure model exporting into first causalnex tutorial, as per #124 and #129
+* Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
+  the graph into two or more subgraphs, as per #45 and #100
+* Fix decision tree and mdlp discretisations bug when input data is shuffled
+* Fix broken URLs in FAQ documentation, as per #113 and #125
+* Fix integer index type checking for timeseries data, as per #74 and #86
+* Fix bug where inputs to the DAGRegressor/Classifier yielded different predictions between float and int dtypes, as per #140
 
 # Release 0.10.0
-* Add supervised discretisation strategies using Decision Tree and MDLP algorithms.
-* Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN.
-* Fixes cyclical import of `causalnex.plots`, as per #106.
+* Add supervised discretisation strategies using Decision Tree and MDLP algorithms
+* Add `BayesianNetworkClassifier` an sklearn compatible class for fitting and predicting probabilities in a BN
+* Fixes cyclical import of `causalnex.plots`, as per #106
 * Add utility function to extract Markov blanket from a Bayesian Network
 * Support receiving a list of inputs for `InferenceEngine` with a multiprocessing option
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms
@@ -97,7 +110,28 @@ Bugfix to address readthedocs issue.
 The initial release of CausalNex.
 
 ## Thanks for supporting contributions
-CausalNex was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and [Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in inferencing causality in their project work. This work was later turned into a product thanks to the following contributors:
-[Yetunde Dada](https://github.com/yetudada), [Wesley Leong](https://www.linkedin.com/in/wesleyleong/), [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/), [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/), [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/), [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/), [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/), [Angel Droth](https://www.linkedin.com/in/angeldroth/), [Zain Patel](https://www.linkedin.com/in/zain-patel/), and [Shuhei Ishida](https://www.linkedin.com/in/shuhei-i/).
 
-CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered questions or simply be part of inspiring discussions.
+CausalNex was originally designed by [Paul Beaumont](https://www.linkedin.com/in/pbeaumont/) and
+[Ben Horsburgh](https://www.linkedin.com/in/benhorsburgh/) to solve challenges they faced in
+inferring causality in their project work.
+This work was later turned into a product thanks to the following contributors:
+[Philip Pilgerstorfer](https://uk.linkedin.com/in/philippilgerstorfer)
+, [Angel Droth](https://www.linkedin.com/in/angeldroth/)
+, [Richard Oentaryo](https://www.linkedin.com/in/oentaryo/)
+, [Steve Ler](https://www.linkedin.com/in/song-lim-steve-ler-380366106/)
+, [Hiep Nguyen](https://vn.linkedin.com/in/hiep-nguyen-87b772105)
+, [Gabriel Azevedo Ferreira](https://sg.linkedin.com/in/gabriel-azevedo-ferreira-82415810b)
+, [Zain Patel](https://www.linkedin.com/in/zain-patel/)
+, [Wesley Leong](https://www.linkedin.com/in/wesleyleong/)
+, [Yetunde Dada](https://github.com/yetudada)
+, [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/)
+, [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/)
+, [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/)
+, [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/)
+, [Shuhei Ishida](https://www.linkedin.com/in/shuhei-i/)
+, [Francesca Sogaro](https://www.linkedin.com/in/francesca-sogaro/)
+, [Deepyaman Datta](https://www.linkedin.com/in/deepyaman/).
+
+CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference
+and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered
+questions or simply be part of inspiring discussions.

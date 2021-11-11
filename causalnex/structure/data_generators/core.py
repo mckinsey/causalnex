@@ -92,9 +92,8 @@ def generate_structure(
 
     if w_min > w_max:
         raise ValueError(
-            "Absolute minimum weight must be less than or equal to maximum weight: {} > {}".format(
-                w_min, w_max
-            )
+            "Absolute minimum weight must be less than or equal to maximum weight: "
+            f"{w_min} > {w_max}"
         )
 
     if graph_type == "erdos-renyi":
@@ -118,8 +117,8 @@ def generate_structure(
 
     else:
         raise ValueError(
-            "Unknown graph type {t}. ".format(t=graph_type)
-            + "Available types are ['erdos-renyi', 'barabasi-albert', 'full']"
+            f"Unknown graph type {graph_type}. "
+            "Available types are ['erdos-renyi', 'barabasi-albert', 'full']"
         )
 
     # randomly permute edges - required because we limited ourselves to lower diagonal previously
@@ -581,11 +580,9 @@ def _create_weight_matrix(
 
 
 def _raise_dist_error(name: str, dist: str, dist_options):
+    valid_dists = ", ".join(valid_dist for valid_dist in dist_options)
     raise ValueError(
-        "Unknown {} distribution {}, ".format(name, dist)
-        + "valid distributions are {}".format(
-            ", ".join(valid_dist for valid_dist in dist_options)
-        )
+        f"Unknown {name} distribution {dist}, valid distributions are {valid_dists}"
     )
 
 

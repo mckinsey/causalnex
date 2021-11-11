@@ -80,7 +80,9 @@ CausalNex is built for Python 3.6, 3.7, and 3.8.
 
 ## How do I upgrade CausalNex?
 
-We use [SemVer](http://semver.org/) for versioning. The best way to upgrade safely is to check our [release notes](RELEASE.md) for any notable breaking changes.
+[release]: https://tinyurl.com/f7jw6cwz
+
+We use [SemVer](http://semver.org/) for versioning. The best way to upgrade safely is to check our [release notes][release] for any notable breaking changes.
 
 Once CausalNex is installed, you can check your version as follows:
 
@@ -96,8 +98,8 @@ pip install causalnex -U
 
 ## How can I find out more CausalNex?
 
-CausalNex is on GitHub, and our preferred community channel for feedback is through [GitHub issues](https://github.com/quantumblacklabs/causalnex/issues). You can find news about updates and new features introduced by heading over to [RELEASE.md](https://github.com/quantumblacklabs/causalnex/blob/develop/RELEASE.md).
+CausalNex is on GitHub, and our preferred community channel for feedback is through [GitHub issues](https://github.com/quantumblacklabs/causalnex/issues). You can find news about updates and new features introduced by heading over to [RELEASE.md][release].
 
 ## Where can I learn more about Bayesian Networks?
 
-You can read our [documentation](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.htm) to know more about the concepts and other useful references with regards to using Bayesian Networks for Causal Inference.
+You can read our [documentation](https://causalnex.readthedocs.io/en/latest/04_user_guide/04_user_guide.html) to know more about the concepts and other useful references with regards to using Bayesian Networks for Causal Inference.

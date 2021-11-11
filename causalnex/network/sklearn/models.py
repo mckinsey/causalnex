@@ -176,15 +176,14 @@ class BayesianNetworkClassifier(BaseEstimator, ClassifierMixin):
         }
 
         if any(unavailable_discretiser_algs.values()):
+            algs = {
+                k: discretiser_alg[k]
+                for k, v in unavailable_discretiser_algs.items()
+                if v
+            }
             raise KeyError(
-                "Some discretiser algorithms are not supported: `{:}`. "
-                "Please choose in ['unsupervised', 'tree', 'mdlp']".format(
-                    {
-                        k: discretiser_alg[k]
-                        for k, v in unavailable_discretiser_algs.items()
-                        if v
-                    }
-                )
+                f"Some discretiser algorithms are not supported: `{algs}`. "
+                "Please choose in ['unsupervised', 'tree', 'mdlp']"
             )
 
         if set(discretiser_kwargs) != set(discretiser_alg):

@@ -88,7 +88,7 @@ def sprinkler_bbn():
         return sprinkler_dict[(rain, sprinkler)]
 
     def f_grass_wet(sprinkler, rain, grass_wet):
-        table = dict()
+        table = {}
         table["fft"] = 0.0
         table["fff"] = 1.0
         table["ftt"] = 0.8

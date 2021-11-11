@@ -44,7 +44,7 @@ from causalnex.structure.pytorch import DAGClassifier, DAGRegressor
 
 
 class TestDAGSklearn:
-    """ Tests aspects common to both DAGRegressor and DAGClassifier """
+    """Tests aspects common to both DAGRegressor and DAGClassifier"""
 
     @pytest.mark.parametrize("model", [DAGRegressor, DAGClassifier])
     @pytest.mark.parametrize(
@@ -416,7 +416,7 @@ class TestDAGClassifier:
         assert feature_importances_.iloc[1, 0] > 0
         assert feature_importances_.iloc[2, 0] > 0
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_binary(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
@@ -432,7 +432,7 @@ class TestDAGClassifier:
         assert isinstance(y_pred_proba[0, 0], np.float64)
         assert len(y_pred_proba.shape) == 2
 
-    @pytest.mark.parametrize("y_type", [float, str, np.int32, np.int64, np.float32])
+    @pytest.mark.parametrize("y_type", [float, np.int32, np.int64, np.float32])
     def test_value_predict_type_categorical(self, y_type):
         clf = DAGClassifier(alpha=0.1)
         X, y = (
@@ -507,3 +507,36 @@ def test_independent_predictions(hidden_layer_units):
     assert np.isclose(pred_alone[0], pred_joint0[0])
     assert np.isclose(pred_alone[0], pred_joint1[0])
     assert np.isclose(pred_joint0[0], pred_joint1[0])
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_X_dtype_prediction(standardize):
+    """
+    tests whether providing an int or float X returns the same prediction
+    """
+    training_data = pd.DataFrame(
+        {"x": np.linspace(0, 500, num=500), "y": np.linspace(0, 500, num=500)}
+    )
+
+    reg = DAGRegressor(
+        threshold=0.0,
+        alpha=0.0001,
+        beta=0.5,
+        fit_intercept=True,
+        hidden_layer_units=[10],
+        standardize=standardize,
+    )
+
+    X = training_data.loc[:, ["x"]]
+    y = training_data["y"]
+
+    reg.fit(X, y)
+
+    test_data_int = pd.DataFrame({"x": [0, 250, 500]})
+
+    test_data_float = pd.DataFrame({"x": [0.0, 250.0, 500.0]})
+
+    pred_int = reg.predict(test_data_int)
+    pred_float = reg.predict(test_data_float)
+
+    assert np.all(pred_float == pred_int)

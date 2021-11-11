@@ -31,7 +31,7 @@ This module contains the implementation of ``StructureModel``.
 ``StructureModel`` is a class that describes relationships between variables as a graph.
 """
 
-from typing import Hashable, List, Set, Union
+from typing import Any, Hashable, List, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -51,15 +51,10 @@ def _validate_origin(origin: str) -> None:
     Raises:
         ValueError: if origin is not valid.
     """
-
     allowed = {"unknown", "learned", "expert"}
 
     if origin not in allowed:
-        raise ValueError(
-            "Unknown origin: must be one of {allowed} - got `{origin}`.".format(
-                allowed=allowed, origin=origin
-            )
-        )
+        raise ValueError(f"Unknown origin: must be one of {allowed} - got `{origin}`.")
 
 
 class StructureModel(nx.DiGraph):
@@ -98,9 +93,9 @@ class StructureModel(nx.DiGraph):
 
             attr : Attributes to add to graph as key/value pairs (no attributes by default).
         """
-
         _validate_origin(origin)
         super().__init__(incoming_graph_data, **attr)
+
         for u_of_edge, v_of_edge in self.edges:
             self[u_of_edge][v_of_edge]["origin"] = origin
 
@@ -156,9 +151,9 @@ class StructureModel(nx.DiGraph):
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
     def add_edges_from(
         self,
-        ebunch_to_add: Union[Set[tuple], List[tuple]],
+        ebunch_to_add: Union[Set[Tuple], List[Tuple]],
         origin: str = "unknown",
-        **attr
+        **attr,
     ):  # pylint: disable=W0221
         """
         Adds a bunch of causal relationships, u -> v.
@@ -183,7 +178,6 @@ class StructureModel(nx.DiGraph):
                         - expert: edges were created by a domain expert.
             **attr:  Attributes to add to edge as key/value pairs (no attributes by default).
         """
-
         _validate_origin(origin)
 
         attr.update({"origin": origin})
@@ -195,10 +189,10 @@ class StructureModel(nx.DiGraph):
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
     def add_weighted_edges_from(
         self,
-        ebunch_to_add: Union[Set[tuple], List[tuple]],
+        ebunch_to_add: Union[Set[Tuple], List[Tuple]],
         weight: str = "weight",
         origin: str = "unknown",
-        **attr
+        **attr,
     ):  # pylint: disable=W0221
         """
         Adds a bunch of weighted causal relationships, u -> v.
@@ -230,14 +224,13 @@ class StructureModel(nx.DiGraph):
         attr.update({"origin": origin})
         super().add_weighted_edges_from(ebunch_to_add, weight=weight, **attr)
 
-    def edges_with_origin(self, origin) -> list:
+    def edges_with_origin(self, origin: List[Any]) -> List[Tuple[Any, Any]]:
         """
         List of edges created with given origin attribute.
 
         Returns:
             A list of edges with the given origin.
         """
-
         return [(u, v) for u, v in self.edges if self[u][v]["origin"] == origin]
 
     def remove_edges_below_threshold(self, threshold: float):
@@ -247,7 +240,6 @@ class StructureModel(nx.DiGraph):
         Args:
             threshold: edges whose absolute weight is less than this value are removed.
         """
-
         self.remove_edges_from(
             [(u, v) for u, v, w in self.edges(data="weight") if np.abs(w) < threshold]
         )
@@ -262,9 +254,9 @@ class StructureModel(nx.DiGraph):
         largest_n_edges = 0
         largest_subgraph = None
 
-        for subgraph in (
-            self.subgraph(c).copy() for c in nx.weakly_connected_components(self)
-        ):
+        for component in nx.weakly_connected_components(self):
+            subgraph = self.subgraph(component).copy()
+
             if len(subgraph.edges) > largest_n_edges:
                 largest_n_edges = len(subgraph.edges)
                 largest_subgraph = subgraph
@@ -285,13 +277,13 @@ class StructureModel(nx.DiGraph):
             NodeNotFound: if the node is not found in the graph.
         """
         if node in self.nodes:
-            for subgraph in (
-                self.subgraph(c).copy() for c in nx.weakly_connected_components(self)
-            ):
-                if node in subgraph.nodes:
+            for component in nx.weakly_connected_components(self):
+                subgraph = self.subgraph(component).copy()
+
+                if node in set(subgraph.nodes):
                     return subgraph
 
-        raise NodeNotFound("Node {node} not found in the graph.".format(node=node))
+        raise NodeNotFound(f"Node {node} not found in the graph.")
 
     def threshold_till_dag(self):
         """
@@ -301,3 +293,45 @@ class StructureModel(nx.DiGraph):
         while not nx.algorithms.is_directed_acyclic_graph(self):
             i, j, _ = min(self.edges(data="weight"), key=lambda x: abs(x[2]))
             self.remove_edge(i, j)
+
+    def get_markov_blanket(
+        self, nodes: Union[Any, List[Any], Set[Any]]
+    ) -> "StructureModel":
+        """
+        Get Markov blanket of specified target nodes
+
+        Args:
+            nodes: Target node name or list/set of target nodes
+
+        Returns:
+            Markov blanket of the target node(s)
+
+        Raises:
+            NodeNotFound: if one of the target nodes is not found in the graph.
+        """
+        if not isinstance(nodes, (list, set)):
+            nodes = [nodes]
+
+        blanket_nodes = set()
+
+        for node in set(nodes):  # Ensure target nodes are unique
+            if node not in set(self.nodes):
+                raise NodeNotFound(f"Node {node} not found in the graph.")
+
+            blanket_nodes.add(node)
+            blanket_nodes.update(self.predecessors(node))
+
+            for child in self.successors(node):
+                blanket_nodes.add(child)
+                blanket_nodes.update(self.predecessors(child))
+
+        blanket = StructureModel()
+        blanket.add_nodes_from(blanket_nodes)
+        blanket.add_weighted_edges_from(
+            [
+                (u, v, w)
+                for u, v, w in self.edges(data="weight")
+                if u in blanket_nodes and v in blanket_nodes
+            ]
+        )
+        return blanket

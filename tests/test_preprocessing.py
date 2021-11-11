@@ -243,9 +243,8 @@ class TestErrorHandling:
         selected_method = "INVALID"
         with pytest.raises(
             ValueError,
-            match="{0} is not a recognised method. Use one of: {1}".format(
-                selected_method, " ".join(allowed_methods)
-            ),
+            match=f"{selected_method} is not a recognised method. "
+            f"Use one of: {' '.join(allowed_methods)}",
         ):
             Discretiser(method=selected_method)
 
@@ -255,7 +254,7 @@ class TestErrorHandling:
         selected_method = "uniform"
         with pytest.raises(
             ValueError,
-            match="{0} method expects {1}".format(selected_method, "num_buckets"),
+            match=f"{selected_method} method expects num_buckets",
         ):
             Discretiser(method=selected_method)
 
@@ -265,7 +264,7 @@ class TestErrorHandling:
         selected_method = "quantile"
         with pytest.raises(
             ValueError,
-            match="{0} method expects {1}".format(selected_method, "num_buckets"),
+            match=f"{selected_method} method expects num_buckets",
         ):
             Discretiser(method=selected_method)
 
@@ -275,9 +274,7 @@ class TestErrorHandling:
         selected_method = "outlier"
         with pytest.raises(
             ValueError,
-            match="{0} method expects {1}".format(
-                selected_method, "outlier_percentile"
-            ),
+            match=f"{selected_method} method expects outlier_percentile",
         ):
             Discretiser(method=selected_method)
 
@@ -289,7 +286,7 @@ class TestErrorHandling:
         Discretiser(method="outlier", outlier_percentile=0.1)
         with pytest.raises(
             ValueError,
-            match="{0} must be between 0 and 0.5".format("outlier_percentile"),
+            match="outlier_percentile must be between 0 and 0.5",
         ):
             Discretiser(method="outlier", outlier_percentile=-0.0000001)
 
@@ -299,7 +296,7 @@ class TestErrorHandling:
         Discretiser(method="outlier", outlier_percentile=0.49)
         with pytest.raises(
             ValueError,
-            match="{0} must be between 0 and 0.5".format("outlier_percentile"),
+            match="outlier_percentile must be between 0 and 0.5",
         ):
             Discretiser(method="outlier", outlier_percentile=0.5)
 
@@ -309,9 +306,7 @@ class TestErrorHandling:
         selected_method = "fixed"
         with pytest.raises(
             ValueError,
-            match="{0} method expects {1}".format(
-                selected_method, "numeric_split_points"
-            ),
+            match=f"{selected_method} method expects numeric_split_points",
         ):
             Discretiser(method=selected_method)
 
@@ -321,7 +316,7 @@ class TestErrorHandling:
         Discretiser(method="fixed", numeric_split_points=[-1, -0, 0, 1])
         with pytest.raises(
             ValueError,
-            match="{0} must be monotonically increasing".format("numeric_split_points"),
+            match="numeric_split_points must be monotonically increasing",
         ):
             Discretiser(method="fixed", numeric_split_points=[1, -1])
 
@@ -331,9 +326,7 @@ class TestErrorHandling:
         selected_method = "percentiles"
         with pytest.raises(
             ValueError,
-            match="{0} method expects {1}".format(
-                selected_method, "percentile_split_points"
-            ),
+            match=f"{selected_method} method expects percentile_split_points",
         ):
             Discretiser(method=selected_method)
 
@@ -343,7 +336,7 @@ class TestErrorHandling:
         Discretiser(method="percentiles", percentile_split_points=[-0.0, 0.0, 0.0001])
         with pytest.raises(
             ValueError,
-            match="{0} must be between 0 and 1".format("percentile_split_points"),
+            match="percentile_split_points must be between 0 and 1",
         ):
             Discretiser(
                 method="percentiles", percentile_split_points=[-0.0000001, 0.0001]
@@ -355,7 +348,7 @@ class TestErrorHandling:
         Discretiser(method="percentiles", percentile_split_points=[0.0001, 1])
         with pytest.raises(
             ValueError,
-            match="{0} must be between 0 and 1".format("percentile_split_points"),
+            match="percentile_split_points must be between 0 and 1",
         ):
             Discretiser(
                 method="percentiles", percentile_split_points=[0.0001, 1.0000001]
@@ -367,9 +360,7 @@ class TestErrorHandling:
         Discretiser(method="percentiles", percentile_split_points=[0, -0, 0.1, 1])
         with pytest.raises(
             ValueError,
-            match="{0} must be monotonically increasing".format(
-                "percentile_split_points"
-            ),
+            match="percentile_split_points must be monotonically increasing",
         ):
             Discretiser(method="percentiles", percentile_split_points=[1, 0.1])
 
