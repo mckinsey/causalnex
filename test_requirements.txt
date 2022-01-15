@@ -13,3 +13,4 @@ pylint>=2.7.2, <3.0
 pytest-cov>=2.5, <3.0
 pytest-mock>=1.7.1,<2.0
 pytest>=4.3.0,<5.0
+scikit-learn>=0.24.2 # not directly required, pinned by Snyk to avoid a vulnerability

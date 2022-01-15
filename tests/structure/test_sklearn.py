@@ -507,3 +507,36 @@ def test_independent_predictions(hidden_layer_units):
     assert np.isclose(pred_alone[0], pred_joint0[0])
     assert np.isclose(pred_alone[0], pred_joint1[0])
     assert np.isclose(pred_joint0[0], pred_joint1[0])
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_X_dtype_prediction(standardize):
+    """
+    tests whether providing an int or float X returns the same prediction
+    """
+    training_data = pd.DataFrame(
+        {"x": np.linspace(0, 500, num=500), "y": np.linspace(0, 500, num=500)}
+    )
+
+    reg = DAGRegressor(
+        threshold=0.0,
+        alpha=0.0001,
+        beta=0.5,
+        fit_intercept=True,
+        hidden_layer_units=[10],
+        standardize=standardize,
+    )
+
+    X = training_data.loc[:, ["x"]]
+    y = training_data["y"]
+
+    reg.fit(X, y)
+
+    test_data_int = pd.DataFrame({"x": [0, 250, 500]})
+
+    test_data_float = pd.DataFrame({"x": [0.0, 250.0, 500.0]})
+
+    pred_int = reg.predict(test_data_int)
+    pred_float = reg.predict(test_data_float)
+
+    assert np.all(pred_float == pred_int)
