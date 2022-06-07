@@ -41,6 +41,7 @@ utils:
   setup_pre_commit: &setup_pre_commit
     name: Install pre-commit hooks
     command: |
+      pip install --upgrade pre-commit
       pre-commit install --install-hooks
       pre-commit install --hook-type pre-push
   linters: &linters
