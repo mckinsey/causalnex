@@ -133,6 +133,7 @@ workflows:
       - unit_tests_36
       - unit_tests_37
       - unit_tests_38
+      - unit_tests_39
       - linters_37
       - docs
       - all_circleci_checks_succeeded:
@@ -140,5 +141,6 @@ workflows:
             - unit_tests_36
             - unit_tests_37
             - unit_tests_38
+            - unit_tests_39
             - linters_37
             - docs
