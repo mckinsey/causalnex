@@ -70,7 +70,6 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return X[:, self.idx]
 
-    # pylint: disable=no-self-use
     # pylint: disable=unused-argument
     def preprocess_X(self, X: np.ndarray, fit_transform: bool = True) -> np.ndarray:
         """
@@ -93,7 +92,6 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return X
 
-    # pylint: disable=no-self-use
     def preprocess_tabu_edges(
         self, tabu_edges: List[Tuple[int, int]]
     ) -> List[Tuple[int, int]]:
@@ -108,7 +106,6 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return tabu_edges
 
-    # pylint: disable=no-self-use
     def preprocess_tabu_nodes(self, tabu_nodes: List[int]) -> List[int]:
         """
         Overload this method to perform any required preprocessing of the tabu_nodes.
@@ -121,7 +118,6 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return tabu_nodes
 
-    # pylint: disable=no-self-use
     def update_idx_col(self, idx_col: Dict[int, str]) -> Dict[int, str]:
         """
         Overload this method to update the idx_col dict with expanded colnames.
@@ -147,7 +143,6 @@ class DistTypeBase(metaclass=ABCMeta):
         sm.nodes[self.idx]["dist_type"] = self
         return sm
 
-    # pylint: disable=no-self-use
     def modify_h(self, square_weight_mat: torch.Tensor) -> torch.Tensor:
         """
         Overload this method to apply updates to the W matrix in h(W).
@@ -161,7 +156,6 @@ class DistTypeBase(metaclass=ABCMeta):
         """
         return square_weight_mat
 
-    # pylint: disable=no-self-use
     def collapse_adj(self, adj: np.ndarray) -> np.ndarray:
         """
         Overload this method to apply updates to collapse the W matrix

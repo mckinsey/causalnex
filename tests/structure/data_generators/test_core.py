@@ -135,10 +135,10 @@ class TestGenerateStructure:
         """Erdos-Renyi degree increases edges"""
         edge_counts = [
             max(
-                [
+                (
                     len(generate_structure(100, degree, "erdos-renyi").edges)
                     for _ in range(10)
-                ]
+                )
             )
             for degree in [10, 90]
         ]
@@ -149,10 +149,8 @@ class TestGenerateStructure:
         """Barabasi-Albert degree increases edges"""
         edge_counts = [
             max(
-                [
-                    len(generate_structure(100, degree, "barabasi-albert").edges)
-                    for _ in range(10)
-                ]
+                len(generate_structure(100, degree, "barabasi-albert").edges)
+                for _ in range(10)
             )
             for degree in [10, 90]
         ]
@@ -340,10 +338,10 @@ class TestMixedDataGen:
         # 0 -> 1 (we look at the class with the highest deviation from uniform
         # to avoid small values)
         c, _ = max(
-            [
+            (
                 (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
                 for i in range(n_categories)
-            ],
+            ),
             key=operator.itemgetter(1),
         )
         joint_proba, factored_proba = calculate_proba(df, "0", f"1_{c}")
@@ -364,10 +362,10 @@ class TestMixedDataGen:
         # 2. independent links
         # categorical
         c, _ = max(
-            [
+            (
                 (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
                 for i in range(n_categories)
-            ],
+            ),
             key=operator.itemgetter(1),
         )
         joint_proba, factored_proba = calculate_proba(df, "0", f"5_{c}")
@@ -379,17 +377,17 @@ class TestMixedDataGen:
 
         # categorical
         c, _ = max(
-            [
+            (
                 (i, np.abs(df[f"1_{i}"].mean() - 1 / n_categories))
                 for i in range(n_categories)
-            ],
+            ),
             key=operator.itemgetter(1),
         )
         d, _ = max(
-            [
+            (
                 (d, np.abs(df[f"5_{d}"].mean() - 1 / n_categories))
                 for d in range(n_categories)
-            ],
+            ),
             key=operator.itemgetter(1),
         )
         joint_proba, factored_proba = calculate_proba(df, f"1_{d}", f"5_{c}")
