@@ -476,8 +476,8 @@ def _learn_structure_lasso(
             float: objective.
         """
 
-        w_pos = w_vec[: d ** 2]
-        w_neg = w_vec[d ** 2 :]
+        w_pos = w_vec[: d**2]
+        w_neg = w_vec[d**2 :]
 
         wmat_pos = w_pos.reshape([d, d])
         wmat_neg = w_neg.reshape([d, d])
@@ -498,10 +498,10 @@ def _learn_structure_lasso(
             np.ndarray: gradient vector.
         """
 
-        w_pos = w_vec[: d ** 2]
-        w_neg = w_vec[d ** 2 :]
+        w_pos = w_vec[: d**2]
+        w_neg = w_vec[d**2 :]
 
-        grad_vec = np.zeros(2 * d ** 2)
+        grad_vec = np.zeros(2 * d**2)
         wmat_pos = w_pos.reshape([d, d])
         wmat_neg = w_neg.reshape([d, d])
 
@@ -514,8 +514,8 @@ def _learn_structure_lasso(
             + (rho * (np.trace(exp_hdmrd) - d) + alpha) * exp_hdmrd.T * wmat * 2
         )
         lbd_grad = beta * np.ones(d * d)
-        grad_vec[: d ** 2] = obj_grad.flatten() + lbd_grad
-        grad_vec[d ** 2 :] = -obj_grad.flatten() + lbd_grad
+        grad_vec[: d**2] = obj_grad.flatten() + lbd_grad
+        grad_vec[d**2 :] = -obj_grad.flatten() + lbd_grad
 
         return grad_vec
 
@@ -533,7 +533,7 @@ def _learn_structure_lasso(
             sol = sopt.minimize(_func, w_est, method="L-BFGS-B", jac=_grad, bounds=bnds)
             w_new = sol.x
             h_new = _h(
-                w_new[: d ** 2].reshape([d, d]) - w_new[d ** 2 :].reshape([d, d])
+                w_new[: d**2].reshape([d, d]) - w_new[d**2 :].reshape([d, d])
             )
             if h_new > 0.25 * h_val:
                 rho *= 10
@@ -545,7 +545,7 @@ def _learn_structure_lasso(
         if h_val > h_tol and n_iter == max_iter - 1:
             warnings.warn("Failed to converge. Consider increasing max_iter.")
 
-    w_new = w_est[: d ** 2].reshape([d, d]) - w_est[d ** 2 :].reshape([d, d])
+    w_new = w_est[: d**2].reshape([d, d]) - w_est[d**2 :].reshape([d, d])
     w_new[np.abs(w_new) < w_threshold] = 0
     return StructureModel(w_new.reshape([d, d]))
 
