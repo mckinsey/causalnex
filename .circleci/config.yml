@@ -87,6 +87,12 @@ jobs:
       PYTHON_VERSION: '3.8'
     <<: *unit_test_steps
 
+  unit_tests_39:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.9'
+    <<: *unit_test_steps
+
   linters_37:
     docker: *python
     environment:
