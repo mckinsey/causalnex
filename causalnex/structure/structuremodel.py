@@ -117,9 +117,7 @@ class StructureModel(nx.DiGraph):
     # this has been disabled because origin tracking is required for CausalGraphs
     # implementing it in this way allows all 3rd party libraries and applications to
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
-    def add_edge(
-        self, u_of_edge: str, v_of_edge: str, origin: str = "unknown", **attr
-    ):  # pylint: disable=W0221
+    def add_edge(self, u_of_edge: str, v_of_edge: str, origin: str = "unknown", **attr):
         """
         Adds a causal relationship from u to v.
 
@@ -154,7 +152,7 @@ class StructureModel(nx.DiGraph):
         ebunch_to_add: Union[Set[Tuple], List[Tuple]],
         origin: str = "unknown",
         **attr,
-    ):  # pylint: disable=W0221
+    ):
         """
         Adds a bunch of causal relationships, u -> v.
 
@@ -193,7 +191,7 @@ class StructureModel(nx.DiGraph):
         weight: str = "weight",
         origin: str = "unknown",
         **attr,
-    ):  # pylint: disable=W0221
+    ):
         """
         Adds a bunch of weighted causal relationships, u -> v.
 

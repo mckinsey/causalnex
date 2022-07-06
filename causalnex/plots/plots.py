@@ -42,7 +42,7 @@ def plot_structure(
     node_attributes: Dict[str, Dict[str, str]] = None,
     edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
     graph_attributes: Dict[str, str] = None,
-):  # pylint: disable=missing-return-type-doc
+):
     """
     Plot a `StructureModel` using pygraphviz.
 

@@ -152,7 +152,7 @@ def compare_result_with_ideal(
     for node in em_cpds:
         deltas = (em_cpds[node] - bn.cpds[node]).abs().values
         max_delta = max(max_delta, deltas.max())
-        avg_delta += np.mean(deltas ** 2)
+        avg_delta += np.mean(deltas**2)
 
     avg_delta = np.sqrt(avg_delta / len(em_cpds))
     return max_delta, avg_delta
