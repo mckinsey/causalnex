@@ -1,7 +1,9 @@
 click>=7.0, <8.0
 ipykernel>=4.8.1, <5.0
+ipython_genutils>=0.2.0
 jinja2>=2.3, <3.0
 jupyter_client>=5.1, <7.0
+Markupsafe<2.1
 nbconvert>=5.0, <6.0
 nbsphinx==0.4.2
 nbstripout==0.3.3
