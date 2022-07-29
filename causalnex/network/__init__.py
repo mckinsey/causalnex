@@ -33,3 +33,4 @@
 __all__ = ["BayesianNetwork"]
 
 from .network import BayesianNetwork
+from .network import DynamicBayesianNetwork
