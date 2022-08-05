@@ -182,7 +182,7 @@ make package
 
 5. Now you can install the pip package that has your changes in either the container or on your host machine. The name of installed package will be `causalnex`
 ```bash
-pip install dist/causalnex-0.11.0-py3-none-any.whl
+make install
 ```
 
 ## Hints on pre-commit usage
