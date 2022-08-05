@@ -160,6 +160,7 @@ docker build -t quantumblacklabs/causalnex:devel-$CONTAINER_TYPE -f devel-$CONTA
 ```
 
 2. Run the container in interactive mode.
+For running on CPU, simply run the docker container:
 ```bash
 docker run -it -w /causalnex_src -v $PWD:/causalnex_src quantumblacklabs/causalnex:devel-cpu bash
 ```
