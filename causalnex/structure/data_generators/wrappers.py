@@ -485,7 +485,7 @@ def _generate_inter_structure(
     u = []
     for i in range(p):
         u_i = np.random.uniform(low=w_min, high=w_max, size=[num_nodes, num_nodes]) / (
-            w_decay ** i
+            w_decay**i
         )
         u_i[np.random.rand(num_nodes, num_nodes) < neg] *= -1
         u.append(u_i)
