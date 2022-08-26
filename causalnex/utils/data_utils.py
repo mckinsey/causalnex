@@ -63,7 +63,7 @@ def states_to_df(node_states: Dict[AnyStr, Union[list, Set]]) -> pd.DataFrame:
         Dataframe representing all node states
     """
     nodes = node_states.keys()
-    max_card = max([len(el) for el in node_states.values()])
+    max_card = max(len(el) for el in node_states.values())
     df = pd.DataFrame(np.zeros([max_card, len(nodes)]), columns=nodes)
 
     for node in nodes:

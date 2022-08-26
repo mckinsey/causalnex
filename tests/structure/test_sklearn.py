@@ -488,7 +488,7 @@ class TestDAGClassifier:
 def test_independent_predictions(hidden_layer_units):
     x = np.linspace(0.0, 100, 100)
     X = pd.DataFrame({"x": x})
-    Y = pd.Series(x ** 2, name="y")
+    Y = pd.Series(x**2, name="y")
 
     reg = DAGRegressor(
         threshold=0.0,
