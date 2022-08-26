@@ -511,6 +511,14 @@ def bad_cpd(empty_cpd) -> pd.DataFrame:
     return df
 
 
+@pytest.fixture
+def parentless_cpd() -> pd.DataFrame:
+    """Create a (valid) CPD table for a parentless node"""
+    df = pd.DataFrame([[0.3], [0.7]], index=[False, True])
+    df.index.name = "e"
+    return df
+
+
 @pytest.fixture()
 def data_dynotears_p1() -> Dict[str, np.ndarray]:
     """
