@@ -496,7 +496,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
         """
         reg = 0.0
         reg += torch.sum(self.dag_layer_weight**2)
-        
+
         for layer in self.loc_lin_layer_weights:
             reg += torch.sum(layer.weight**2)
 
