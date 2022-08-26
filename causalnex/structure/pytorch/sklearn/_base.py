@@ -264,7 +264,7 @@ class DAGBase(
         # force convert to ndarray
         X = np.asarray(X)
         if self.standardize:
-            X = X.copy()
+            X = np.asarray(X.copy(), dtype="float")
             X[:, self.continuous_col_idxs] = self._ss_X.transform(
                 X[:, self.continuous_col_idxs]
             )

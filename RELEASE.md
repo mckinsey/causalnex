@@ -1,16 +1,18 @@
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
 * Add a new tutorial on adding latent variable as well as identifying its candidate location
-* Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
-  the graph into two or more subgraphs, as per #45 and #100
 * Allow users to provide self-defined CPD, as per #18 and #99
 * Generalise the utility function to get Markov blanket and incorporate it within `StructureModel` (cf. #136)
+* Add a link to `PyGraphviz` installation guide under the installation prerequisites
+* Add GPU support to Pytorch implementation, as requested in #56 and #114 (some issues remain)
+* Add an example for structure model exporting into first causalnex tutorial, as per #124 and #129
+* Fix infinite loop when querying `InferenceEngine` after a do-intervention that splits
+  the graph into two or more subgraphs, as per #45 and #100
 * Fix decision tree and mdlp discretisations bug when input data is shuffled
 * Fix broken URLs in FAQ documentation, as per #113 and #125
-* Add a link to `PyGraphviz` installation guide under the installation prerequisites
 * Fix integer index type checking for timeseries data, as per #74 and #86
-* Add GPU support to Pytorch implementation, as requested in #56 and #114
-* Add an example for structure model exporting into first causalnex tutorial, as per #124 and #129
+* Fix bug where inputs to the DAGRegressor/Classifier yielded different predictions between float and int dtypes, as per #140
+* Fix bug in set_cpd() where only pd.MultiIndex dataframes were considered which does not account for parentless nodes, as per #146
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms

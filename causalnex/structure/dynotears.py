@@ -317,12 +317,12 @@ def _reshape_wa(
     w_mat = w_plus - w_minus
     a_plus = (
         w_tilde[2 * d_vars :]
-        .reshape(2 * p_orders, d_vars ** 2)[::2]
+        .reshape(2 * p_orders, d_vars**2)[::2]
         .reshape(d_vars * p_orders, d_vars)
     )
     a_minus = (
         w_tilde[2 * d_vars :]
-        .reshape(2 * p_orders, d_vars ** 2)[1::2]
+        .reshape(2 * p_orders, d_vars**2)[1::2]
         .reshape(d_vars * p_orders, d_vars)
     )
     a_mat = a_plus - a_minus
@@ -425,8 +425,8 @@ def _learn_dynamic_structure(
             )
         )
         _h_value = _h(wa_vec)
-        l1_penalty = lambda_w * (wa_vec[: 2 * d_vars ** 2].sum()) + lambda_a * (
-            wa_vec[2 * d_vars ** 2 :].sum()
+        l1_penalty = lambda_w * (wa_vec[: 2 * d_vars**2].sum()) + lambda_a * (
+            wa_vec[2 * d_vars**2 :].sum()
         )
         return loss + 0.5 * rho * _h_value * _h_value + alpha * _h_value + l1_penalty
 
@@ -460,16 +460,16 @@ def _learn_dynamic_structure(
 
         grad_vec_w = np.append(
             obj_grad_w, -obj_grad_w, axis=0
-        ).flatten() + lambda_w * np.ones(2 * d_vars ** 2)
-        grad_vec_a = obj_grad_a.reshape(p_orders, d_vars ** 2)
+        ).flatten() + lambda_w * np.ones(2 * d_vars**2)
+        grad_vec_a = obj_grad_a.reshape(p_orders, d_vars**2)
         grad_vec_a = np.hstack(
             (grad_vec_a, -grad_vec_a)
-        ).flatten() + lambda_a * np.ones(2 * p_orders * d_vars ** 2)
+        ).flatten() + lambda_a * np.ones(2 * p_orders * d_vars**2)
         return np.append(grad_vec_w, grad_vec_a, axis=0)
 
     # initialise matrix, weights and constraints
-    wa_est = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
-    wa_new = np.zeros(2 * (p_orders + 1) * d_vars ** 2)
+    wa_est = np.zeros(2 * (p_orders + 1) * d_vars**2)
+    wa_new = np.zeros(2 * (p_orders + 1) * d_vars**2)
     rho, alpha, h_value, h_new = 1.0, 0.0, np.inf, np.inf
 
     for n_iter in range(max_iter):
