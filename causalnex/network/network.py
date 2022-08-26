@@ -307,11 +307,6 @@ class BayesianNetwork:
             and true_parents == table_parents
             and df.index.name == node
         ):
-            print(df.index)
-            print(self.node_states[node])
-            print()
-            print(true_parents)
-            print(table_parents)
             raise IndexError("Wrong index values. Please check your indices")
 
         sorted_df = df.reindex(sorted(df.columns), axis=1)
