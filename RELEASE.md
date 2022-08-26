@@ -12,6 +12,7 @@
 * Fix broken URLs in FAQ documentation, as per #113 and #125
 * Fix integer index type checking for timeseries data, as per #74 and #86
 * Fix bug where inputs to the DAGRegressor/Classifier yielded different predictions between float and int dtypes, as per #140
+* Fix bug in set_cpd() where only pd.MultiIndex dataframes were considered which does not account for parentless nodes, as per #146
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms

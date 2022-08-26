@@ -767,6 +767,12 @@ class TestSetCPD:
             for val, val_after_adding in zip(*(cpd, cpd_after_adding))
         )
 
+    def test_set_parentless_cpd(self, bn, parentless_cpd):
+        """The CPD of the target node should be the same as the self-defined table after adding"""
+
+        bn.set_cpd("e", parentless_cpd)
+        assert bn.cpds["e"].values.tolist() == parentless_cpd.values.tolist()
+
     def test_set_cpd_to_non_existent_node(self, bn, good_cpd):
         """Should raise error if adding a cpd to a non-existing node in Bayesian Network"""
 
