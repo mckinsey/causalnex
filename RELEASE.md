@@ -1,3 +1,7 @@
+# Upcoming release
+
+* Add python 3.9 support
+
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
 * Add a new tutorial on adding latent variable as well as identifying its candidate location
@@ -12,6 +16,7 @@
 * Fix broken URLs in FAQ documentation, as per #113 and #125
 * Fix integer index type checking for timeseries data, as per #74 and #86
 * Fix bug where inputs to the DAGRegressor/Classifier yielded different predictions between float and int dtypes, as per #140
+* Fix bug in set_cpd() where only pd.MultiIndex dataframes were considered which does not account for parentless nodes, as per #146
 
 # Release 0.10.0
 * Add supervised discretisation strategies using Decision Tree and MDLP algorithms
