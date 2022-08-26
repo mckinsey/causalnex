@@ -294,11 +294,11 @@ class BayesianNetwork:
             parent_node: self.node_states[parent_node]
             for parent_node in self._structure.predecessors(node)
         }
-        
         if isinstance(df.columns, pd.MultiIndex):
             table_parents = {
-            name: set(df.columns.levels[i].values)
-            for i, name in enumerate(df.columns.names)}
+                name: set(df.columns.levels[i].values)
+                for i, name in enumerate(df.columns.names)
+            }
         else:
             table_parents = {}
         
@@ -312,9 +312,13 @@ class BayesianNetwork:
         sorted_df = df.reindex(sorted(df.columns), axis=1)
         node_card = len(self.node_states[node])
         
-        if bool(table_parents):
+        if any(table_parents):  # Check whether table parents is empty
             evidence, evidence_card = zip(
-            *[(key, len(table_parents[key])) for key in sorted(table_parents.keys())])
+                *[
+                    (key, len(table_parents[key])) 
+                    for key in sorted(table_parents.keys())
+                ]
+            )
         else:
             evidence, evidence_card = (None, None)
             
