@@ -538,6 +538,7 @@ class BayesianNetwork:
                 if the latent variable cannot be found in the network or
                 if the latent variable is present/observed in the data
                 if the latent variable states are empty
+                if additional non-lv nodes are added to the subgraph without being fit
         """
         if not isinstance(lv_name, str):
             raise ValueError(f"Invalid latent variable name '{lv_name}'")
@@ -545,6 +546,19 @@ class BayesianNetwork:
             raise ValueError(f"Latent variable '{lv_name}' not added to the network")
         if not isinstance(lv_states, list) or len(lv_states) == 0:
             raise ValueError(f"Latent variable '{lv_name}' contains no states")
+
+        # Unaccounted nodes that have not been fit will result in infinite loop during
+        # generation of InferenceEngine
+        unaccounted_nodes = []
+        for node in self.nodes:
+            if (node not in self.cpds) and (node != lv_name):
+                unaccounted_nodes.append(node)
+        if len(unaccounted_nodes) > 0:
+            raise ValueError(
+                f"Node(s) {unaccounted_nodes} have not had their states and cpds fit. "
+                "Before fitting latent variable cpds, add the additional nodes and"
+                "edges to the subgraph and fit with .fit_node_states_and_cpds() first."
+            )
 
         # Register states for the latent variable
         self._node_states[lv_name] = {v: k for k, v in enumerate(sorted(lv_states))}
