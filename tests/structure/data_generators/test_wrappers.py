@@ -32,7 +32,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 import pytest
-from scipy.stats import anderson, stats
+from scipy import stats
 from sklearn.gaussian_process.kernels import RBF
 
 from causalnex.structure import StructureModel
@@ -117,7 +117,7 @@ class TestGenerateContinuousData:
         """Anderson-Darling test for data coming from a particular distribution, for gaussian."""
         data = generate_continuous_data(graph, 1000000, "gaussian", 1, seed=10)
 
-        stat, crit, sig = anderson(data[:, 0], "norm")
+        stat, crit, sig = stats.anderson(data[:, 0], "norm")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_normal_parent_dist(self, graph):
@@ -126,7 +126,7 @@ class TestGenerateContinuousData:
             graph, distribution="normal", n_samples=1000000, noise_scale=1, seed=10
         )
 
-        stat, crit, sig = anderson(data[:, 0], "norm")
+        stat, crit, sig = stats.anderson(data[:, 0], "norm")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_studentt_parent_dist(self, graph):
@@ -149,7 +149,7 @@ class TestGenerateContinuousData:
             graph, distribution="exponential", noise_scale=1, n_samples=100000, seed=10
         )
 
-        stat, crit, sig = anderson(data[:, 0], "expon")
+        stat, crit, sig = stats.anderson(data[:, 0], "expon")
         assert stat < crit[list(sig).index(5)]
 
     def test_linear_gumbel_parent_dist(self, graph):
@@ -158,7 +158,7 @@ class TestGenerateContinuousData:
             graph, distribution="gumbel", noise_scale=1, n_samples=100000, seed=10
         )
 
-        stat, crit, sig = anderson(data[:, 0], "gumbel_r")
+        stat, crit, sig = stats.anderson(data[:, 0], "gumbel_r")
         assert stat < crit[list(sig).index(5)]
 
     @pytest.mark.parametrize(

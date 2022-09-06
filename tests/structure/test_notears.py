@@ -127,8 +127,10 @@ class TestFromPandas:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[0, 1] for _ in range(10)] + [[1, 0] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_pandas(data)
         assert all(
             weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
@@ -274,8 +276,10 @@ class TestFromPandasLasso:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[0, 1] for _ in range(10)] + [[1, 0] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_pandas_lasso(data, 0.1)
         assert all(
             weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
@@ -456,8 +460,10 @@ class TestFromNumpy:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[0, 1] for _ in range(10)] + [[1, 0] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_numpy(data.values)
         assert all(
             weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1
@@ -597,8 +603,10 @@ class TestFromNumpyLasso:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[0, 1] for _ in range(10)] + [[1, 0] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_numpy_lasso(data.values, 0.1)
         assert all(
             weight < 0 for u, v, weight in g.edges(data="weight") if u == 0 and v == 1

@@ -32,7 +32,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 import pytest
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianNetwork as BayesianModel
 from sklearn.datasets import load_iris
 
 from causalnex.discretiser import Discretiser
