@@ -34,6 +34,7 @@ import copy
 import inspect
 import re
 import types
+import math
 from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 
 import networkx as nx
@@ -205,7 +206,7 @@ class InferenceEngine:
         Raises:
             ValueError: if states do not match original states of the node, or probabilities do not sum to 1.
         """
-        if sum(state.values()) != 1.0:
+        if not math.isclose(sum(state.values()), 1.0):
             raise ValueError("The cpd for the provided observation must sum to 1")
 
         if max(state.values()) > 1.0 or min(state.values()) < 0:
