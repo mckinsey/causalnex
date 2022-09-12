@@ -840,7 +840,7 @@ class TestSetCPD:
         """Should raise an error when setting bad parent node states index"""
 
         bad_cpd = good_cpd
-        bad_cpd.columns.set_levels(["test1", "test2"], level=0, inplace=True)
+        bad_cpd.columns = bad_cpd.columns.set_levels(["test1", "test2"], level=0)
 
         with pytest.raises(
             IndexError,
