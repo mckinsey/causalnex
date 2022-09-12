@@ -32,9 +32,9 @@ This module contains the implementation of ``InferenceEngine``.
 """
 import copy
 import inspect
+import math
 import re
 import types
-import math
 from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 
 import networkx as nx
