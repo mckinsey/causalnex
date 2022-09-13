@@ -1,6 +1,6 @@
 # Upcoming release
 
-* Add python 3.9 support
+* Add python 3.9, 3.10 support
 
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
