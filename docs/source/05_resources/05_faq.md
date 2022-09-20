@@ -76,7 +76,7 @@ The following points describe how we are unique comparing to the others:
 
 ## What version of Python does CausalNex use?
 
-CausalNex is built for Python 3.6, 3.7, 3.8, and 3.9.
+CausalNex is built for Python 3.6, 3.7, 3.8, 3.9 and 3.10.
 
 ## How do I upgrade CausalNex?
 

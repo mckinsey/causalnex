@@ -40,7 +40,7 @@ import networkx as nx
 import pandas as pd
 from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
 from pgmpy.factors.discrete.CPD import TabularCPD
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianNetwork as BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
 from causalnex.structure import StructureModel

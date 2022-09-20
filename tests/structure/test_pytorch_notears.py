@@ -106,8 +106,10 @@ class TestFromPandas:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[0, 1] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[1, 0] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[0, 1] for _ in range(10)] + [[1, 0] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_pandas(data)
         assert all(
             weight < 0
@@ -219,7 +221,7 @@ class TestFromPandas:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains .*(NaN|infinity|too large).*",
         ):
             from_pandas(pd.DataFrame(data=data, columns=["a"]))
 
@@ -332,8 +334,10 @@ class TestFromNumpy:
     def test_inverse_relationships_get_negative_weight(self):
         """If observations indicate a==!b and b==!a then the weight of the relationship from a-> should be negative"""
 
-        data = pd.DataFrame([[1, -2] for _ in range(10)], columns=["a", "b"])
-        data.append(pd.DataFrame([[-1, 2] for _ in range(10)], columns=["a", "b"]))
+        data = pd.DataFrame(
+            [[1, -2] for _ in range(10)] + [[-1, 2] for _ in range(10)],
+            columns=["a", "b"],
+        )
         g = from_numpy(data.values, w_threshold=0.25)
         assert set(g.edges) == {(0, 1)}
         assert -2 <= g.get_edge_data(0, 1)["mean_effect"] <= -1.9
@@ -479,7 +483,7 @@ class TestFromNumpy:
         """
         with pytest.raises(
             ValueError,
-            match="Input contains NaN, infinity or a value too large for dtype*",
+            match=r"Input contains .*(NaN|infinity|too large).*",
         ):
             from_numpy(np.array([data]))
 

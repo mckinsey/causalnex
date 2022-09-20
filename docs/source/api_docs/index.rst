@@ -18,9 +18,9 @@ Welcome to CausalNex's API docs and tutorials!
     :target: https://github.com/quantumblacklabs/causalnex
     :alt: Test coverage
 
-.. image:: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue.svg
+.. image:: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9%20%7C%203.8%20%7C%203.10-blue.svg
     :target: https://pypi.org/project/causalnex/
-    :alt: Python version 3.6, 3.7, 3.8, 3.9
+    :alt: Python version 3.6, 3.7, 3.8, 3.9, 3.10
 
 .. image:: https://badge.fury.io/py/causalnex.svg
     :target: https://pypi.org/project/causalnex/
