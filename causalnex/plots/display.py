@@ -25,7 +25,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Methods to display styled pygraphgiz plots."""
+"""Methods to display styled pygraphviz plots."""
 
 import io
 from typing import Any, Tuple
@@ -56,7 +56,7 @@ def display_plot_ipython(viz: AGraph, prog: str = "neato") -> Image:
     Args:
         viz: pygraphviz object to render.
 
-        prog: The graph layout. Avaliable are:
+        prog: The graph layout. Available are:
         dot, neato, fdp, sfdp, twopi and circo
 
     Returns:
@@ -84,7 +84,7 @@ def display_plot_mpl(
     Args:
         viz: pygraphviz object to render.
 
-        prog: The graph layout. Avaliable are:
+        prog: The graph layout. Available are:
         dot, neato, fdp, sfdp, twopi and circo
 
         ax: Optional matplotlib axes to plot on.

@@ -30,23 +30,23 @@ import re
 from collections import namedtuple
 from copy import deepcopy
 from typing import Dict, Tuple
-
+import platform
 import networkx as nx
 
 
 def plot_structure(
-    sm: nx.DiGraph,
-    prog: str = "neato",
-    all_node_attributes: Dict[str, str] = None,
-    all_edge_attributes: Dict[str, str] = None,
-    node_attributes: Dict[str, Dict[str, str]] = None,
-    edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
-    graph_attributes: Dict[str, str] = None,
+        sm: nx.DiGraph,
+        prog: str = "neato",
+        all_node_attributes: Dict[str, str] = None,
+        all_edge_attributes: Dict[str, str] = None,
+        node_attributes: Dict[str, Dict[str, str]] = None,
+        edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
+        graph_attributes: Dict[str, str] = None,
 ):
     """
     Plot a `StructureModel` using pygraphviz.
 
-    Return a pygraphviz graph from a StructureModel. The pygraphgiz graph
+    Return a pygraphviz graph from a StructureModel. The pygraphviz graph
     is decorated and laid out so that it can be plotted easily.
 
     Default node, edge, and graph attributes are provided to style and layout
@@ -88,13 +88,13 @@ def plot_structure(
         sm: structure to plot
         prog: Name of Graphviz layout program
         all_node_attributes: attributes to apply to all nodes
-        all_edge_attributes: attrinbutes to apply to all edges
+        all_edge_attributes: attributes to apply to all edges
         node_attributes: attributes to apply to specific nodes
         edge_attributes: attributes to apply to specific edges
         graph_attributes: attributes to apply to the graph
 
     Returns:
-        a styled pygraphgiz graph that can be rendered as an image
+        a styled pygraphviz graph that can be rendered as an image
 
     Raises:
         Warning: Suggests mitigation strategies when ``pygraphviz`` is not installed.
@@ -135,7 +135,7 @@ def plot_structure(
 
 def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
     """
-    Create a pygraphgiz compatible color gradient string.
+    Create a pygraphviz compatible color gradient string.
 
     This string can be used when setting colors for nodes,
     edges, and graph attributes.
@@ -157,6 +157,11 @@ def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
     Returns:
         a pygraphviz color gradient string
     """
+    sys = platform.system()
+
+    if sys == "Windows":
+        if steps > 7:
+            steps = 7
 
     color_regex = re.compile(
         r"(#)([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})*"
@@ -185,11 +190,11 @@ def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
 
 
 def _add_attributes(
-    sm: nx.DiGraph,
-    all_node_attributes: Dict[str, str] = None,
-    all_edge_attributes: Dict[str, str] = None,
-    node_attributes: Dict[str, Dict[str, str]] = None,
-    edge_attributes: Dict[str, Dict[str, str]] = None,
+        sm: nx.DiGraph,
+        all_node_attributes: Dict[str, str] = None,
+        all_edge_attributes: Dict[str, str] = None,
+        node_attributes: Dict[str, Dict[str, str]] = None,
+        edge_attributes: Dict[str, Dict[str, str]] = None,
 ) -> nx.DiGraph:
     _sm = deepcopy(sm)
 
@@ -225,7 +230,7 @@ def _add_attributes(
 GRAPH_STYLE = {
     "bgcolor": "#001521",
     "fontcolor": "#FFFFFFD9",
-    "fontname": "Helvetica",
+    "fontname": "Helvetica,Arial,sans-serif",
     "splines": True,
     "overlap": "scale",
     "scale": 2.0,
@@ -238,7 +243,7 @@ _style = namedtuple("Style", ["WEAK", "NORMAL", "STRONG"])
 NODE_STYLE = _style(
     {
         "fontcolor": "#FFFFFF8c",
-        "fontname": "Helvetica",
+        "fontname": "Helvetica,Arial,sans-serif",
         "shape": "circle",
         "fixedsize": True,
         "style": "filled",
@@ -250,7 +255,7 @@ NODE_STYLE = _style(
     },
     {
         "fontcolor": "#FFFFFFD9",
-        "fontname": "Helvetica",
+        "fontname": "Helvetica,Arial,sans-serif",
         "shape": "circle",
         "fixedsize": True,
         "style": "filled",
@@ -262,7 +267,7 @@ NODE_STYLE = _style(
     },
     {
         "fontcolor": "#4a90e2",
-        "fontname": "Helvetica",
+        "fontname": "Helvetica,Arial,sans-serif",
         "shape": "circle",
         "fixedsize": True,
         "style": "filled",
