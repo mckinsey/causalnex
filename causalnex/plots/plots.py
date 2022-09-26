@@ -26,22 +26,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Plot Methods."""
+import platform
 import re
 from collections import namedtuple
 from copy import deepcopy
 from typing import Dict, Tuple
-import platform
+
 import networkx as nx
 
 
 def plot_structure(
-        sm: nx.DiGraph,
-        prog: str = "neato",
-        all_node_attributes: Dict[str, str] = None,
-        all_edge_attributes: Dict[str, str] = None,
-        node_attributes: Dict[str, Dict[str, str]] = None,
-        edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
-        graph_attributes: Dict[str, str] = None,
+    sm: nx.DiGraph,
+    prog: str = "neato",
+    all_node_attributes: Dict[str, str] = None,
+    all_edge_attributes: Dict[str, str] = None,
+    node_attributes: Dict[str, Dict[str, str]] = None,
+    edge_attributes: Dict[Tuple[str, str], Dict[str, str]] = None,
+    graph_attributes: Dict[str, str] = None,
 ):
     """
     Plot a `StructureModel` using pygraphviz.
@@ -190,11 +191,11 @@ def color_gradient_string(from_color: str, to_color: str, steps: int) -> str:
 
 
 def _add_attributes(
-        sm: nx.DiGraph,
-        all_node_attributes: Dict[str, str] = None,
-        all_edge_attributes: Dict[str, str] = None,
-        node_attributes: Dict[str, Dict[str, str]] = None,
-        edge_attributes: Dict[str, Dict[str, str]] = None,
+    sm: nx.DiGraph,
+    all_node_attributes: Dict[str, str] = None,
+    all_edge_attributes: Dict[str, str] = None,
+    node_attributes: Dict[str, Dict[str, str]] = None,
+    edge_attributes: Dict[str, Dict[str, str]] = None,
 ) -> nx.DiGraph:
     _sm = deepcopy(sm)
 
