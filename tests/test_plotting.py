@@ -191,16 +191,35 @@ class TestColorGradientString:
         s = color_gradient_string("#ffffff33", "#ffffffaa", 1)
         assert s.endswith("#ffffffaa;0.50")
 
+    @patch("sys.platform", "linux")
     def test_correct_num_steps(self):
         """string should have the correct number of steps"""
         for steps in range(1, 10):
             s = color_gradient_string("#ffffff33", "#ffffffaa", steps)
             assert s.count(":") == steps
 
+    @patch("sys.platform", "linux")
     def test_expected_string(self):
         """should produce the expected reference example"""
         s = color_gradient_string("#00000000", "#99999999", 9)
         expected = ":".join(["#" + str(i) * 8 + ";0.10" for i in range(10)])
+        assert s == expected
+
+    @patch("sys.platform", "win32")
+    def test_correct_num_steps_on_windows(self):
+        """string should have the correct number of steps"""
+        for steps in range(1, 10):
+            s = color_gradient_string("#ffffff33", "#ffffffaa", steps)
+            if steps > 7:
+                assert s.count(":") == 7
+            else:
+                assert s.count(":") == steps
+
+    @patch("sys.platform", "win32")
+    def test_expected_string_on_windows(self):
+        """should produce the expected reference example"""
+        s = color_gradient_string("#00000000", "#77777777", 9)
+        expected = ":".join(["#" + str(i) * 8 + ";0.12" for i in range(8)])
         assert s == expected
 
 
