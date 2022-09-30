@@ -43,7 +43,7 @@ from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.models import BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
-from causalnex.structure import StructureModel
+from causalnex.structure import StructureModel, DynamicStructureModel
 from causalnex.utils.pgmpy_utils import pd_to_tabular_cpd
 
 
@@ -802,9 +802,9 @@ class DynamicBayesianNetwork(BayesianNetwork):
          'traffic_heavy': {0: 0.25, 1: 0.75, 2: 0.6666666666666666, 3: 0.6666666666666666}}
     """
 
-    def __init__(self, structure: StructureModel):
+    def __init__(self, structure: DynamicStructureModel):
         """
-        Create a ``DynamicBayesianNetwork`` with a DAG defined by ``StructureModel``.
+        Create a ``DynamicBayesianNetwork`` with a DAG defined by ``DynamicStructureModel``.
 
         Args:
             structure: a graph representing a causal relationship between variables.

@@ -38,7 +38,8 @@ import pandas as pd
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
-from causalnex.structure import StructureModel
+from causalnex.structure import DynamicStructureModel
+from causalnex.structure import DynamicStructureNode
 from causalnex.structure.transformers import DynamicDataTransformer
 
 
@@ -53,7 +54,7 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     tabu_edges: List[Tuple[int, int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
-) -> StructureModel:
+) -> DynamicStructureModel:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between variables in
     data. The input data is a time series or a list of realisations of a same time series.
@@ -122,9 +123,9 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
         tabu_child_nodes,
     )
 
-    sm = StructureModel()
-    sm.add_nodes_from(
-        [f"{var}_lag{l_val}" for var in col_idx.keys() for l_val in range(p + 1)]
+    sm = DynamicStructureModel()
+    sm.add_nodes(
+        [DynamicStructureNode(var, l_val) for var in col_idx.keys() for l_val in range(p + 1)]
     )
     sm.add_weighted_edges_from(
         [
@@ -166,7 +167,7 @@ def from_numpy_dynamic(  # pylint: disable=too-many-arguments
     tabu_edges: List[Tuple[int, int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
-) -> StructureModel:
+) -> DynamicStructureModel:
     """
     Learn the graph structure of a Dynamic Bayesian Network describing conditional dependencies between variables in
     data. The input data is time series data present in numpy arrays X and Xlags.
@@ -254,7 +255,7 @@ def from_numpy_dynamic(  # pylint: disable=too-many-arguments
 
 def _matrices_to_structure_model(
     w_est: np.ndarray, a_est: np.ndarray
-) -> StructureModel:
+) -> DynamicStructureModel:
     """
     Converts the matrices output by dynotears (W and A) into a StructureModel
     We use the following convention:
@@ -268,13 +269,13 @@ def _matrices_to_structure_model(
         StructureModel representing the structure learnt
 
     """
-    sm = StructureModel()
+    sm = DynamicStructureModel()
     lag_cols = [
-        f"{var}_lag{l_val}"
+        DynamicStructureNode(var, l_val)
         for l_val in range(1 + (a_est.shape[0] // a_est.shape[1]))
         for var in range(a_est.shape[1])
     ]
-    sm.add_nodes_from(lag_cols)
+    sm.add_nodes(lag_cols)
     sm.add_edges_from(
         [
             (lag_cols[i], lag_cols[j], dict(weight=w_est[i, j]))
