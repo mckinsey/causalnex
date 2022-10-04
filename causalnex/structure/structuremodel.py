@@ -98,7 +98,6 @@ class StructureModel(nx.DiGraph):
         super().__init__(incoming_graph_data, **attr)
 
         for u_of_edge, v_of_edge in self.edges:
-            print(f'in for loop in init {u_of_edge}, {v_of_edge}')
             self[u_of_edge][v_of_edge]["origin"] = origin
 
     def to_directed_class(self):
@@ -340,23 +339,15 @@ class DynamicStructureNode(NamedTuple):
     node: Union[int, str]
     time_step: int
 
-    @classmethod
-    def __instancecheck__(cls, instance):
-        print(f'inside instance check function {type(instance)}')
-        if hasattr(instance, 'node') and hasattr(instance, 'time_step') and hasattr(instance, 'get_node_name'):
-            return True
-        else:
-            return False
-
     def get_node_name(self):
         return f'{self.node}_lag{self.time_step}'
 
-    def __eq__(self, other):
-        if isinstance(other, DynamicStructureNode):
-            return self.get_node_name() == other.get_node_name()
-        return False
 
 def checkargs(function):
+    """
+    This function ensures the arguments passed to the methods in ``DynamicStructureModel`` are of the correct type.
+    Specifically that they are of type ``DynamicStructureNode``.
+    """
     def _f(*arguments, **attr):
         for index, argument in enumerate(inspect.getfullargspec(function)[0]):
             if argument == 'self':
@@ -377,6 +368,9 @@ def checkargs(function):
                 elif isinstance(arguments[index], types.GeneratorType):
                     # this comes from networkx, coerce into correct types
                     pass
+                elif hasattr(function.__annotations__[argument], '__args__'):
+                    if not isinstance(arguments[index], function.__annotations__[argument].__args__[0]):
+                        raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
                 elif not isinstance(arguments[index], function.__annotations__[argument]):
                     raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
             except IndexError as e:
@@ -463,7 +457,6 @@ class DynamicStructureModel(StructureModel):
         """
         node_name = node.get_node_name()
         if node_name in self.nodes:
-            print(f'node {node} in self nodes {self.nodes}')
             for component in nx.weakly_connected_components(self):
                 subgraph = self.subgraph(component).copy()
 
@@ -492,27 +485,28 @@ class DynamicStructureModel(StructureModel):
             nodes = [nodes]
 
         blanket_nodes = set()
-
+        
         for node in set(nodes):  # Ensure target nodes are unique
-            if node not in set(self.nodes):
-                raise NodeNotFound(f"Node {node} not found in the graph.")
+            node_name = node.get_node_name()
+            if node_name not in set(self.nodes):
+                raise NodeNotFound(f"Node {node} not found in the graph")
 
-            blanket_nodes.add(node)
-            blanket_nodes.update(self.predecessors(node))
+            blanket_nodes.add(node_name)
+            blanket_nodes.update(self.predecessors(node_name))
 
-            for child in self.successors(node):
+            for child in self.successors(node_name):
                 blanket_nodes.add(child)
                 blanket_nodes.update(self.predecessors(child))
 
         blanket = DynamicStructureModel()
-        blanket.add_nodes(blanket_nodes)
-        blanket.add_weighted_edges_from(
-            [
-                (u, v, w)
-                for u, v, w in self.edges(data="weight")
-                if u in blanket_nodes and v in blanket_nodes
-            ]
-        )
+        blanket_dyn_nodes = [DynamicStructureNode(node_name[0], node_name[-1]) for node_name in blanket_nodes]
+        blanket.add_nodes(blanket_dyn_nodes)
+
+        blanket_weighted_edges = []
+        for u, v, w in self.edges(data="weight"):
+            if u in blanket_nodes and v in blanket_nodes:
+                blanket_weighted_edges.append((DynamicStructureNode(u[0], u[-1]), DynamicStructureNode(v[0], v[-1]), w))
+        blanket.add_weighted_edges_from(blanket_weighted_edges)
         return blanket
 
     # disabled: W0221: Parameters differ from overridden 'add_edge' method (arguments-differ)

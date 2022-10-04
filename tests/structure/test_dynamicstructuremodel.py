@@ -100,7 +100,7 @@ class TestDynamicStructureModel:
         sm.add_edges_from(edges)
 
         udg = sm.to_undirected()
-        print(f'udg edges {udg.edges}')
+
         assert all((edge[0].get_node_name(), edge[1].get_node_name()) in udg.edges for edge in [(nodes[1], nodes[2]), (nodes[2], nodes[3])])
         assert (nodes[0].get_node_name(), nodes[1].get_node_name()) in udg.edges or (nodes[1].get_node_name(), nodes[0].get_node_name()) in udg.edges
         assert len(udg.edges) == 3
@@ -639,24 +639,27 @@ class TestDynamicStructureModelGetTargetSubgraph:
         """The subgraph returned should still have the edge data preserved from the original graph"""
 
         sm = DynamicStructureModel()
-        sm.add_weighted_edges_from([(1, 2, 2.0)], origin="unknown")
-        sm.add_weighted_edges_from([(1, 3, 1.0)], origin="learned")
-        sm.add_weighted_edges_from([(5, 6, 0.7)], origin="expert")
+        nodes = [DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), DynamicStructureNode(3, 0), DynamicStructureNode(5, 0), DynamicStructureNode(6, 0)]
+        
+        sm.add_weighted_edges_from([(nodes[0], nodes[1], 2.0)], origin="unknown")
+        sm.add_weighted_edges_from([(nodes[0], nodes[2], 1.0)], origin="learned")
+        sm.add_weighted_edges_from([(nodes[3], nodes[4], 0.7)], origin="expert")
 
-        subgraph = sm.get_target_subgraph(2)
+        subgraph = sm.get_target_subgraph(nodes[1])
 
         assert set(subgraph.edges.data("origin")) == {
-            (1, 2, "unknown"),
-            (1, 3, "learned"),
+            (nodes[0].get_node_name(), nodes[1].get_node_name(), "unknown"),
+            (nodes[0].get_node_name(), nodes[2].get_node_name(), "learned"),
         }
-        assert set(subgraph.edges.data("weight")) == {(1, 2, 2.0), (1, 3, 1.0)}
+        assert set(subgraph.edges.data("weight")) == {(nodes[0].get_node_name(), nodes[1].get_node_name(), 2.0), (nodes[0].get_node_name(), nodes[2].get_node_name(), 1.0)}
 
     def test_instance_type(self):
         """The subgraph returned should still be a DynamicStructureModel instance"""
 
         sm = DynamicStructureModel()
-        sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
-        subgraph = sm.get_target_subgraph(2)
+        nodes = [DynamicStructureNode(0, 0), DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), DynamicStructureNode(3, 0), DynamicStructureNode(4, 0), DynamicStructureNode(6, 0)]
+        sm.add_edges_from([(nodes[0], nodes[1]), (nodes[1], nodes[2]), (nodes[1], nodes[3]), (nodes[4], nodes[5])])
+        subgraph = sm.get_target_subgraph(nodes[2])
 
         assert isinstance(subgraph, DynamicStructureModel)
 
@@ -664,14 +667,15 @@ class TestDynamicStructureModelGetTargetSubgraph:
         """get_target_subgraph should be able to run more than once"""
 
         sm = DynamicStructureModel()
-        sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
+        nodes = [DynamicStructureNode(0, 0), DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), DynamicStructureNode(3, 0), DynamicStructureNode(4, 0), DynamicStructureNode(6, 0)]
+        sm.add_edges_from([(nodes[0], nodes[1]), (nodes[1], nodes[2]), (nodes[1], nodes[3]), (nodes[4], nodes[5])])
 
-        subgraph = sm.get_target_subgraph(0)
-        subgraph.remove_edge(0, 1)
-        subgraph = subgraph.get_target_subgraph(1)
+        subgraph = sm.get_target_subgraph(nodes[0])
+        subgraph.remove_edge(nodes[0].get_node_name(), nodes[1].get_node_name())
+        subgraph = subgraph.get_target_subgraph(nodes[1])
 
         expected_graph = DynamicStructureModel()
-        expected_edges = [(1, 2), (1, 3)]
+        expected_edges = [(nodes[1], nodes[2]), (nodes[1], nodes[3])]
         expected_graph.add_edges_from(expected_edges)
 
         assert set(subgraph.nodes) == set(expected_graph.nodes)
@@ -681,11 +685,11 @@ class TestDynamicStructureModelGetTargetSubgraph:
 class TestDynamicStructureModelGetMarkovBlanket:
     @pytest.mark.parametrize(
         "target_node, test_input, expected",
-        [
-            (1, [(0, 1), (1, 2), (1, 3), (4, 5)], [(0, 1), (1, 2), (1, 3)]),
-            (1, [(0, 1), (1, 2), (1, 3), (4, 3)], [(0, 1), (1, 2), (1, 3), (4, 3)]),
-            (3, [(3, 4), (3, 5), (6, 7)], [(3, 4), (3, 5)]),
-            (7, [(7, 8), (1, 2), (6, 7), (2, 3), (5, 8)], [(7, 8), (6, 7), (5, 8)]),
+        [   
+            (DynamicStructureNode(1, 0), [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(5, 0))], [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0))]),
+            (DynamicStructureNode(1, 0), [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(3, 0))], [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(3, 0))]),
+            (DynamicStructureNode(3, 0), [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0))], [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0))]),
+            (DynamicStructureNode(7, 0), [(DynamicStructureNode(7, 0), DynamicStructureNode(8, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0)), (DynamicStructureNode(2, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(5, 0), DynamicStructureNode(8, 0))], [(DynamicStructureNode(7, 0), DynamicStructureNode(8, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0)), (DynamicStructureNode(5, 0), DynamicStructureNode(8, 0))]),
         ],
     )
     def test_get_markov_blanket_single(self, target_node, test_input, expected):
@@ -704,16 +708,16 @@ class TestDynamicStructureModelGetMarkovBlanket:
         "target_nodes, test_input, expected",
         [
             (
-                [1, 4],
-                [(0, 1), (1, 2), (1, 3), (4, 5)],
-                [(0, 1), (1, 2), (1, 3), (4, 5)],
+                [DynamicStructureNode(1, 0), DynamicStructureNode(4, 0)],
+                [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(5, 0))],
+                [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(5, 0))],
             ),
-            ([2, 4], [(0, 1), (1, 2), (1, 3), (4, 3)], [(1, 2), (1, 3), (4, 3)]),
-            ([3, 6], [(3, 4), (3, 5), (6, 7)], [(3, 4), (3, 5), (6, 7)]),
+            ([DynamicStructureNode(2, 0), DynamicStructureNode(4, 0)], [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(3, 0))], [(DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(3, 0))]),
+            ([DynamicStructureNode(3, 0), DynamicStructureNode(6, 0)], [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0))], [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0))]),
             (
-                [2, 5],
-                [(7, 8), (1, 2), (6, 7), (2, 3), (5, 8)],
-                [(1, 2), (2, 3), (7, 8), (5, 8)],
+                [DynamicStructureNode(2, 0), DynamicStructureNode(5, 0)],
+                [(DynamicStructureNode(7, 0), DynamicStructureNode(8, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(6, 0), DynamicStructureNode(7, 0)), (DynamicStructureNode(2, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(5, 0), DynamicStructureNode(8, 0))],
+                [(DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(2, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(7, 0), DynamicStructureNode(8, 0)), (DynamicStructureNode(5, 0), DynamicStructureNode(8, 0))],
             ),
         ],
     )
@@ -733,14 +737,14 @@ class TestDynamicStructureModelGetMarkovBlanket:
         "target_node, test_input, expected",
         [
             (
-                "a",
-                [("a", "b"), ("a", "c"), ("c", "d"), ("e", "f")],
-                [("a", "b"), ("a", "c")],
+                DynamicStructureNode('a', 0),
+                [(DynamicStructureNode('a', 0), DynamicStructureNode('b', 0)), (DynamicStructureNode('a', 0), DynamicStructureNode('c', 0)), (DynamicStructureNode('c', 0), DynamicStructureNode('d', 0)), (DynamicStructureNode('e', 0), DynamicStructureNode('f', 0))],
+                [(DynamicStructureNode('a', 0), DynamicStructureNode('b', 0)), (DynamicStructureNode('a', 0), DynamicStructureNode('c', 0))],
             ),
             (
-                "g",
-                [("g", "h"), ("g", "z"), ("a", "b"), ("a", "c"), ("c", "d")],
-                [("g", "h"), ("g", "z")],
+                DynamicStructureNode('g', 0),
+                [(DynamicStructureNode('g', 0), DynamicStructureNode('h', 0)), (DynamicStructureNode('g', 0), DynamicStructureNode('z', 0)), (DynamicStructureNode('a', 0), DynamicStructureNode('b', 0)), (DynamicStructureNode('a', 0), DynamicStructureNode('c', 0)), (DynamicStructureNode('c', 0), DynamicStructureNode('d', 0))],
+                [(DynamicStructureNode('g', 0), DynamicStructureNode('h', 0)), (DynamicStructureNode('g', 0), DynamicStructureNode('z', 0))],
             ),
         ],
     )
@@ -759,10 +763,10 @@ class TestDynamicStructureModelGetMarkovBlanket:
     @pytest.mark.parametrize(
         "target_node, test_input",
         [
-            (7, [(0, 1), (1, 2), (1, 3), (4, 6)]),
-            (1, [(3, 4), (3, 5), (7, 6)]),
-            ([1, 7], [(0, 1), (1, 2), (1, 3), (4, 6)]),
-            ([8, 2], [(3, 4), (3, 5), (7, 6)]),
+            (DynamicStructureNode(7, 0), [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(6, 0))]),
+            (DynamicStructureNode(1, 0), [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0)), (DynamicStructureNode(7, 0), DynamicStructureNode(6, 0))]),
+            #([DynamicStructureNode(1, 0), DynamicStructureNode(7, 0)], [(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)), (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0)), (DynamicStructureNode(4, 0), DynamicStructureNode(6, 0))]),
+            #([DynamicStructureNode(8, 0), DynamicStructureNode(2, 0)], [(DynamicStructureNode(3, 0), DynamicStructureNode(4, 0)), (DynamicStructureNode(3, 0), DynamicStructureNode(5, 0)), (DynamicStructureNode(7, 0), DynamicStructureNode(6, 0))]),
         ],
     )
     def test_node_not_in_graph(self, target_node, test_input):
@@ -773,7 +777,7 @@ class TestDynamicStructureModelGetMarkovBlanket:
 
         with pytest.raises(
             NodeNotFound,
-            match=f"Node {target_node} not found in the graph",
+            match=re.escape(f"Node {target_node} not found in the graph"),
         ):
             sm.get_markov_blanket(target_node)
 
@@ -784,10 +788,10 @@ class TestDynamicStructureModelGetMarkovBlanket:
                     DynamicStructureNode(2, 0), DynamicStructureNode(7, 0)]
         sm = DynamicStructureModel()
         sm.add_nodes(nodes)
-        blanket = sm.get_markov_blanket(1)
+        blanket = sm.get_markov_blanket(nodes[0])
 
         expected_graph = DynamicStructureModel()
-        expected_graph.add_node(1)
+        expected_graph.add_node(nodes[0])
 
         assert set(blanket.nodes) == set(expected_graph.nodes)
         assert set(blanket.edges) == set(expected_graph.edges)
@@ -795,13 +799,16 @@ class TestDynamicStructureModelGetMarkovBlanket:
     def test_isolates_nodes_and_edges(self):
         """Should be able to return the subgraph with the specified node"""
 
-        edges = [(0, 1), (1, 2), (1, 3), (5, 6), (4, 5)]
-        isolated_nodes = [DynamicStructureNode(7, 0), DynamicStructureNode(8, 0), DynamicStructureNode(9, 0)]
+        nodes = [DynamicStructureNode(0, 0), DynamicStructureNode(1, 0), DynamicStructureNode(2, 0),
+                    DynamicStructureNode(3, 0), DynamicStructureNode(4, 0), DynamicStructureNode(5, 0), DynamicStructureNode(6, 0),
+                    DynamicStructureNode(7, 0), DynamicStructureNode(8, 0), DynamicStructureNode(9, 0)]
+        edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2]), (nodes[1], nodes[3]), (nodes[5], nodes[6]), (nodes[4], nodes[5])]
+        isolated_nodes = [nodes[7], nodes[8], nodes[9]]
         sm = DynamicStructureModel()
         sm.add_edges_from(edges)
         sm.add_nodes(isolated_nodes)
-        subgraph = sm.get_markov_blanket(5)
-        expected_edges = [(5, 6), (4, 5)]
+        subgraph = sm.get_markov_blanket(nodes[5])
+        expected_edges = [(nodes[5], nodes[6]), (nodes[4], nodes[5])]
         expected_graph = DynamicStructureModel()
         expected_graph.add_edges_from(expected_edges)
 
@@ -810,9 +817,10 @@ class TestDynamicStructureModelGetMarkovBlanket:
 
     def test_instance_type(self):
         """The subgraph returned should still be a DynamicStructureModel instance"""
-
+        nodes = [DynamicStructureNode(0, 0), DynamicStructureNode(1, 0), DynamicStructureNode(2, 0),
+                    DynamicStructureNode(3, 0), DynamicStructureNode(4, 0), DynamicStructureNode(6, 0)]
         sm = DynamicStructureModel()
-        sm.add_edges_from([(0, 1), (1, 2), (1, 3), (4, 6)])
-        subgraph = sm.get_markov_blanket(DynamicStructureNode(2, 0))
+        sm.add_edges_from([(nodes[0], nodes[1]), (nodes[1], nodes[2]), (nodes[1], nodes[3]), (nodes[4], nodes[5])])
+        subgraph = sm.get_markov_blanket(nodes[2])
 
         assert isinstance(subgraph, DynamicStructureModel)
