@@ -32,6 +32,7 @@ This module contains the implementation of ``StructureModel``.
 """
 
 from typing import Any, Hashable, List, Set, Tuple, Union, NamedTuple
+from collections import Iterable
 
 import networkx as nx
 import numpy as np
@@ -545,6 +546,10 @@ class DynamicStructureModel(StructureModel):
         """
         _validate_origin(origin)
 
+        if isinstance(ebunch_to_add, Iterable) and not ebunch_to_add:
+            super().add_edges_from(ebunch_to_add, **attr)
+            return
+
         if isinstance(ebunch_to_add, types.GeneratorType):
             dsn_ebunch = []
             for e in ebunch_to_add:
@@ -598,6 +603,10 @@ class DynamicStructureModel(StructureModel):
             **attr: Attributes to add to edge as key/value pairs (no attributes by default).
         """
         _validate_origin(origin)
+
+        if isinstance(ebunch_to_add, Iterable) and not ebunch_to_add:
+            super().add_weighted_edges_from(ebunch_to_add, weight=weight, **attr)
+            return
 
         if isinstance(ebunch_to_add, types.GeneratorType):
             dsn_ebunch = [(DynamicStructureNode(e[0][0], e[0][-1]).get_node_name(), DynamicStructureNode(e[1][0], e[1][-1]).get_node_name(), e[2]) for e in ebunch_to_add]

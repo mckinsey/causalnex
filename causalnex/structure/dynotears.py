@@ -130,8 +130,8 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     sm.add_weighted_edges_from(
         [
             (
-                _format_name_from_pandas(idx_col, u),
-                _format_name_from_pandas(idx_col, v),
+                DynamicStructureNode(idx_col[int(u[0])], u[-1]), # _format_name_from_pandas(idx_col, u), idx_col[int(u[0])]
+                DynamicStructureNode(idx_col[int(v[0])], v[-1]),
                 w,
             )
             for u, v, w in g.edges.data("weight")

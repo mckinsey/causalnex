@@ -249,6 +249,8 @@ class TestFromNumpyDynotears:
 
     def test_isolated_nodes_exist(self, data_dynotears_p2):
         """Isolated nodes should still be in the learned structure"""
+        # X is the current time step of 5 features
+        # Y is the previous 2 time steps of 5 features
         sm = from_numpy_dynamic(
             data_dynotears_p2["X"], data_dynotears_p2["Y"], w_threshold=1
         )
