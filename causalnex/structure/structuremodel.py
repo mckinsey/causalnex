@@ -41,6 +41,7 @@ from networkx.exception import NodeNotFound
 def _validate_origin(origin: str) -> None:
     """
     Checks that origin has a valid value. One of:
+
         - unknown: edge exists for an unknown reason;
         - learned: edge was created as the output of a machine-learning process;
         - expert: edge was created by a domain expert.
