@@ -135,7 +135,8 @@ This work was later turned into a product thanks to the following contributors:
 , [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/)
 , [Shuhei Ishida](https://www.linkedin.com/in/shuhei-i/)
 , [Francesca Sogaro](https://www.linkedin.com/in/francesca-sogaro/)
-, [Deepyaman Datta](https://www.linkedin.com/in/deepyaman/).
+, [Deepyaman Datta](https://www.linkedin.com/in/deepyaman/)
+, [Ryan Ng](https://www.linkedin.com/in/ryannsj/).
 
 CausalNex would also not be possible without the generous sharing from leading researches in the field of causal inference
 and we are grateful to everyone who advised and supported us, filed issues or helped resolve them, asked and answered

@@ -745,6 +745,34 @@ class TestFitLatentCPDs:
             bn.add_node("d", [("z", "d")], [])
             bn.fit_latent_cpds("d", lv_states, df)
 
+    def test_fit_additional_nodes_lv(self):
+        """An error should be raised if bn has unfitted additional nodes"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Node\(s\) \['an'\] have not had their states *",
+        ):
+            df, sm, _, _ = naive_bayes_plus_parents()
+
+            df["lv"] = np.nan
+            df["an"] = np.random.randint(0, 2, df.shape[0])
+            df["z"] = np.random.randint(0, 2, df.shape[0])
+
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+
+            bn.fit_node_states_and_cpds(df.drop(["lv"], axis=1))
+
+            assert "an" not in bn.nodes
+            assert "an" not in bn.cpds
+
+            bn.add_node("lv", [("z", "lv"), ("an", "lv")], [])
+
+            assert "an" in bn.nodes
+            assert "an" not in bn.cpds
+
+            bn.fit_latent_cpds("lv", [0, 1, 2], df)
+
 
 class TestSetCPD:
     """Test behaviour of adding a self-defined cpd"""
