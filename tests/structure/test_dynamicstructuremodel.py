@@ -37,45 +37,45 @@ class TestDynamicStructureModel:
         """Creating a DynamicStructureModel using constructor should give all edges unknown origin"""
         nodes = [DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)]
         sm = DynamicStructureModel([(nodes[0], nodes[1])])
-        assert (nodes[0].get_node_name(), nodes[1].get_node_name()) in sm.edges
-        assert (nodes[0].get_node_name(), nodes[1].get_node_name(), "unknown") in sm.edges.data("origin")
+        assert (nodes[0], nodes[1]) in sm.edges
+        assert (nodes[0], nodes[1], "unknown") in sm.edges.data("origin")
 
     def test_init_with_origin(self):
         """should be possible to specify origin during init"""
 
         nodes = [DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)]
         sm = DynamicStructureModel([(nodes[0], nodes[1])], origin="learned")
-        assert (nodes[0].get_node_name(), nodes[1].get_node_name(), "learned") in sm.edges.data("origin")
+        assert (nodes[0], nodes[1], "learned") in sm.edges.data("origin")
 
     def test_edge_unknown_property(self):
         """should return only edges whose origin is unknown"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, origin="unknown")
-        sm.add_edge(1, 3, origin="learned")
-        sm.add_edge(1, 4, origin="expert")
+        sm.add_edge((1, 0), (2, 0), origin="unknown")
+        sm.add_edge((1, 0), (3, 0), origin="learned")
+        sm.add_edge((1, 0), (4, 0), origin="expert")
 
-        assert sm.edges_with_origin("unknown") == [(1, 2)]
+        assert sm.edges_with_origin("unknown") == [(DynamicStructureNode(1, 0), DynamicStructureNode(2, 0))]
 
     def test_edge_learned_property(self):
         """should return only edges whose origin is unknown"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, origin="unknown")
-        sm.add_edge(1, 3, origin="learned")
-        sm.add_edge(1, 4, origin="expert")
+        sm.add_edge((1, 0), (2, 0), origin="unknown")
+        sm.add_edge((1, 0), (3, 0), origin="learned")
+        sm.add_edge((1, 0), (4, 0), origin="expert")
 
-        assert sm.edges_with_origin("learned") == [(1, 3)]
+        assert sm.edges_with_origin("learned") == [(DynamicStructureNode(1, 0), DynamicStructureNode(3, 0))]
 
     def test_edge_expert_property(self):
         """should return only edges whose origin is unknown"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, origin="unknown")
-        sm.add_edge(1, 3, origin="learned")
-        sm.add_edge(1, 4, origin="expert")
+        sm.add_edge((1, 0), (2, 0), origin="unknown")
+        sm.add_edge((1, 0), (3, 0), origin="learned")
+        sm.add_edge((1, 0), (4, 0), origin="expert")
 
-        assert sm.edges_with_origin("expert") == [(1, 4)]
+        assert sm.edges_with_origin("expert") == [(DynamicStructureNode(1, 0), DynamicStructureNode(4, 0))]
 
     def test_to_directed(self):
         """should create a structure model"""
@@ -85,10 +85,11 @@ class TestDynamicStructureModel:
 
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[0]), (nodes[1], nodes[2]), (nodes[2], nodes[3])]
         sm.add_edges_from(edges)
-
+        
         dag = sm.to_directed()
+        
         assert isinstance(dag, DynamicStructureModel)
-        assert all((edge[0].get_node_name(), edge[1].get_node_name()) in dag.edges for edge in edges)
+        assert all((edge[0], edge[1]) in dag.edges for edge in edges)
 
     def test_to_undirected(self):
         """should create an undirected Graph"""
@@ -101,8 +102,8 @@ class TestDynamicStructureModel:
 
         udg = sm.to_undirected()
 
-        assert all((edge[0].get_node_name(), edge[1].get_node_name()) in udg.edges for edge in [(nodes[1], nodes[2]), (nodes[2], nodes[3])])
-        assert (nodes[0].get_node_name(), nodes[1].get_node_name()) in udg.edges or (nodes[1].get_node_name(), nodes[0].get_node_name()) in udg.edges
+        assert all((edge[0], edge[1]) in udg.edges for edge in [(nodes[1], nodes[2]), (nodes[2], nodes[3])])
+        assert (nodes[0], nodes[1]) in udg.edges or (nodes[1], nodes[0]) in udg.edges
         assert len(udg.edges) == 3
 
 
@@ -111,37 +112,37 @@ class TestDynamicStructureModelAddEdge:
         """edges added with default origin should be identified as unknown origin"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2)
+        sm.add_edge((1, 0), (2, 0))
 
-        assert (1, 2) in sm.edges
-        assert (1, 2, "unknown") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)) in sm.edges
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "unknown") in sm.edges.data("origin")
 
     def test_add_edge_unknown(self):
         """edges added with unknown origin should be labelled as unknown origin"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, "unknown")
+        sm.add_edge((1, 0), (2, 0), "unknown")
 
-        assert (1, 2) in sm.edges
-        assert (1, 2, "unknown") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)) in sm.edges
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "unknown") in sm.edges.data("origin")
 
     def test_add_edge_learned(self):
         """edges added with learned origin should be labelled as learned origin"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, "learned")
+        sm.add_edge((1, 0), (2, 0), "learned")
 
-        assert (1, 2) in sm.edges
-        assert (1, 2, "learned") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)) in sm.edges
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "learned") in sm.edges.data("origin")
 
     def test_add_edge_expert(self):
         """edges added with expert origin should be labelled as expert origin"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, "expert")
+        sm.add_edge((1, 0), (2, 0), "expert")
 
-        assert (1, 2) in sm.edges
-        assert (1, 2, "expert") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)) in sm.edges
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "expert") in sm.edges.data("origin")
 
     def test_add_edge_other(self):
         """edges added with other origin should throw an error"""
@@ -149,37 +150,37 @@ class TestDynamicStructureModelAddEdge:
         sm = DynamicStructureModel()
 
         with pytest.raises(ValueError, match="^Unknown origin: must be one of.*$"):
-            sm.add_edge(1, 2, "other")
+            sm.add_edge((1, 0), (2, 0), "other")
 
     def test_add_edge_custom_attr(self):
         """it should be possible to add an edge with custom attributes"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, x="Y")
+        sm.add_edge((1, 0), (2, 0), x="Y")
 
-        assert (1, 2) in sm.edges
-        assert (1, 2, "Y") in sm.edges.data("x")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0)) in sm.edges
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "Y") in sm.edges.data("x")
 
     def test_add_edge_multiple_times(self):
         """adding an edge again should update the edges origin attr"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, origin="unknown")
-        assert (1, 2, "unknown") in sm.edges.data("origin")
-        sm.add_edge(1, 2, origin="learned")
-        assert (1, 2, "learned") in sm.edges.data("origin")
+        sm.add_edge((1, 0), (2, 0), origin="unknown")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "unknown") in sm.edges.data("origin")
+        sm.add_edge((1, 0), (2, 0), origin="learned")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "learned") in sm.edges.data("origin")
 
     def test_add_multiple_edges(self):
         """it should be possible to add multiple edges with different origins"""
 
         sm = DynamicStructureModel()
-        sm.add_edge(1, 2, origin="unknown")
-        sm.add_edge(1, 3, origin="learned")
-        sm.add_edge(1, 4, origin="expert")
+        sm.add_edge((1, 0), (2, 0), origin="unknown")
+        sm.add_edge((1, 0), (3, 0), origin="learned")
+        sm.add_edge((1, 0), (4, 0), origin="expert")
 
-        assert (1, 2, "unknown") in sm.edges.data("origin")
-        assert (1, 3, "learned") in sm.edges.data("origin")
-        assert (1, 4, "expert") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(2, 0), "unknown") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(3, 0), "learned") in sm.edges.data("origin")
+        assert (DynamicStructureNode(1, 0), DynamicStructureNode(4, 0), "expert") in sm.edges.data("origin")
 
 
 class TestDynamicStructureModelAddEdgesFrom:
@@ -191,8 +192,8 @@ class TestDynamicStructureModelAddEdgesFrom:
 
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges)
-        assert all((edge[0].get_node_name(), edge[1].get_node_name()) in sm.edges for edge in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v in edges)
+        assert all((edge[0], edge[1]) in sm.edges for edge in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v in edges)
 
     def test_add_edges_from_unknown(self):
         """edges added with unknown origin should be labelled as unknown origin"""
@@ -203,8 +204,8 @@ class TestDynamicStructureModelAddEdgesFrom:
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges, "unknown")
 
-        assert all((u.get_node_name(), v.get_node_name()) in sm.edges for u, v in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v in edges)
+        assert all((u, v) in sm.edges for u, v in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v in edges)
 
     def test_add_edges_from_learned(self):
         """edges added with learned origin should be labelled as learned origin"""
@@ -215,8 +216,8 @@ class TestDynamicStructureModelAddEdgesFrom:
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges, "learned")
 
-        assert all((u.get_node_name(), v.get_node_name()) in sm.edges for u, v in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "learned") in sm.edges.data("origin") for u, v in edges)
+        assert all((u, v) in sm.edges for u, v in edges)
+        assert all((u, v, "learned") in sm.edges.data("origin") for u, v in edges)
 
     def test_add_edges_from_expert(self):
         """edges added with expert origin should be labelled as expert origin"""
@@ -227,8 +228,8 @@ class TestDynamicStructureModelAddEdgesFrom:
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges, "expert")
 
-        assert all((u.get_node_name(), v.get_node_name()) in sm.edges for u, v in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "expert") in sm.edges.data("origin") for u, v in edges)
+        assert all((u, v) in sm.edges for u, v in edges)
+        assert all((u, v, "expert") in sm.edges.data("origin") for u, v in edges)
 
     def test_add_edges_from_other(self):
         """edges added with other origin should throw an error"""
@@ -248,8 +249,8 @@ class TestDynamicStructureModelAddEdgesFrom:
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges, x="Y")
 
-        assert all((u.get_node_name(), v.get_node_name()) in sm.edges for u, v in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "Y") in sm.edges.data("x") for u, v in edges)
+        assert all((u, v) in sm.edges for u, v in edges)
+        assert all((u, v, "Y") in sm.edges.data("x") for u, v in edges)
 
     def test_add_edges_from_multiple_times(self):
         """adding edges again should update the edges origin attr"""
@@ -259,9 +260,9 @@ class TestDynamicStructureModelAddEdgesFrom:
 
         edges = [(nodes[0], nodes[1]), (nodes[1], nodes[2])]
         sm.add_edges_from(edges, "unknown")
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v in edges)
         sm.add_edges_from(edges, "learned")
-        assert all((u.get_node_name(), v.get_node_name(), "learned") in sm.edges.data("origin") for u, v in edges)
+        assert all((u, v, "learned") in sm.edges.data("origin") for u, v in edges)
 
     def test_add_multiple_edges(self):
         """it should be possible to add multiple edges with different origins"""
@@ -272,9 +273,9 @@ class TestDynamicStructureModelAddEdgesFrom:
         sm.add_edges_from([(nodes[0], nodes[2])], origin="learned")
         sm.add_edges_from([(nodes[0], nodes[3])], origin="expert")
 
-        assert (nodes[0].get_node_name(), nodes[1].get_node_name(), "unknown") in sm.edges.data("origin")
-        assert (nodes[0].get_node_name(), nodes[2].get_node_name(), "learned") in sm.edges.data("origin")
-        assert (nodes[0].get_node_name(), nodes[3].get_node_name(), "expert") in sm.edges.data("origin")
+        assert (nodes[0], nodes[1], "unknown") in sm.edges.data("origin")
+        assert (nodes[0], nodes[2], "learned") in sm.edges.data("origin")
+        assert (nodes[0], nodes[3], "expert") in sm.edges.data("origin")
 
 
 class TestDynamicStructureModelAddWeightedEdgesFrom:
@@ -286,8 +287,8 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         sm.add_weighted_edges_from(edges)
 
-        assert all((u.get_node_name(), v.get_node_name(), w) in sm.edges.data("weight") for u, v, w in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v, w in edges)
+        assert all((u, v, w) in sm.edges.data("weight") for u, v, w in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v, w in edges)
 
     def test_add_weighted_edges_from_unknown(self):
         """edges added with unknown origin should be labelled as unknown origin"""
@@ -298,8 +299,8 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         sm.add_weighted_edges_from(edges, origin="unknown")
 
-        assert all((u.get_node_name(), v.get_node_name(), w) in sm.edges.data("weight") for u, v, w in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v, w in edges)
+        assert all((u, v, w) in sm.edges.data("weight") for u, v, w in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v, w in edges)
 
     def test_add_weighted_edges_from_learned(self):
         """edges added with learned origin should be labelled as learned origin"""
@@ -310,8 +311,8 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         sm.add_weighted_edges_from(edges, origin="learned")
 
-        assert all((u.get_node_name(), v.get_node_name(), w) in sm.edges.data("weight") for u, v, w in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "learned") in sm.edges.data("origin") for u, v, w in edges)
+        assert all((u, v, w) in sm.edges.data("weight") for u, v, w in edges)
+        assert all((u, v, "learned") in sm.edges.data("origin") for u, v, w in edges)
 
     def test_add_weighted_edges_from_expert(self):
         """edges added with expert origin should be labelled as expert origin"""
@@ -323,8 +324,8 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         sm.add_weighted_edges_from(edges, origin="expert")
 
-        assert all((u.get_node_name(), v.get_node_name(), w) in sm.edges.data("weight") for u, v, w in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "expert") in sm.edges.data("origin") for u, v, w in edges)
+        assert all((u, v, w) in sm.edges.data("weight") for u, v, w in edges)
+        assert all((u, v, "expert") in sm.edges.data("origin") for u, v, w in edges)
 
     def test_add_weighted_edges_from_other(self):
         """edges added with other origin should throw an error"""
@@ -345,8 +346,8 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         sm.add_weighted_edges_from(edges, x="Y")
 
-        assert all((u.get_node_name(), v.get_node_name(), w) in sm.edges.data("weight") for u, v, w in edges)
-        assert all((u.get_node_name(), v.get_node_name(), "Y") in sm.edges.data("x") for u, v, _ in edges)
+        assert all((u, v, w) in sm.edges.data("weight") for u, v, w in edges)
+        assert all((u, v, "Y") in sm.edges.data("x") for u, v, _ in edges)
 
     def test_add_weighted_edges_from_multiple_times(self):
         """adding edges again should update the edges origin attr"""
@@ -358,10 +359,10 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         edges = [(nodes[0], nodes[1], .5), (nodes[1], nodes[2], .5)]
         
         sm.add_weighted_edges_from(edges, origin="unknown")
-        assert all((u.get_node_name(), v.get_node_name(), "unknown") in sm.edges.data("origin") for u, v, _ in edges)
+        assert all((u, v, "unknown") in sm.edges.data("origin") for u, v, _ in edges)
         
         sm.add_weighted_edges_from(edges, origin="learned")
-        assert all((u.get_node_name(), v.get_node_name(), "learned") in sm.edges.data("origin") for u, v, _ in edges)
+        assert all((u, v, "learned") in sm.edges.data("origin") for u, v, _ in edges)
 
     def test_add_multiple_weighted_edges(self):
         """it should be possible to add multiple edges with different origins"""
@@ -372,9 +373,9 @@ class TestDynamicStructureModelAddWeightedEdgesFrom:
         sm.add_weighted_edges_from([(nodes[0], nodes[2], 0.5)], origin="learned")
         sm.add_weighted_edges_from([(nodes[0], nodes[3], 0.5)], origin="expert")
 
-        assert ('1_lag0', '2_lag0', "unknown") in sm.edges.data("origin")
-        assert ('1_lag0', '3_lag0', "learned") in sm.edges.data("origin")
-        assert ('1_lag0', '4_lag0', "expert") in sm.edges.data("origin")
+        assert (nodes[0], nodes[1], "unknown") in sm.edges.data("origin")
+        assert (nodes[0], nodes[2], "learned") in sm.edges.data("origin")
+        assert (nodes[0], nodes[3], "expert") in sm.edges.data("origin")
 
 
 class TestDynamicStructureModelRemoveEdgesBelowThreshold:
@@ -390,7 +391,7 @@ class TestDynamicStructureModelRemoveEdgesBelowThreshold:
         sm.add_weighted_edges_from(weak_edges)
 
         sm.remove_edges_below_threshold(0.7)
-        assert set(sm.edges(data="weight")) == set((u.get_node_name(), v.get_node_name(), w) for u, v, w in  strong_edges)
+        assert set(sm.edges(data="weight")) == set((u, v, w) for u, v, w in  strong_edges)
 
     def test_negative_weights(self):
         """Negative edges whose absolute value is greater than the defined threshold should not be removed"""
@@ -406,7 +407,7 @@ class TestDynamicStructureModelRemoveEdgesBelowThreshold:
 
         sm.remove_edges_below_threshold(0.7)
 
-        assert set(sm.edges(data="weight")) == set((u.get_node_name(), v.get_node_name(), w) for u, v, w in  strong_edges)
+        assert set(sm.edges(data="weight")) == set((u, v, w) for u, v, w in  strong_edges)
 
     def test_equal_weights(self):
         """Edges whose absolute value is equal to the defined threshold should not be removed"""
@@ -424,8 +425,8 @@ class TestDynamicStructureModelRemoveEdgesBelowThreshold:
         sm.remove_edges_below_threshold(0.6)
 
         assert set(sm.edges(data="weight")) == set.union(
-            set((u.get_node_name(), v.get_node_name(), w) for u, v, w in  strong_edges), 
-            set((u.get_node_name(), v.get_node_name(), w) for u, v, w in  equal_edges)
+            set((u, v, w) for u, v, w in  strong_edges), 
+            set((u, v, w) for u, v, w in  equal_edges)
         )
 
     def test_graph_with_no_edges(self):
@@ -437,7 +438,7 @@ class TestDynamicStructureModelRemoveEdgesBelowThreshold:
         sm.add_nodes(nodes)
         sm.remove_edges_below_threshold(0.6)
 
-        assert set(sm.nodes) == set([node.get_node_name() for node in nodes])
+        assert set(sm.nodes) == set([node for node in nodes])
         assert set(sm.edges) == set()
 
 
@@ -525,10 +526,10 @@ class TestDynamicStructureModelGetLargestSubgraph:
         largest_subgraph = sm.get_largest_subgraph()
 
         assert set(largest_subgraph.edges.data("origin")) == {
-            (nodes[0].get_node_name(), nodes[1].get_node_name(), "unknown"),
-            (nodes[0].get_node_name(), nodes[2].get_node_name(), "learned"),
+            (nodes[0], nodes[1], "unknown"),
+            (nodes[0], nodes[2], "learned"),
         }
-        assert set(largest_subgraph.edges.data("weight")) == {(nodes[0].get_node_name(), nodes[1].get_node_name(), 2.0), (nodes[0].get_node_name(), nodes[2].get_node_name(), 1.0)}
+        assert set(largest_subgraph.edges.data("weight")) == {(nodes[0], nodes[1], 2.0), (nodes[0], nodes[2], 1.0)}
 
 
 class TestDynamicStructureModelGetTargetSubgraph:
@@ -614,7 +615,8 @@ class TestDynamicStructureModelGetTargetSubgraph:
         subgraph = sm.get_target_subgraph(DynamicStructureNode(1, 0))
         expected_graph = DynamicStructureModel()
         expected_graph.add_node(DynamicStructureNode(1, 0))
-
+        print(f'subgraph nodes {subgraph.nodes}\n')
+        print(f'expected nodes {expected_graph.nodes}')
         assert set(subgraph.nodes) == set(expected_graph.nodes)
         assert set(subgraph.edges) == set(expected_graph.edges)
 
@@ -648,10 +650,10 @@ class TestDynamicStructureModelGetTargetSubgraph:
         subgraph = sm.get_target_subgraph(nodes[1])
 
         assert set(subgraph.edges.data("origin")) == {
-            (nodes[0].get_node_name(), nodes[1].get_node_name(), "unknown"),
-            (nodes[0].get_node_name(), nodes[2].get_node_name(), "learned"),
+            (nodes[0], nodes[1], "unknown"),
+            (nodes[0], nodes[2], "learned"),
         }
-        assert set(subgraph.edges.data("weight")) == {(nodes[0].get_node_name(), nodes[1].get_node_name(), 2.0), (nodes[0].get_node_name(), nodes[2].get_node_name(), 1.0)}
+        assert set(subgraph.edges.data("weight")) == {(nodes[0], nodes[1], 2.0), (nodes[0], nodes[2], 1.0)}
 
     def test_instance_type(self):
         """The subgraph returned should still be a DynamicStructureModel instance"""
@@ -671,7 +673,7 @@ class TestDynamicStructureModelGetTargetSubgraph:
         sm.add_edges_from([(nodes[0], nodes[1]), (nodes[1], nodes[2]), (nodes[1], nodes[3]), (nodes[4], nodes[5])])
 
         subgraph = sm.get_target_subgraph(nodes[0])
-        subgraph.remove_edge(nodes[0].get_node_name(), nodes[1].get_node_name())
+        subgraph.remove_edge(nodes[0], nodes[1])
         subgraph = subgraph.get_target_subgraph(nodes[1])
 
         expected_graph = DynamicStructureModel()
@@ -824,3 +826,270 @@ class TestDynamicStructureModelGetMarkovBlanket:
         subgraph = sm.get_markov_blanket(nodes[2])
 
         assert isinstance(subgraph, DynamicStructureModel)
+
+class TestDynamicStructureModelEdgeCoercion:
+
+    def test_edge_not_tuple(self):
+        edges = [((1, 0), (3, 0), .5), 6]
+        sm = DynamicStructureModel()
+        
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Edges must be tuples containing 2 or 3 elements, received {edges}"),
+        ):
+            sm.add_edges_from(edges)
+
+    def test_multi_edge_not_dsn(self):
+        edges = [((0,0), (1,0)), ((1,0), (2,0))]
+        sm = DynamicStructureModel()
+        sm.add_edges_from(edges)
+
+        expected_edges = [(DynamicStructureNode(0,0), DynamicStructureNode(1,0)), (DynamicStructureNode(1,0), DynamicStructureNode(2,0))]
+        expected_graph = DynamicStructureModel()
+        expected_graph.add_edges_from(expected_edges)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+        assert set(sm.edges) == set(expected_graph.edges)
+
+    def test_weighted_multi_edge_not_dsn(self):
+        edges = [((0,0), (1,0), .5), ((1,0), (2,0), .7)]
+        sm = DynamicStructureModel()
+        sm.add_weighted_edges_from(edges)
+
+        expected_edges = [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .7)]
+        expected_graph = DynamicStructureModel()
+        expected_graph.add_weighted_edges_from(expected_edges)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+        assert set(sm.edges) == set(expected_graph.edges)
+
+    @pytest.mark.parametrize(
+        "input_edges, expected_edges",
+        [
+            (
+                [((0,0), (1,0), .5), ((1,0), (2,0), .7)],
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .7)]
+            ),
+            (
+                [((0,0), (1,0)), ((1,0), (2,0))],
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0)), (DynamicStructureNode(1,0), DynamicStructureNode(2,0))]
+            )
+        ],
+    )
+    def test_multi_edge_dsn(self, input_edges, expected_edges):
+        sm = DynamicStructureModel()
+        weighted = len(input_edges[0]) == 3
+        if not weighted:
+            sm.add_edges_from(input_edges)
+        else:
+            sm.add_weighted_edges_from(input_edges)
+
+        expected_graph = DynamicStructureModel()
+        if not weighted:
+            expected_graph.add_edges_from(expected_edges)
+        else:
+            expected_graph.add_weighted_edges_from(expected_edges)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+        assert set(sm.edges) == set(expected_graph.edges)
+
+    def test_node_not_tuple(self):
+        edges = [((1, 0), (3, 0), .5), ((1, 0), 3, .7)]
+        sm = DynamicStructureModel()
+        
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Nodes in {edges[1]} must be tuples with node name and time step"),
+        ):
+            sm.add_edges_from(edges)
+
+    @pytest.mark.parametrize(
+        "input_edges, expected_edges",
+        [
+            (
+                [(DynamicStructureNode(0,0), (1,0), .5), ((1,0), DynamicStructureNode(2,0), .7)],
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .7)]
+            ),
+            (
+                [(DynamicStructureNode(0,0), (1,0)), ((1,0), DynamicStructureNode(2,0))],
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0)), (DynamicStructureNode(1,0), DynamicStructureNode(2,0))]
+            ),
+            (
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0)), ((1,0), DynamicStructureNode(2,0))],
+                [(DynamicStructureNode(0,0), DynamicStructureNode(1,0)), (DynamicStructureNode(1,0), DynamicStructureNode(2,0))]
+            )
+        ],
+    )
+    def test_multi_edge_one_dsn(self, input_edges, expected_edges):
+        sm = DynamicStructureModel()
+        weighted = len(input_edges[0]) == 3
+        if not weighted:
+            sm.add_edges_from(input_edges)
+        else:
+            sm.add_weighted_edges_from(input_edges)
+
+        expected_graph = DynamicStructureModel()
+        if not weighted:
+            expected_graph.add_edges_from(expected_edges)
+        else:
+            expected_graph.add_weighted_edges_from(expected_edges)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+        assert set(sm.edges) == set(expected_graph.edges)
+
+    def test_multi_edge_bad_tuple(self):
+        edges = [((0,0), (1,0), .5), ((1,0), (2,0), .7, .8)]
+        sm = DynamicStructureModel()
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Argument {edges[1]} must be a tuple containing 2 or 3 elements"),
+        ):
+            sm.add_weighted_edges_from(edges)
+
+    # def test_single_edge_not_tuple(self):
+    #     edge = 6
+    #     sm = DynamicStructureModel()
+        
+    #     with pytest.raises(
+    #         TypeError,
+    #         match=re.escape(f"Edges must be tuples containing 2 or 3 elements, received {edge}"),
+    #     ):
+    #         sm.add_edge(edge)
+
+    def test_single_edge_node_not_tuple(self):
+        u = (1, 0)
+        v = 3
+        sm = DynamicStructureModel()
+        
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Nodes in {(u, v)} must be tuples with node name and time step"),
+        ):
+            sm.add_edge(u, v)
+
+    @pytest.mark.parametrize(
+        "input_edge, expected_edge",
+        [
+            (
+                ((0,0), (1,0), .5),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5)
+            ),
+            (
+                ((0,0), (1,0)),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0))
+            ),
+            (
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0)),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0))
+            ),
+            (
+                (DynamicStructureNode(0,0), (1,0)),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0))
+            ),
+            (
+                ((0,0), DynamicStructureNode(1,0)),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0))
+            ),
+            (
+                (DynamicStructureNode(0,0), (1,0), .5),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5)
+            ),
+            (
+                ((0,0), DynamicStructureNode(1,0), .5),
+                (DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5)
+            )
+        ],
+    )
+    def test_single_edge_dsn(self, input_edge, expected_edge):
+        sm = DynamicStructureModel()
+        weighted = len(input_edge) == 3
+        if not weighted:
+            sm.add_edge(input_edge[0], input_edge[1])
+        else:
+            sm.add_weighted_edges_from(input_edge)
+
+        expected_graph = DynamicStructureModel()
+        if not weighted:
+            expected_graph.add_edge(expected_edge[0], expected_edge[1])
+        else:
+            expected_graph.add_weighted_edges_from(expected_edge)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+        assert set(sm.edges) == set(expected_graph.edges)
+
+    def test_single_edge_bad_tuple(self):
+        edge = ((1,0), (2,0), .7, .8)
+        sm = DynamicStructureModel()
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Argument {edge} must be either a DynamicStructureNode or tuple containing 2 or 3 elements"),
+        ):
+            sm.add_weighted_edges_from(edge)
+
+class TestDynamicStructureModelNodeCoercion:
+
+    @pytest.mark.parametrize(
+        "input_nodes, expected_nodes",
+        [
+            (
+                [(0,0), (1,0)],
+                [DynamicStructureNode(0,0), DynamicStructureNode(1,0)]
+            ),
+            (
+                [DynamicStructureNode(0,0), (1,0)],
+                [DynamicStructureNode(0,0), DynamicStructureNode(1,0)]
+            ),
+            (
+                (DynamicStructureNode(n, 0) for n in range(2)),
+                [DynamicStructureNode(0,0), DynamicStructureNode(1,0)]
+            )
+        ],
+    )
+    def test_multi_node(self, input_nodes, expected_nodes):
+        sm = DynamicStructureModel()
+        sm.add_nodes(input_nodes)
+
+        expected_graph = DynamicStructureModel()
+        expected_graph.add_nodes(expected_nodes)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+
+    @pytest.mark.parametrize(
+        "input_node, expected_node",
+        [
+            (
+                (0,0),
+                DynamicStructureNode(0,0)
+            ),
+            (
+                DynamicStructureNode(0,0),
+                DynamicStructureNode(0,0)
+            )
+        ],
+    )
+    def test_single_node(self, input_node, expected_node):
+        sm = DynamicStructureModel()
+        sm.add_nodes(input_node)
+
+        expected_graph = DynamicStructureModel()
+        expected_graph.add_nodes(expected_node)
+
+        assert set(sm.nodes) == set(expected_graph.nodes)
+
+    def test_multi_node_bad_tuple(self):
+        nodes = [(0,0), (1,0,1)]
+        sm = DynamicStructureModel()
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Argument {nodes[1]} must be either a DynamicStructureNode or tuple containing 2 elements"),
+        ):
+            sm.add_nodes(nodes)
+
+    def test_single_node_bad_tuple(self):
+        node = (1,0,1)
+        sm = DynamicStructureModel()
+        with pytest.raises(
+            TypeError,
+            match=re.escape(f"Argument {node} must be either a DynamicStructureNode or tuple containing 2 elements"),
+        ):
+            sm.add_node(node)

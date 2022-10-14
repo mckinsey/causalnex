@@ -130,7 +130,7 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     sm.add_weighted_edges_from(
         [
             (
-                DynamicStructureNode(idx_col[int(u[0])], u[-1]), # _format_name_from_pandas(idx_col, u), idx_col[int(u[0])]
+                DynamicStructureNode(idx_col[int(u[0])], u[-1]),
                 DynamicStructureNode(idx_col[int(v[0])], v[-1]),
                 w,
             )
@@ -140,20 +140,6 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     )
 
     return sm
-
-
-def _format_name_from_pandas(idx_col: Dict[int, str], from_numpy_node: str) -> str:
-    """
-    Helper function for `from_pandas_dynamic`. converts a node from the `from_numpy_dynamic` format to the `from_pandas`
-    format
-    Args:
-        idx_col: map from variable to intdex
-        from_numpy_node: nodes in the structure model output by `from_numpy_dynamic`.
-    Returns:
-        nodes in from_pandas_dynamic format
-    """
-    idx, lag_val = from_numpy_node.split("_lag")
-    return f"{idx_col[int(idx)]}_lag{lag_val}"
 
 
 def from_numpy_dynamic(  # pylint: disable=too-many-arguments

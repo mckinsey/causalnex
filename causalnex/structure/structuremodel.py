@@ -31,6 +31,7 @@ This module contains the implementation of ``StructureModel``.
 ``StructureModel`` is a class that describes relationships between variables as a graph.
 """
 
+from distutils.ccompiler import new_compiler
 from typing import Any, Hashable, List, Set, Tuple, Union, NamedTuple
 from collections import Iterable
 
@@ -295,7 +296,7 @@ class StructureModel(nx.DiGraph):
             self.remove_edge(i, j)
 
     def get_markov_blanket(
-        self, nodes: Union[Any, List[Any], Set[Any]]
+        self, nodes: Union[Any, List[Any], Set[Any]], cls: nx.DiGraph = None
     ) -> "StructureModel":
         """
         Get Markov blanket of specified target nodes
@@ -325,7 +326,10 @@ class StructureModel(nx.DiGraph):
                 blanket_nodes.add(child)
                 blanket_nodes.update(self.predecessors(child))
 
-        blanket = StructureModel()
+        if cls:
+            blanket = cls()
+        else:
+            blanket = StructureModel()
         blanket.add_nodes_from(blanket_nodes)
         blanket.add_weighted_edges_from(
             [
@@ -337,6 +341,9 @@ class StructureModel(nx.DiGraph):
         return blanket
 
 class DynamicStructureNode(NamedTuple):
+    """
+    Used by DynamicStructureModel to store each node as a (node_name, lag) pair
+    """
     node: Union[int, str]
     time_step: int
 
@@ -344,60 +351,112 @@ class DynamicStructureNode(NamedTuple):
         return f'{self.node}_lag{self.time_step}'
 
 
-def checkargs(function):
-    """
-    This function ensures the arguments passed to the methods in ``DynamicStructureModel`` are of the correct type.
-    Specifically that they are of type ``DynamicStructureNode``.
-    """
-    def _f(*arguments, **attr):
-        for index, argument in enumerate(inspect.getfullargspec(function)[0]):
-            if argument == 'self':
-                continue
-            try:
-                if isinstance(arguments[index], list):
-                    for arg in arguments[index]:
-                        if isinstance(arg, tuple) and not isinstance(arg, DynamicStructureNode):
-                            if len(arg) == 3:
-                                if not all(isinstance(n, DynamicStructureNode) for n in arg[:-1]):
-                                    raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))    
-                            else:
-                                if not all(isinstance(n, DynamicStructureNode) for n in arg):
-                                    raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
-                        else:
-                            if not isinstance(arg, function.__annotations__[argument].__args__[0]):       
-                                raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
-                elif isinstance(arguments[index], types.GeneratorType):
-                    # this comes from networkx, coerce into correct types
-                    pass
-                elif hasattr(function.__annotations__[argument], '__args__'):
-                    if not isinstance(arguments[index], function.__annotations__[argument].__args__[0]):
-                        raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
-                elif not isinstance(arguments[index], function.__annotations__[argument]):
-                    raise TypeError("{} is not of type {}".format(arguments[index], function.__annotations__[argument]))
-            except IndexError as e:
-                # index error here means arg was passed implicitly
-                break
-        return function(*arguments, **attr)
-    _f.__doc__ = function.__doc__
-    return _f
+def check_collection_type(c):
+    return isinstance(c, (list, set, types.GeneratorType))
 
-def _validate_dsm_init_args(incoming_graph_data):
-    if isinstance(incoming_graph_data, list):
-        assert all(isinstance(n[0], DynamicStructureNode) and isinstance(n[1], DynamicStructureNode) for n in incoming_graph_data)
+def coerce_dsm_edges(arg):
+    """
+    Used by DynamicStructureModel to convert edges as passed as primitive tuples to tuples of ``DynamicStructureNode``s.
+    An example input is [((0,0), (1,0), .5), ((1,0), (2,0), .5)]. This would be converted to 
+    [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .5)]
+    """
+    multi_edge = check_collection_type(arg)
+    if multi_edge:
+        if isinstance(arg, types.GeneratorType):
+            arg = list(arg)
+        if not all(isinstance(e, Tuple) for e in arg):
+            raise TypeError(f'Edges must be tuples containing 2 or 3 elements, received {arg}')
+        if all(isinstance(e[0], DynamicStructureNode) and isinstance(e[1], DynamicStructureNode) for e in arg):
+            return arg
+        else:
+            new_arg = []
+            for e in arg:
+                if not isinstance(e[0], Tuple) or not isinstance(e[1], Tuple):
+                    raise TypeError(f'Nodes in {e} must be tuples with node name and time step')
+                elif isinstance(e[0], DynamicStructureNode) and isinstance(e[1], DynamicStructureNode):
+                    new_arg.append(e)
+                elif len(e) == 2:
+                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(e[1], DynamicStructureNode):
+                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), DynamicStructureNode(e[1][0], e[1][1])))
+                    elif not isinstance(e[0], DynamicStructureNode):
+                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1]))
+                    elif not isinstance(e[1], DynamicStructureNode):
+                        new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1])))
+                elif len(e) == 3:
+                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(e[1], DynamicStructureNode):
+                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), DynamicStructureNode(e[1][0], e[1][1]), e[2]))
+                    elif not isinstance(e[0], DynamicStructureNode):
+                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1], e[2]))
+                    elif not isinstance(e[1], DynamicStructureNode):
+                        new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1]), e[2]))
+                else:
+                    raise TypeError(f'Argument {e} must be a tuple containing 2 or 3 elements')
+            return new_arg
+    else:
+        # if not isinstance(arg, Tuple):
+        #     raise TypeError(f'Edges must be tuples containing 2 or 3 elements, received {arg}')
+        if not isinstance(arg[0], Tuple) or not isinstance(arg[1], Tuple):
+            raise TypeError(f'Nodes in {arg} must be tuples with node name and time step')
+        elif isinstance(arg[0], DynamicStructureNode) and isinstance(arg[1], DynamicStructureNode):
+            return arg        
+        elif len(arg) == 2:
+            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(arg[1], DynamicStructureNode):
+                return (DynamicStructureNode(arg[0][0], arg[0][1]), DynamicStructureNode(arg[1][0], arg[1][1]))
+            elif not isinstance(arg[0], DynamicStructureNode):
+                return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1])
+            elif not isinstance(arg[1], DynamicStructureNode):
+                return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]))
+        elif len(arg) == 3:
+            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(arg[1], DynamicStructureNode):
+                return (DynamicStructureNode(arg[0][0], arg[0][1]), DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
+            elif not isinstance(arg[0], DynamicStructureNode):
+                return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1], arg[2])
+            elif not isinstance(arg[1], DynamicStructureNode):
+                return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
+        else:
+            raise TypeError(f'Argument {arg} must be either a DynamicStructureNode or tuple containing 2 or 3 elements')
+
+def coerce_dsm_nodes(arg):
+    """
+    Used by DynamicStructureModel to convert nodes passed as (node_name, lag) tuples into ``DynamicStructureNode``s
+    """
+    multi_node = check_collection_type(arg)
+    if multi_node:
+        if isinstance(arg, types.GeneratorType):
+            arg = list(arg)
+        if all(isinstance(n, DynamicStructureNode) for n in arg):
+            return arg
+        else:
+            new_arg = []
+            for n in arg:
+                if isinstance(n, DynamicStructureNode):
+                    new_arg.append(n)
+                elif isinstance(n, Tuple) and len(n) == 2:
+                    new_arg.append(DynamicStructureNode(n[0], n[1]))
+                else:
+                    raise TypeError(f'Argument {n} must be either a DynamicStructureNode or tuple containing 2 elements')
+            return new_arg
+    else:
+        if isinstance(arg, DynamicStructureNode):
+            return arg
+        elif isinstance(arg, Tuple) and len(arg) == 2:
+            return DynamicStructureNode(arg[0], arg[1])
+        else:
+            raise TypeError(f'Argument {arg} must be either a DynamicStructureNode or tuple containing 2 elements')
 
 class DynamicStructureModel(StructureModel):
     """
-    Base class for structure models, which are an extension of ``networkx.DiGraph``.
+    Base class for dynamic structure models, which are an extension of ``StructureModel``.
 
-    A ``StructureModel`` stores nodes and edges with optional data, or attributes.
+    A ``DynamicStructureModel`` stores ``DynamicStructureNode``s and edges with optional data, or attributes.
 
     Edges have one required attribute, "origin", which describes how the edge was created.
     Origin can be one of either unknown, learned, or expert.
 
-    StructureModel hold directed edges, describing a cause -> effect relationship.
-    Cycles are permitted within a ``StructureModel``.
+    DynamicStructureModel hold directed edges, describing a cause -> effect relationship.
+    Cycles are permitted within a ``DynamicStructureModel``.
 
-    Nodes can be arbitrary (hashable) Python objects with optional key/value attributes.
+    Nodes will be coerced into ``DynamicStructureNode``s with optional key/value attributes.
     By convention None is not used as a node.
 
     Edges are represented as links between nodes with optional key/value attributes.
@@ -405,7 +464,7 @@ class DynamicStructureModel(StructureModel):
 
     def __init__(self, incoming_graph_data=None, origin="unknown", **attr):
         """
-        Create a ``StructureModel`` with incoming_graph_data, which has come from some origin.
+        Create a ``DynamicStructureModel`` with incoming_graph_data, which has come from some origin.
 
         Args:
             incoming_graph_data (Optional): input graph (optional, default: None)
@@ -421,19 +480,16 @@ class DynamicStructureModel(StructureModel):
 
             attr : Attributes to add to graph as key/value pairs (no attributes by default).
         """
-        if incoming_graph_data is not None:
-            _validate_dsm_init_args(incoming_graph_data)
         super().__init__(incoming_graph_data, origin, **attr)
 
 
-    @checkargs
     def add_node(self, dnode: DynamicStructureNode):
-        super().add_nodes_from([dnode.get_node_name()])
+        dnode = coerce_dsm_nodes(dnode)
+        super().add_node(dnode)
     
-    @checkargs
     def add_nodes(self, dnodes: List[DynamicStructureNode]):
-        node_names = [dnode.get_node_name() for dnode in dnodes]
-        super().add_nodes_from(node_names)
+        dnodes = coerce_dsm_nodes(dnodes)
+        super().add_nodes_from(dnodes)
 
     def to_directed_class(self):
         """
@@ -442,7 +498,6 @@ class DynamicStructureModel(StructureModel):
         """
         return DynamicStructureModel
 
-    @checkargs
     def get_target_subgraph(self, node: DynamicStructureNode) -> "DynamicStructureModel":
         """
         Get the subgraph with the specified node.
@@ -456,17 +511,9 @@ class DynamicStructureModel(StructureModel):
         Raises:
             NodeNotFound: if the node is not found in the graph.
         """
-        node_name = node.get_node_name()
-        if node_name in self.nodes:
-            for component in nx.weakly_connected_components(self):
-                subgraph = self.subgraph(component).copy()
+        node = coerce_dsm_nodes(node)
+        return super().get_target_subgraph(node)
 
-                if node_name in set(subgraph.nodes):
-                    return subgraph
-
-        raise NodeNotFound(f"Node {node} not found in the graph")
-
-    @checkargs
     def get_markov_blanket(
         self, nodes: Union[DynamicStructureNode, List[DynamicStructureNode], Set[DynamicStructureNode]]
     ) -> "DynamicStructureModel":
@@ -482,39 +529,17 @@ class DynamicStructureModel(StructureModel):
         Raises:
             NodeNotFound: if one of the target nodes is not found in the graph.
         """
-        if not isinstance(nodes, (list, set)):
-            nodes = [nodes]
+        nodes = coerce_dsm_nodes(nodes)
+        return super().get_markov_blanket(nodes, DynamicStructureModel)
 
-        blanket_nodes = set()
-        
-        for node in set(nodes):  # Ensure target nodes are unique
-            node_name = node.get_node_name()
-            if node_name not in set(self.nodes):
-                raise NodeNotFound(f"Node {node} not found in the graph")
-
-            blanket_nodes.add(node_name)
-            blanket_nodes.update(self.predecessors(node_name))
-
-            for child in self.successors(node_name):
-                blanket_nodes.add(child)
-                blanket_nodes.update(self.predecessors(child))
-
-        blanket = DynamicStructureModel()
-        blanket_dyn_nodes = [DynamicStructureNode(node_name[0], node_name[-1]) for node_name in blanket_nodes]
-        blanket.add_nodes(blanket_dyn_nodes)
-
-        blanket_weighted_edges = []
-        for u, v, w in self.edges(data="weight"):
-            if u in blanket_nodes and v in blanket_nodes:
-                blanket_weighted_edges.append((DynamicStructureNode(u[0], u[-1]), DynamicStructureNode(v[0], v[-1]), w))
-        blanket.add_weighted_edges_from(blanket_weighted_edges)
-        return blanket
+    def add_edge(self, u: DynamicStructureNode, v: DynamicStructureNode, origin: str = "unknown", **attr):
+        edge = coerce_dsm_edges((u, v))
+        super().add_edge(edge[0], edge[1], origin, **attr)
 
     # disabled: W0221: Parameters differ from overridden 'add_edge' method (arguments-differ)
     # this has been disabled because origin tracking is required for CausalGraphs
     # implementing it in this way allows all 3rd party libraries and applications to
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
-    @checkargs
     def add_edges_from(
         self,
         ebunch_to_add: Union[Set[Tuple[DynamicStructureNode, DynamicStructureNode]], List[Tuple[DynamicStructureNode, DynamicStructureNode]]],
@@ -524,7 +549,7 @@ class DynamicStructureModel(StructureModel):
         """
         Adds a bunch of causal relationships, u -> v.
 
-        If u or v do not currently exists in the ``StructureModel`` then they will be created.
+        If u or v do not currently exists in the ``DynamicStructureModel`` then they will be created.
 
         By default relationships will be given origin="unknown",
         but may also be given "learned" or "expert" origin.
@@ -544,32 +569,14 @@ class DynamicStructureModel(StructureModel):
                         - expert: edges were created by a domain expert.
             **attr:  Attributes to add to edge as key/value pairs (no attributes by default).
         """
-        _validate_origin(origin)
-
-        if isinstance(ebunch_to_add, Iterable) and not ebunch_to_add:
-            super().add_edges_from(ebunch_to_add, **attr)
-            return
-
-        if isinstance(ebunch_to_add, types.GeneratorType):
-            dsn_ebunch = []
-            for e in ebunch_to_add:
-                if len(e) == 3:
-                    dsn_ebunch.append((DynamicStructureNode(e[0][0], e[0][-1]).get_node_name(), DynamicStructureNode(e[1][0], e[1][-1]).get_node_name(), e[2]))
-                else:
-                    dsn_ebunch.append((DynamicStructureNode(e[0][0], e[0][-1]).get_node_name(), DynamicStructureNode(e[1][0], e[1][-1]).get_node_name()))
-        else:
-            if len(ebunch_to_add[0]) == 3:
-                dsn_ebunch = [(e[0].get_node_name(), e[1].get_node_name(), e[2]) for e in ebunch_to_add]
-            else:
-                dsn_ebunch = [(e[0].get_node_name(), e[1].get_node_name()) for e in ebunch_to_add]
-        attr.update({"origin": origin})
-        super().add_edges_from(dsn_ebunch, **attr)
+        ebunch_to_add = coerce_dsm_edges(ebunch_to_add)
+        print(ebunch_to_add)
+        super().add_edges_from(ebunch_to_add, origin, **attr)
 
     # disabled: W0221: Parameters differ from overridden 'add_edge' method (arguments-differ)
     # this has been disabled because origin tracking is required for CausalGraphs
     # implementing it in this way allows all 3rd party libraries and applications to
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
-    @checkargs
     def add_weighted_edges_from(
         self,
         ebunch_to_add: Union[Set[Tuple[DynamicStructureNode, DynamicStructureNode, float]], List[Tuple[DynamicStructureNode, DynamicStructureNode, float]]],
@@ -580,7 +587,7 @@ class DynamicStructureModel(StructureModel):
         """
         Adds a bunch of weighted causal relationships, u -> v.
 
-        If u or v do not currently exists in the ``StructureModel`` then they will be created.
+        If u or v do not currently exists in the ``DynamicStructureModel`` then they will be created.
 
         By default relationships will be given origin="unknown",
         but may also be given "learned" or "expert" origin.
@@ -602,15 +609,7 @@ class DynamicStructureModel(StructureModel):
                 - expert: edges were created by a domain expert.
             **attr: Attributes to add to edge as key/value pairs (no attributes by default).
         """
-        _validate_origin(origin)
-
-        if isinstance(ebunch_to_add, Iterable) and not ebunch_to_add:
-            super().add_weighted_edges_from(ebunch_to_add, weight=weight, **attr)
-            return
-
-        if isinstance(ebunch_to_add, types.GeneratorType):
-            dsn_ebunch = [(DynamicStructureNode(e[0][0], e[0][-1]).get_node_name(), DynamicStructureNode(e[1][0], e[1][-1]).get_node_name(), e[2]) for e in ebunch_to_add]
-        else:
-            dsn_ebunch = [(e[0].get_node_name(), e[1].get_node_name(), e[2]) for e in ebunch_to_add]
-        attr.update({"origin": origin})
-        super().add_weighted_edges_from(dsn_ebunch, weight=weight, **attr)
+        ebunch_to_add = coerce_dsm_edges(ebunch_to_add)
+        if not isinstance(ebunch_to_add, list):
+            ebunch_to_add = [ebunch_to_add]
+        super().add_weighted_edges_from(ebunch_to_add, weight=weight, origin=origin, **attr)
