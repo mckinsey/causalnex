@@ -26,7 +26,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
-from causalnex.structure.structuremodel import DynamicStructureNode
 
 import networkx as nx
 import numpy as np
@@ -34,6 +33,7 @@ import pandas as pd
 import pytest
 
 from causalnex.structure.dynotears import from_numpy_dynamic, from_pandas_dynamic
+from causalnex.structure.structuremodel import DynamicStructureNode
 
 
 class TestFromNumpyDynotears:
@@ -136,7 +136,9 @@ class TestFromNumpyDynotears:
         edges_in_sm_and_a = [el for el in sm.edges if el in a_edges]
         sm_inter_edges = [el for el in sm.edges if "lag0" not in el[0].get_node_name()]
 
-        assert sorted([el for el in sm.edges if "lag0" in el[0].get_node_name()]) == sorted(w_edges)
+        assert sorted(
+            [el for el in sm.edges if "lag0" in el[0].get_node_name()]
+        ) == sorted(w_edges)
         assert len(edges_in_sm_and_a) / len(a_edges) > 0.6
         assert len(edges_in_sm_and_a) / len(sm_inter_edges) > 0.9
 
@@ -279,8 +281,8 @@ class TestFromNumpyDynotears:
         )
         sm = from_numpy_dynamic(data.values[1:], data.values[:-1], w_threshold=0.1)
         edge = (
-            sm.get_edge_data(DynamicStructureNode(1, 0), DynamicStructureNode(0, 0)) or 
-            sm.get_edge_data(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0))
+            sm.get_edge_data(DynamicStructureNode(1, 0), DynamicStructureNode(0, 0))
+            or sm.get_edge_data(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0))
         )["weight"]
 
         assert 0.99 < edge <= 1.01
@@ -294,8 +296,8 @@ class TestFromNumpyDynotears:
         )
         sm = from_numpy_dynamic(data.values[1:], data.values[:-1], w_threshold=0.1)
         edge = (
-            sm.get_edge_data(DynamicStructureNode(1, 0), DynamicStructureNode(0, 0)) or 
-            sm.get_edge_data(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0))
+            sm.get_edge_data(DynamicStructureNode(1, 0), DynamicStructureNode(0, 0))
+            or sm.get_edge_data(DynamicStructureNode(0, 0), DynamicStructureNode(1, 0))
         )["weight"]
         assert -1.01 < edge <= -0.99
 
@@ -419,7 +421,9 @@ class TestFromPandasDynotears:
 
         edges_in_sm_and_a = [el for el in sm.edges if el in a_edges]
         sm_inter_edges = [el for el in sm.edges if "lag0" not in el[0].get_node_name()]
-        assert sorted(el for el in sm.edges if "lag0" in el[0].get_node_name()) == sorted(w_edges)
+        assert sorted(
+            el for el in sm.edges if "lag0" in el[0].get_node_name()
+        ) == sorted(w_edges)
         assert len(edges_in_sm_and_a) / len(a_edges) > 0.6
         assert len(edges_in_sm_and_a) / len(sm_inter_edges) > 0.9
 
@@ -581,8 +585,10 @@ class TestFromPandasDynotears:
         )
         sm = from_pandas_dynamic(data, p=1, w_threshold=0.1)
         edge = (
-            sm.get_edge_data(DynamicStructureNode('b', 0), DynamicStructureNode('a', 0)) or 
-            sm.get_edge_data(DynamicStructureNode('a', 0), DynamicStructureNode('b', 0))
+            sm.get_edge_data(DynamicStructureNode("b", 0), DynamicStructureNode("a", 0))
+            or sm.get_edge_data(
+                DynamicStructureNode("a", 0), DynamicStructureNode("b", 0)
+            )
         )["weight"]
 
         assert 0.99 < edge <= 1.01
@@ -596,8 +602,10 @@ class TestFromPandasDynotears:
         )
         sm = from_pandas_dynamic(data, p=1, w_threshold=0.1)
         edge = (
-            sm.get_edge_data(DynamicStructureNode('b', 0), DynamicStructureNode('a', 0)) or 
-            sm.get_edge_data(DynamicStructureNode('a', 0), DynamicStructureNode('b', 0))
+            sm.get_edge_data(DynamicStructureNode("b", 0), DynamicStructureNode("a", 0))
+            or sm.get_edge_data(
+                DynamicStructureNode("a", 0), DynamicStructureNode("b", 0)
+            )
         )["weight"]
         assert -1.01 < edge <= -0.99
 

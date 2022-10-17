@@ -31,15 +31,13 @@ This module contains the implementation of ``StructureModel``.
 ``StructureModel`` is a class that describes relationships between variables as a graph.
 """
 
-from distutils.ccompiler import new_compiler
-from typing import Any, Hashable, List, Set, Tuple, Union, NamedTuple
-from collections import Iterable
+import types
+from typing import Any, Hashable, List, NamedTuple, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
 from networkx.exception import NodeNotFound
-import inspect
-import types
+
 
 def _validate_origin(origin: str) -> None:
     """
@@ -340,24 +338,27 @@ class StructureModel(nx.DiGraph):
         )
         return blanket
 
+
 class DynamicStructureNode(NamedTuple):
     """
     Used by DynamicStructureModel to store each node as a (node_name, lag) pair
     """
+
     node: Union[int, str]
     time_step: int
 
     def get_node_name(self):
-        return f'{self.node}_lag{self.time_step}'
+        return f"{self.node}_lag{self.time_step}"
 
 
 def check_collection_type(c):
     return isinstance(c, (list, set, types.GeneratorType))
 
+
 def coerce_dsm_edges(arg):
     """
     Used by DynamicStructureModel to convert edges as passed as primitive tuples to tuples of ``DynamicStructureNode``s.
-    An example input is [((0,0), (1,0), .5), ((1,0), (2,0), .5)]. This would be converted to 
+    An example input is [((0,0), (1,0), .5), ((1,0), (2,0), .5)]. This would be converted to
     [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .5)]
     """
     multi_edge = check_collection_type(arg)
@@ -365,56 +366,105 @@ def coerce_dsm_edges(arg):
         if isinstance(arg, types.GeneratorType):
             arg = list(arg)
         if not all(isinstance(e, Tuple) for e in arg):
-            raise TypeError(f'Edges must be tuples containing 2 or 3 elements, received {arg}')
-        if all(isinstance(e[0], DynamicStructureNode) and isinstance(e[1], DynamicStructureNode) for e in arg):
+            raise TypeError(
+                f"Edges must be tuples containing 2 or 3 elements, received {arg}"
+            )
+        if all(
+            isinstance(e[0], DynamicStructureNode)
+            and isinstance(e[1], DynamicStructureNode)
+            for e in arg
+        ):
             return arg
         else:
             new_arg = []
             for e in arg:
                 if not isinstance(e[0], Tuple) or not isinstance(e[1], Tuple):
-                    raise TypeError(f'Nodes in {e} must be tuples with node name and time step')
-                elif isinstance(e[0], DynamicStructureNode) and isinstance(e[1], DynamicStructureNode):
+                    raise TypeError(
+                        f"Nodes in {e} must be tuples with node name and time step"
+                    )
+                elif isinstance(e[0], DynamicStructureNode) and isinstance(
+                    e[1], DynamicStructureNode
+                ):
                     new_arg.append(e)
                 elif len(e) == 2:
-                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(e[1], DynamicStructureNode):
-                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), DynamicStructureNode(e[1][0], e[1][1])))
+                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(
+                        e[1], DynamicStructureNode
+                    ):
+                        new_arg.append(
+                            (
+                                DynamicStructureNode(e[0][0], e[0][1]),
+                                DynamicStructureNode(e[1][0], e[1][1]),
+                            )
+                        )
                     elif not isinstance(e[0], DynamicStructureNode):
                         new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1]))
                     elif not isinstance(e[1], DynamicStructureNode):
                         new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1])))
                 elif len(e) == 3:
-                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(e[1], DynamicStructureNode):
-                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), DynamicStructureNode(e[1][0], e[1][1]), e[2]))
+                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(
+                        e[1], DynamicStructureNode
+                    ):
+                        new_arg.append(
+                            (
+                                DynamicStructureNode(e[0][0], e[0][1]),
+                                DynamicStructureNode(e[1][0], e[1][1]),
+                                e[2],
+                            )
+                        )
                     elif not isinstance(e[0], DynamicStructureNode):
-                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1], e[2]))
+                        new_arg.append(
+                            (DynamicStructureNode(e[0][0], e[0][1]), e[1], e[2])
+                        )
                     elif not isinstance(e[1], DynamicStructureNode):
-                        new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1]), e[2]))
+                        new_arg.append(
+                            (e[0], DynamicStructureNode(e[1][0], e[1][1]), e[2])
+                        )
                 else:
-                    raise TypeError(f'Argument {e} must be a tuple containing 2 or 3 elements')
+                    raise TypeError(
+                        f"Argument {e} must be a tuple containing 2 or 3 elements"
+                    )
             return new_arg
     else:
         # if not isinstance(arg, Tuple):
         #     raise TypeError(f'Edges must be tuples containing 2 or 3 elements, received {arg}')
         if not isinstance(arg[0], Tuple) or not isinstance(arg[1], Tuple):
-            raise TypeError(f'Nodes in {arg} must be tuples with node name and time step')
-        elif isinstance(arg[0], DynamicStructureNode) and isinstance(arg[1], DynamicStructureNode):
-            return arg        
+            raise TypeError(
+                f"Nodes in {arg} must be tuples with node name and time step"
+            )
+        elif isinstance(arg[0], DynamicStructureNode) and isinstance(
+            arg[1], DynamicStructureNode
+        ):
+            return arg
         elif len(arg) == 2:
-            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(arg[1], DynamicStructureNode):
-                return (DynamicStructureNode(arg[0][0], arg[0][1]), DynamicStructureNode(arg[1][0], arg[1][1]))
+            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
+                arg[1], DynamicStructureNode
+            ):
+                return (
+                    DynamicStructureNode(arg[0][0], arg[0][1]),
+                    DynamicStructureNode(arg[1][0], arg[1][1]),
+                )
             elif not isinstance(arg[0], DynamicStructureNode):
                 return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1])
             elif not isinstance(arg[1], DynamicStructureNode):
                 return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]))
         elif len(arg) == 3:
-            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(arg[1], DynamicStructureNode):
-                return (DynamicStructureNode(arg[0][0], arg[0][1]), DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
+            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
+                arg[1], DynamicStructureNode
+            ):
+                return (
+                    DynamicStructureNode(arg[0][0], arg[0][1]),
+                    DynamicStructureNode(arg[1][0], arg[1][1]),
+                    arg[2],
+                )
             elif not isinstance(arg[0], DynamicStructureNode):
                 return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1], arg[2])
             elif not isinstance(arg[1], DynamicStructureNode):
                 return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
         else:
-            raise TypeError(f'Argument {arg} must be either a DynamicStructureNode or tuple containing 2 or 3 elements')
+            raise TypeError(
+                f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 or 3 elements"
+            )
+
 
 def coerce_dsm_nodes(arg):
     """
@@ -434,7 +484,9 @@ def coerce_dsm_nodes(arg):
                 elif isinstance(n, Tuple) and len(n) == 2:
                     new_arg.append(DynamicStructureNode(n[0], n[1]))
                 else:
-                    raise TypeError(f'Argument {n} must be either a DynamicStructureNode or tuple containing 2 elements')
+                    raise TypeError(
+                        f"Argument {n} must be either a DynamicStructureNode or tuple containing 2 elements"
+                    )
             return new_arg
     else:
         if isinstance(arg, DynamicStructureNode):
@@ -442,7 +494,10 @@ def coerce_dsm_nodes(arg):
         elif isinstance(arg, Tuple) and len(arg) == 2:
             return DynamicStructureNode(arg[0], arg[1])
         else:
-            raise TypeError(f'Argument {arg} must be either a DynamicStructureNode or tuple containing 2 elements')
+            raise TypeError(
+                f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 elements"
+            )
+
 
 class DynamicStructureModel(StructureModel):
     """
@@ -482,11 +537,10 @@ class DynamicStructureModel(StructureModel):
         """
         super().__init__(incoming_graph_data, origin, **attr)
 
-
     def add_node(self, dnode: DynamicStructureNode):
         dnode = coerce_dsm_nodes(dnode)
         super().add_node(dnode)
-    
+
     def add_nodes(self, dnodes: List[DynamicStructureNode]):
         dnodes = coerce_dsm_nodes(dnodes)
         super().add_nodes_from(dnodes)
@@ -498,7 +552,9 @@ class DynamicStructureModel(StructureModel):
         """
         return DynamicStructureModel
 
-    def get_target_subgraph(self, node: DynamicStructureNode) -> "DynamicStructureModel":
+    def get_target_subgraph(
+        self, node: DynamicStructureNode
+    ) -> "DynamicStructureModel":
         """
         Get the subgraph with the specified node.
 
@@ -515,7 +571,10 @@ class DynamicStructureModel(StructureModel):
         return super().get_target_subgraph(node)
 
     def get_markov_blanket(
-        self, nodes: Union[DynamicStructureNode, List[DynamicStructureNode], Set[DynamicStructureNode]]
+        self,
+        nodes: Union[
+            DynamicStructureNode, List[DynamicStructureNode], Set[DynamicStructureNode]
+        ],
     ) -> "DynamicStructureModel":
         """
         Get Markov blanket of specified target nodes
@@ -532,7 +591,13 @@ class DynamicStructureModel(StructureModel):
         nodes = coerce_dsm_nodes(nodes)
         return super().get_markov_blanket(nodes, DynamicStructureModel)
 
-    def add_edge(self, u: DynamicStructureNode, v: DynamicStructureNode, origin: str = "unknown", **attr):
+    def add_edge(
+        self,
+        u: DynamicStructureNode,
+        v: DynamicStructureNode,
+        origin: str = "unknown",
+        **attr,
+    ):
         edge = coerce_dsm_edges((u, v))
         super().add_edge(edge[0], edge[1], origin, **attr)
 
@@ -542,7 +607,10 @@ class DynamicStructureModel(StructureModel):
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
     def add_edges_from(
         self,
-        ebunch_to_add: Union[Set[Tuple[DynamicStructureNode, DynamicStructureNode]], List[Tuple[DynamicStructureNode, DynamicStructureNode]]],
+        ebunch_to_add: Union[
+            Set[Tuple[DynamicStructureNode, DynamicStructureNode]],
+            List[Tuple[DynamicStructureNode, DynamicStructureNode]],
+        ],
         origin: str = "unknown",
         **attr,
     ):
@@ -579,10 +647,13 @@ class DynamicStructureModel(StructureModel):
     # integrate seamlessly, where edges will be given origin="unknown" where not provided
     def add_weighted_edges_from(
         self,
-        ebunch_to_add: Union[Set[Tuple[DynamicStructureNode, DynamicStructureNode, float]], List[Tuple[DynamicStructureNode, DynamicStructureNode, float]]],
+        ebunch_to_add: Union[
+            Set[Tuple[DynamicStructureNode, DynamicStructureNode, float]],
+            List[Tuple[DynamicStructureNode, DynamicStructureNode, float]],
+        ],
         weight: str = "weight",
         origin: str = "unknown",
-        **attr
+        **attr,
     ):
         """
         Adds a bunch of weighted causal relationships, u -> v.
@@ -612,4 +683,6 @@ class DynamicStructureModel(StructureModel):
         ebunch_to_add = coerce_dsm_edges(ebunch_to_add)
         if not isinstance(ebunch_to_add, list):
             ebunch_to_add = [ebunch_to_add]
-        super().add_weighted_edges_from(ebunch_to_add, weight=weight, origin=origin, **attr)
+        super().add_weighted_edges_from(
+            ebunch_to_add, weight=weight, origin=origin, **attr
+        )

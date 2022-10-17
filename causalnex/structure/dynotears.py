@@ -31,15 +31,14 @@ dataset.
 """
 
 import warnings
-from typing import Dict, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import scipy.linalg as slin
 import scipy.optimize as sopt
 
-from causalnex.structure import DynamicStructureModel
-from causalnex.structure import DynamicStructureNode
+from causalnex.structure import DynamicStructureModel, DynamicStructureNode
 from causalnex.structure.transformers import DynamicDataTransformer
 
 
@@ -125,7 +124,11 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
 
     sm = DynamicStructureModel()
     sm.add_nodes(
-        [DynamicStructureNode(var, l_val) for var in col_idx.keys() for l_val in range(p + 1)]
+        [
+            DynamicStructureNode(var, l_val)
+            for var in col_idx.keys()
+            for l_val in range(p + 1)
+        ]
     )
     sm.add_weighted_edges_from(
         [

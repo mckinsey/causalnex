@@ -43,7 +43,7 @@ from pgmpy.factors.discrete.CPD import TabularCPD
 from pgmpy.models import BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
-from causalnex.structure import StructureModel, DynamicStructureModel
+from causalnex.structure import StructureModel
 from causalnex.utils.pgmpy_utils import pd_to_tabular_cpd
 
 
