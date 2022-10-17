@@ -348,122 +348,146 @@ class DynamicStructureNode(NamedTuple):
     time_step: int
 
     def get_node_name(self):
+        """
+        Naming convention for dynamic nodes
+        """
         return f"{self.node}_lag{self.time_step}"
 
 
 def check_collection_type(c):
+    """
+    Check if data structure is a collection
+    """
     return isinstance(c, (list, set, types.GeneratorType))
+
+
+def convert_to_dsm_edges(arg):
+    """
+    If not all edges passed to DynamicStructureModel are tuples of DynamicStructureNode, convert them
+    """
+    new_arg = []
+    for e in arg:
+        if not isinstance(e[0], Tuple) or not isinstance(e[1], Tuple):
+            raise TypeError(f"Nodes in {e} must be tuples with node name and time step")
+        if isinstance(e[0], DynamicStructureNode) and isinstance(
+            e[1], DynamicStructureNode
+        ):
+            new_arg.append(e)
+        elif len(e) == 2:
+            if not isinstance(e[0], DynamicStructureNode) and not isinstance(
+                e[1], DynamicStructureNode
+            ):
+                new_arg.append(
+                    (
+                        DynamicStructureNode(e[0][0], e[0][1]),
+                        DynamicStructureNode(e[1][0], e[1][1]),
+                    )
+                )
+            elif not isinstance(e[0], DynamicStructureNode):
+                new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1]))
+            elif not isinstance(e[1], DynamicStructureNode):
+                new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1])))
+        elif len(e) == 3:
+            if not isinstance(e[0], DynamicStructureNode) and not isinstance(
+                e[1], DynamicStructureNode
+            ):
+                new_arg.append(
+                    (
+                        DynamicStructureNode(e[0][0], e[0][1]),
+                        DynamicStructureNode(e[1][0], e[1][1]),
+                        e[2],
+                    )
+                )
+            elif not isinstance(e[0], DynamicStructureNode):
+                new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1], e[2]))
+            elif not isinstance(e[1], DynamicStructureNode):
+                new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1]), e[2]))
+        else:
+            raise TypeError(f"Argument {e} must be a tuple containing 2 or 3 elements")
+    return new_arg
+
+
+def convert_single_edge(arg):
+    """
+    Used by coerce_dsm_edges to convert a single non weighted edge
+    """
+    if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
+        arg[1], DynamicStructureNode
+    ):
+        return (
+            DynamicStructureNode(arg[0][0], arg[0][1]),
+            DynamicStructureNode(arg[1][0], arg[1][1]),
+        )
+    if not isinstance(arg[0], DynamicStructureNode):
+        return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1])
+    if not isinstance(arg[1], DynamicStructureNode):
+        return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]))
+    return arg
+
+
+def convert_single_weighted_edge(arg):
+    """
+    Used by coerce_dsm_edges to convert a single weighted edge
+    """
+    if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
+        arg[1], DynamicStructureNode
+    ):
+        return (
+            DynamicStructureNode(arg[0][0], arg[0][1]),
+            DynamicStructureNode(arg[1][0], arg[1][1]),
+            arg[2],
+        )
+    if not isinstance(arg[0], DynamicStructureNode):
+        return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1], arg[2])
+    if not isinstance(arg[1], DynamicStructureNode):
+        return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
+    return arg
+
+
+def coerce_dsm_multi_edge(arg):
+    """
+    Coerce arguments containing multiple edges passed to DynamicStructureModel methods
+    """
+    if isinstance(arg, types.GeneratorType):
+        arg = list(arg)
+    if not all(isinstance(e, Tuple) for e in arg):
+        raise TypeError(
+            f"Edges must be tuples containing 2 or 3 elements, received {arg}"
+        )
+    if all(
+        isinstance(e[0], DynamicStructureNode)
+        and isinstance(e[1], DynamicStructureNode)
+        for e in arg
+    ):
+        return arg
+    return convert_to_dsm_edges(arg)
 
 
 def coerce_dsm_edges(arg):
     """
     Used by DynamicStructureModel to convert edges as passed as primitive tuples to tuples of ``DynamicStructureNode``s.
     An example input is [((0,0), (1,0), .5), ((1,0), (2,0), .5)]. This would be converted to
-    [(DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5), (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .5)]
+    [
+        (DynamicStructureNode(0,0), DynamicStructureNode(1,0), .5),
+        (DynamicStructureNode(1,0), DynamicStructureNode(2,0), .5)
+    ]
     """
     multi_edge = check_collection_type(arg)
     if multi_edge:
-        if isinstance(arg, types.GeneratorType):
-            arg = list(arg)
-        if not all(isinstance(e, Tuple) for e in arg):
-            raise TypeError(
-                f"Edges must be tuples containing 2 or 3 elements, received {arg}"
-            )
-        if all(
-            isinstance(e[0], DynamicStructureNode)
-            and isinstance(e[1], DynamicStructureNode)
-            for e in arg
-        ):
-            return arg
-        else:
-            new_arg = []
-            for e in arg:
-                if not isinstance(e[0], Tuple) or not isinstance(e[1], Tuple):
-                    raise TypeError(
-                        f"Nodes in {e} must be tuples with node name and time step"
-                    )
-                elif isinstance(e[0], DynamicStructureNode) and isinstance(
-                    e[1], DynamicStructureNode
-                ):
-                    new_arg.append(e)
-                elif len(e) == 2:
-                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(
-                        e[1], DynamicStructureNode
-                    ):
-                        new_arg.append(
-                            (
-                                DynamicStructureNode(e[0][0], e[0][1]),
-                                DynamicStructureNode(e[1][0], e[1][1]),
-                            )
-                        )
-                    elif not isinstance(e[0], DynamicStructureNode):
-                        new_arg.append((DynamicStructureNode(e[0][0], e[0][1]), e[1]))
-                    elif not isinstance(e[1], DynamicStructureNode):
-                        new_arg.append((e[0], DynamicStructureNode(e[1][0], e[1][1])))
-                elif len(e) == 3:
-                    if not isinstance(e[0], DynamicStructureNode) and not isinstance(
-                        e[1], DynamicStructureNode
-                    ):
-                        new_arg.append(
-                            (
-                                DynamicStructureNode(e[0][0], e[0][1]),
-                                DynamicStructureNode(e[1][0], e[1][1]),
-                                e[2],
-                            )
-                        )
-                    elif not isinstance(e[0], DynamicStructureNode):
-                        new_arg.append(
-                            (DynamicStructureNode(e[0][0], e[0][1]), e[1], e[2])
-                        )
-                    elif not isinstance(e[1], DynamicStructureNode):
-                        new_arg.append(
-                            (e[0], DynamicStructureNode(e[1][0], e[1][1]), e[2])
-                        )
-                else:
-                    raise TypeError(
-                        f"Argument {e} must be a tuple containing 2 or 3 elements"
-                    )
-            return new_arg
-    else:
-        # if not isinstance(arg, Tuple):
-        #     raise TypeError(f'Edges must be tuples containing 2 or 3 elements, received {arg}')
-        if not isinstance(arg[0], Tuple) or not isinstance(arg[1], Tuple):
-            raise TypeError(
-                f"Nodes in {arg} must be tuples with node name and time step"
-            )
-        elif isinstance(arg[0], DynamicStructureNode) and isinstance(
-            arg[1], DynamicStructureNode
-        ):
-            return arg
-        elif len(arg) == 2:
-            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
-                arg[1], DynamicStructureNode
-            ):
-                return (
-                    DynamicStructureNode(arg[0][0], arg[0][1]),
-                    DynamicStructureNode(arg[1][0], arg[1][1]),
-                )
-            elif not isinstance(arg[0], DynamicStructureNode):
-                return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1])
-            elif not isinstance(arg[1], DynamicStructureNode):
-                return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]))
-        elif len(arg) == 3:
-            if not isinstance(arg[0], DynamicStructureNode) and not isinstance(
-                arg[1], DynamicStructureNode
-            ):
-                return (
-                    DynamicStructureNode(arg[0][0], arg[0][1]),
-                    DynamicStructureNode(arg[1][0], arg[1][1]),
-                    arg[2],
-                )
-            elif not isinstance(arg[0], DynamicStructureNode):
-                return (DynamicStructureNode(arg[0][0], arg[0][1]), arg[1], arg[2])
-            elif not isinstance(arg[1], DynamicStructureNode):
-                return (arg[0], DynamicStructureNode(arg[1][0], arg[1][1]), arg[2])
-        else:
-            raise TypeError(
-                f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 or 3 elements"
-            )
+        return coerce_dsm_multi_edge(arg)
+    if not isinstance(arg[0], Tuple) or not isinstance(arg[1], Tuple):
+        raise TypeError(f"Nodes in {arg} must be tuples with node name and time step")
+    if isinstance(arg[0], DynamicStructureNode) and isinstance(
+        arg[1], DynamicStructureNode
+    ):
+        return arg
+    if len(arg) == 2:
+        return convert_single_edge(arg)
+    if len(arg) == 3:
+        return convert_single_weighted_edge(arg)
+    raise TypeError(
+        f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 or 3 elements"
+    )
 
 
 def coerce_dsm_nodes(arg):
@@ -476,27 +500,24 @@ def coerce_dsm_nodes(arg):
             arg = list(arg)
         if all(isinstance(n, DynamicStructureNode) for n in arg):
             return arg
-        else:
-            new_arg = []
-            for n in arg:
-                if isinstance(n, DynamicStructureNode):
-                    new_arg.append(n)
-                elif isinstance(n, Tuple) and len(n) == 2:
-                    new_arg.append(DynamicStructureNode(n[0], n[1]))
-                else:
-                    raise TypeError(
-                        f"Argument {n} must be either a DynamicStructureNode or tuple containing 2 elements"
-                    )
-            return new_arg
-    else:
-        if isinstance(arg, DynamicStructureNode):
-            return arg
-        elif isinstance(arg, Tuple) and len(arg) == 2:
-            return DynamicStructureNode(arg[0], arg[1])
-        else:
-            raise TypeError(
-                f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 elements"
-            )
+        new_arg = []
+        for n in arg:
+            if isinstance(n, DynamicStructureNode):
+                new_arg.append(n)
+            elif isinstance(n, Tuple) and len(n) == 2:
+                new_arg.append(DynamicStructureNode(n[0], n[1]))
+            else:
+                raise TypeError(
+                    f"Argument {n} must be either a DynamicStructureNode or tuple containing 2 elements"
+                )
+        return new_arg
+    if isinstance(arg, DynamicStructureNode):
+        return arg
+    if isinstance(arg, Tuple) and len(arg) == 2:
+        return DynamicStructureNode(arg[0], arg[1])
+    raise TypeError(
+        f"Argument {arg} must be either a DynamicStructureNode or tuple containing 2 elements"
+    )
 
 
 class DynamicStructureModel(StructureModel):
