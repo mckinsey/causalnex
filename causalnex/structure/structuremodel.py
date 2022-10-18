@@ -354,11 +354,9 @@ class DynamicStructureNode(NamedTuple):
         return f"{self.node}_lag{self.time_step}"
 
 
-"""
-There is a problem with `sphinx-autodoc-typehints` and NamedTuples. This is needed
-to prevent https://github.com/tox-dev/sphinx-autodoc-typehints/issues/68
-Fix here https://github.com/sphinx-doc/sphinx/issues/6636#issuecomment-608083353
-"""
+# There is a problem with `sphinx-autodoc-typehints` and NamedTuples. This is needed
+# to prevent https://github.com/tox-dev/sphinx-autodoc-typehints/issues/68
+# Fix here https://github.com/sphinx-doc/sphinx/issues/6636#issuecomment-608083353
 DynamicStructureNode.__new__.__module__ = __name__
 
 
