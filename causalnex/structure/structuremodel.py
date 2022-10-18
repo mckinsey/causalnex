@@ -538,31 +538,14 @@ class DynamicStructureModel(StructureModel):
     Edges are represented as links between nodes with optional key/value attributes.
     """
 
-    def __init__(self, incoming_graph_data=None, origin="unknown", **attr):
-        """
-        Create a ``DynamicStructureModel`` with incoming_graph_data, which has come from some origin.
-
-        Args:
-            incoming_graph_data (Optional): input graph (optional, default: None)
-                                 Data to initialize graph. If None (default) an empty graph is created.
-                                 The data can be any format that is supported by the to_networkx_graph()
-                                 function, currently including edge list, dict of dicts, dict of lists,
-                                 NetworkX graph, NumPy matrix or 2d ndarray, SciPy sparse matrix, or PyGraphviz graph.
-
-            origin (str): label for how the edges were created. Can be one of:
-                        - unknown: edges exist for an unknown reason;
-                        - learned: edges were created as the output of a machine-learning process;
-                        - expert: edges were created by a domain expert.
-
-            attr : Attributes to add to graph as key/value pairs (no attributes by default).
-        """
-        super().__init__(incoming_graph_data, origin, **attr)
-
-    def add_node(self, dnode: DynamicStructureNode):
-        dnode = coerce_dsm_nodes(dnode)
-        super().add_node(dnode)
+    def add_node(self, node_for_adding: DynamicStructureNode, **attr):
+        dnode = coerce_dsm_nodes(node_for_adding)
+        super().add_node(dnode, **attr)
 
     def add_nodes(self, dnodes: List[DynamicStructureNode]):
+        """
+        Add multiple `DynamicStructureNode` to graph
+        """
         dnodes = coerce_dsm_nodes(dnodes)
         super().add_nodes_from(dnodes)
 
@@ -596,6 +579,7 @@ class DynamicStructureModel(StructureModel):
         nodes: Union[
             DynamicStructureNode, List[DynamicStructureNode], Set[DynamicStructureNode]
         ],
+        cls: nx.DiGraph = None,
     ) -> "DynamicStructureModel":
         """
         Get Markov blanket of specified target nodes
@@ -614,12 +598,12 @@ class DynamicStructureModel(StructureModel):
 
     def add_edge(
         self,
-        u: DynamicStructureNode,
-        v: DynamicStructureNode,
+        u_of_edge: DynamicStructureNode,
+        v_of_edge: DynamicStructureNode,
         origin: str = "unknown",
         **attr,
     ):
-        edge = coerce_dsm_edges((u, v))
+        edge = coerce_dsm_edges((u_of_edge, v_of_edge))
         super().add_edge(edge[0], edge[1], origin, **attr)
 
     # disabled: W0221: Parameters differ from overridden 'add_edge' method (arguments-differ)
