@@ -354,6 +354,9 @@ class DynamicStructureNode(NamedTuple):
         return f"{self.node}_lag{self.time_step}"
 
 
+DynamicStructureNode.__new__.__module__ = __name__
+
+
 def check_collection_type(c):
     """
     Check if data structure is a collection
