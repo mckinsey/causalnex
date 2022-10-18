@@ -110,7 +110,7 @@ def count_unique_rows(data: pd.DataFrame, placeholder: float = -np.inf) -> pd.Da
     """
     # find a placeholder for NaNs: groupby excludes NaNs by default.
     # So we replace them with some value and later put the NaNs back
-    data.fillna(placeholder, inplace=True)
+    data = data.fillna(placeholder)
     cols = list(data.columns)
 
     if "count" not in data.columns:

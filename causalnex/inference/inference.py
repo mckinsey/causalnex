@@ -32,6 +32,7 @@ This module contains the implementation of ``InferenceEngine``.
 """
 import copy
 import inspect
+import math
 import re
 import types
 from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
@@ -205,7 +206,7 @@ class InferenceEngine:
         Raises:
             ValueError: if states do not match original states of the node, or probabilities do not sum to 1.
         """
-        if sum(state.values()) != 1.0:
+        if not math.isclose(sum(state.values()), 1.0):
             raise ValueError("The cpd for the provided observation must sum to 1")
 
         if max(state.values()) > 1.0 or min(state.values()) < 0:
@@ -345,7 +346,7 @@ class InferenceEngine:
             # initially there are none present, but caller will add appropriate arguments to the function
             # getargvalues was "inadvertently marked as deprecated in Python 3.5"
             # https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
-            arg_spec = inspect.getargvalues(inspect.currentframe())
+            arg_spec = inspect.getargvalues(inspect.currentframe())  # pragma: no cover
 
             return self._cpds[arg_spec.args[0]][  # target name
                 arg_spec.locals[arg_spec.args[0]]

@@ -205,7 +205,7 @@ class DAGBase(
             X = X.copy()
             self._ss_X = StandardScaler()
             X.iloc[:, self.continuous_col_idxs] = self._ss_X.fit_transform(
-                X.iloc[:, self.continuous_col_idxs]
+                X.iloc[:, self.continuous_col_idxs].values
             )
 
             # if its a continuous target also standardize

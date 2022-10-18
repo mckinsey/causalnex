@@ -150,6 +150,41 @@ This command will only work on Unix-like systems and requires `pandoc` to be ins
 
 > ❗ Running `make build-docs` in a Python 3.5 environment may sometimes yield multiple warning messages like the following: `WARNING: toctree contains reference to nonexisting document '04_user_guide/04_user_guide'`. You can simply ignore them or switch to Python 3.6+ when building documentation.
 
+## Developing in Docker
+The Docker images have all the necessary dependencies built in. To develop using the docker containers do the following
+
+1. Build the necessary container
+```bash
+export CONTAINER_TYPE='cpu' # or gpu
+docker build -t quantumblacklabs/causalnex:devel-$CONTAINER_TYPE -f devel-$CONTAINER_TYPE.Dockerfile .
+```
+
+2. Run the container in interactive mode.
+For running on CPU, simply run the docker container:
+```bash
+docker run -it -w /causalnex_src -v $PWD:/causalnex_src quantumblacklabs/causalnex:devel-cpu bash
+```
+
+For the `gpu` type your host machine needs access to a GPU with the CUDA driver installed. The `devel-gpu` image will be able to access the gpu on the host
+```bash
+docker run --gpus all -it -w /causalnex_src -v $PWD:/causalnex_src quantumblacklabs/causalnex:devel-gpu bash
+```
+
+3. Run tests
+```bash
+make test
+```
+
+4. If all tests pass you can build the wheel
+```bash
+make package
+```
+
+5. Now you can install the pip package that has your changes in either the container or on your host machine. The name of installed package will be `causalnex`
+```bash
+make install
+```
+
 ## Hints on pre-commit usage
 The checks will automatically run on all the changed files on each commit.
 Even more extensive set of checks (including the heavy set of `pylint` checks)
