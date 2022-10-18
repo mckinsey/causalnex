@@ -33,6 +33,7 @@ from networkx.exception import NodeNotFound
 
 from causalnex.structure import DynamicStructureModel, DynamicStructureNode
 
+
 class TestDynamicStructureModelGetLargestSubgraph:
     @pytest.mark.parametrize(
         "test_input, expected",
