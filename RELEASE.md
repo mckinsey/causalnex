@@ -1,5 +1,7 @@
 # Upcoming release
 
+# Release 0.11.1
+
 * Add python 3.9, 3.10 support
 * Unlock Scipy restrictions
 * Fix bug: infinite loop on lv inference engine
