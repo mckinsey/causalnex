@@ -93,4 +93,4 @@ See our [LICENSE](LICENSE.md) for more detail.
 
 ## We're hiring!
 
-Do you want to be part of the team that builds CausalNex and [other great products](https://quantumblack.com/labs) at QuantumBlack? If so, you're in luck! QuantumBlack is currently hiring Machine Learning Engineers who love using data to drive their decisions. Take a look at [our open positions](https://www.quantumblack.com/careers/current-openings#content) and see if you're a fit.
+Do you want to be part of the team that builds CausalNex and [other great products](https://quantumblack.com/labs) at QuantumBlack? If so, you're in luck! QuantumBlack is currently hiring Machine Learning Engineers who love using data to drive their decisions. Take a look at [our open positions](https://www.mckinsey.com/capabilities/quantumblack/careers-and-community) and see if you're a fit.
