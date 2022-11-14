@@ -4,6 +4,11 @@ images:
   python: &python
     - image: circleci/buildpack-deps:stretch-browsers
 
+machines:
+  win-python: &win-python
+    image: 'windows-server-2019-vs2019:2022.08.1'
+    resource_class: 'windows.medium'
+    shell: 'powershell.exe -ExecutionPolicy Bypass'
 ###############################################################################
 utils:
   prepare_container: &prepare_container
@@ -21,6 +26,17 @@ utils:
       conda install -y virtualenv
       pip install -U pip setuptools wheel
       sudo apt-get install graphviz
+
+  prepare_machine_windows: &prepare_machine_windows
+    name: Prepare build machine for windows
+    command: |
+      powershell -ExecutionPolicy ByPass -NoExit -Command "& 'C:\tools\miniconda3\shell\condabin\conda-hook.ps1' ; conda activate 'C:\tools\miniconda3' "
+      conda init powershell
+      conda create --name=causalnex_env python=$Env:PYTHON_VERSION -y
+      conda update -n base -c defaults conda -y
+      choco install make
+      # causalnex_env activation right here doesn't work for some reason. Need to restart shell.
+
   activate_conda: &activate_conda
     name: Activate conda environment
     command: |
@@ -37,27 +53,51 @@ utils:
       pip install -r requirements.txt -U
       pip install -r test_requirements.txt -U
       pip install ".[pytorch]"
+
+  setup_requirements_windows: &setup_requirements_windows
+    name: Install PIP dependencies windows
+    command: |
+      conda activate causalnex_env
       conda install -y virtualenv
+      pip install -U pip setuptools wheel
+      conda install -y cython
+      conda install -c anaconda graphviz=2.50.0 # to be able to import pygraphviz
+      pip install -r requirements.txt -U
+      #pip install --global-option=build_ext --global-option="-IC:\Program Files\Graphviz\include" --global-option="-LC:\Program Files\Graphviz\lib" pygraphviz
+      pip install --global-option=build_ext --global-option="-IC:\tools\miniconda3\pkgs\graphviz-2.50.0-hdb8b0d4_0\Library\include" --global-option="-LC:\tools\miniconda3\pkgs\graphviz-2.50.0-hdb8b0d4_0\Library\lib" pygraphviz
+      pip install -r test_requirements.txt -U
+      pip install ".[pytorch]"
+
   setup_pre_commit: &setup_pre_commit
     name: Install pre-commit hooks
     command: |
+      conda activate causalnex_env
       pre-commit install --install-hooks
       pre-commit install --hook-type pre-push
+
   linters: &linters
     name: Run linters and auto-formatters
-    command: make lint
+    command: |
+      conda activate causalnex_env
+      make lint
 
   unit_tests: &unit_tests
     name: Run tests
-    command: make test
+    command: |
+      conda activate causalnex_env
+      make test
 
   build_docs: &build_docs
     name: Build documentation
-    command: make build-docs
+    command: |
+      conda activate causalnex_env
+      make build-docs
 
   install_package: &install_package
     name: Install the package
-    command: make install
+    command: |
+      conda activate causalnex_env
+      make install
 
   unit_test_steps: &unit_test_steps
     steps:
@@ -67,6 +107,13 @@ utils:
       - run: *setup_requirements
       - run: *unit_tests
 
+  unit_test_steps_windows: &unit_test_steps_windows
+    machine: *win-python
+    steps:
+      - checkout
+      - run: *prepare_machine_windows
+      - run: *setup_requirements_windows
+      - run: *unit_tests
 ###############################################################################
 jobs:
   unit_tests_36:
@@ -76,9 +123,9 @@ jobs:
     <<: *unit_test_steps
 
   unit_tests_37:
+    docker: *python
     environment:
       PYTHON_VERSION: '3.7'
-    docker: *python
     <<: *unit_test_steps
 
   unit_tests_38:
@@ -98,6 +145,31 @@ jobs:
     environment:
       PYTHON_VERSION: '3.10'
     <<: *unit_test_steps
+
+  unit_tests_windows_36:
+    environment:
+      PYTHON_VERSION: '3.6'
+    <<: *unit_test_steps_windows
+
+  unit_tests_windows_37:
+    environment:
+      PYTHON_VERSION: '3.7'
+    <<: *unit_test_steps_windows
+
+  unit_tests_windows_38:
+    environment:
+      PYTHON_VERSION: '3.8'
+    <<: *unit_test_steps_windows
+
+  unit_tests_windows_39:
+    environment:
+      PYTHON_VERSION: '3.9'
+    <<: *unit_test_steps_windows
+
+  unit_tests_windows_310:
+    environment:
+      PYTHON_VERSION: '3.10'
+    <<: *unit_test_steps_windows
 
   linters_37:
     docker: *python
@@ -143,6 +215,11 @@ workflows:
       - unit_tests_310
       - linters_37
       - docs
+      - unit_tests_windows_36
+      - unit_tests_windows_37
+      - unit_tests_windows_38
+      - unit_tests_windows_39
+      - unit_tests_windows_310
       - all_circleci_checks_succeeded:
           requires:
             - unit_tests_36
@@ -152,3 +229,8 @@ workflows:
             - unit_tests_310
             - linters_37
             - docs
+            - unit_tests_windows_36
+            - unit_tests_windows_37
+            - unit_tests_windows_38
+            - unit_tests_windows_39
+            - unit_tests_windows_310
