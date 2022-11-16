@@ -7,10 +7,10 @@ isort>=4.3.16, <5.0
 matplotlib~=3.3
 mdlp-discretization~=0.3.3
 mock>=2.0.0, <3.0
-pre-commit>=1.17.0, <2.0.0
+pre-commit>=2.9.2
 pygraphviz>=1.5, <2.0
 pylint>=2.7.2, <3.0
 pytest-cov>=2.5, <3.0
 pytest-mock>=1.7.1,<2.0
-pytest>=4.3.0,<5.0
-scikit-learn>=0.24.2 # not directly required, pinned by Snyk to avoid a vulnerability
+pytest>=4.3.0,<6.0; python_version < '3.10'
+pytest>=6.2.5; python_version >= '3.10'

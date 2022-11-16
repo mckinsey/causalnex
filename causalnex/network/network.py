@@ -40,7 +40,7 @@ import networkx as nx
 import pandas as pd
 from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
 from pgmpy.factors.discrete.CPD import TabularCPD
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianNetwork as BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
 from causalnex.structure import StructureModel
@@ -294,10 +294,14 @@ class BayesianNetwork:
             parent_node: self.node_states[parent_node]
             for parent_node in self._structure.predecessors(node)
         }
-        table_parents = {
-            name: set(df.columns.levels[i].values)
-            for i, name in enumerate(df.columns.names)
-        }
+        if isinstance(df.columns, pd.MultiIndex):
+            table_parents = {
+                name: set(df.columns.levels[i].values)
+                for i, name in enumerate(df.columns.names)
+            }
+        else:
+            table_parents = {}
+
         if not (
             set(df.index.values) == self.node_states[node]
             and true_parents == table_parents
@@ -307,9 +311,17 @@ class BayesianNetwork:
 
         sorted_df = df.reindex(sorted(df.columns), axis=1)
         node_card = len(self.node_states[node])
-        evidence, evidence_card = zip(
-            *[(key, len(table_parents[key])) for key in sorted(table_parents.keys())]
-        )
+
+        if any(table_parents):  # Check whether table parents is empty
+            evidence, evidence_card = zip(
+                *[
+                    (key, len(table_parents[key]))
+                    for key in sorted(table_parents.keys())
+                ]
+            )
+        else:
+            evidence, evidence_card = (None, None)
+
         tabular_cpd = TabularCPD(
             node,
             node_card,
@@ -538,6 +550,7 @@ class BayesianNetwork:
                 if the latent variable cannot be found in the network or
                 if the latent variable is present/observed in the data
                 if the latent variable states are empty
+                if additional non-lv nodes are added to the subgraph without being fit
         """
         if not isinstance(lv_name, str):
             raise ValueError(f"Invalid latent variable name '{lv_name}'")
@@ -545,6 +558,19 @@ class BayesianNetwork:
             raise ValueError(f"Latent variable '{lv_name}' not added to the network")
         if not isinstance(lv_states, list) or len(lv_states) == 0:
             raise ValueError(f"Latent variable '{lv_name}' contains no states")
+
+        # Unaccounted nodes that have not been fit will result in infinite loop during
+        # generation of InferenceEngine
+        unaccounted_nodes = []
+        for node in self.nodes:
+            if (node not in self.cpds) and (node != lv_name):
+                unaccounted_nodes.append(node)
+        if len(unaccounted_nodes) > 0:
+            raise ValueError(
+                f"Node(s) {unaccounted_nodes} have not had their states and cpds fit. "
+                "Before fitting latent variable cpds, add the additional nodes and"
+                "edges to the subgraph and fit with .fit_node_states_and_cpds() first."
+            )
 
         # Register states for the latent variable
         self._node_states[lv_name] = {v: k for k, v in enumerate(sorted(lv_states))}

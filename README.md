@@ -2,15 +2,15 @@
 
 -----------------
 
-| Theme | Status |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Latest Release | [![PyPI version](https://badge.fury.io/py/causalnex.svg)](https://pypi.org/project/causalnex/) |
-| Python Version | [![Python Version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)](https://pypi.org/project/causalnex/) |
-| `master` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master) |
+| Theme | Status                                                                                                                                                                                                                 |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Latest Release | [![PyPI version](https://badge.fury.io/py/causalnex.svg)](https://pypi.org/project/causalnex/)                                                                                                                         |
+| Python Version | [![Python Version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9%20%7C%203.10-blue.svg)](https://pypi.org/project/causalnex/)                                                            |
+| `master` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master)   |
 | `develop` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop) |
-| Documentation Build | [![Documentation](https://readthedocs.org/projects/causalnex/badge/?version=latest)](https://causalnex.readthedocs.io/) |
-| License | [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) |
-| Code Style | [![Code Style: Black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/ambv/black) |
+| Documentation Build | [![Documentation](https://readthedocs.org/projects/causalnex/badge/?version=latest)](https://causalnex.readthedocs.io/)                                                                                                |
+| License | [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)                                                                                                   |
+| Code Style | [![Code Style: Black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/ambv/black)                                                                                                       |
 
 
 ## What is CausalNex?
@@ -93,4 +93,4 @@ See our [LICENSE](LICENSE.md) for more detail.
 
 ## We're hiring!
 
-Do you want to be part of the team that builds CausalNex and [other great products](https://quantumblack.com/labs) at QuantumBlack? If so, you're in luck! QuantumBlack is currently hiring Machine Learning Engineers who love using data to drive their decisions. Take a look at [our open positions](https://www.quantumblack.com/careers/current-openings#content) and see if you're a fit.
+Do you want to be part of the team that builds CausalNex and [other great products](https://www.mckinsey.com/capabilities/quantumblack/labs) at QuantumBlack? If so, you're in luck! QuantumBlack is currently hiring Machine Learning Engineers who love using data to drive their decisions. Take a look at [our open positions](https://www.mckinsey.com/capabilities/quantumblack/careers-and-community) and see if you're a fit.

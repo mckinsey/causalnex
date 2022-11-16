@@ -32,7 +32,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 import pytest
-from pgmpy.models import BayesianModel
+from pgmpy.models import BayesianNetwork as BayesianModel
 from sklearn.datasets import load_iris
 
 from causalnex.discretiser import Discretiser
@@ -508,6 +508,14 @@ def bad_cpd(empty_cpd) -> pd.DataFrame:
     """Create a bad CPD table which does not satisfy probability distribution properties"""
     df = empty_cpd
     df.loc[:] = [[0.2, 1.0, 0.4, 0.1], [0.7, 2.0, 3.0, 0.1], [0.3, 1.0, 0.6, 5.8]]
+    return df
+
+
+@pytest.fixture
+def parentless_cpd() -> pd.DataFrame:
+    """Create a (valid) CPD table for a parentless node"""
+    df = pd.DataFrame([[0.3], [0.7]], index=[False, True])
+    df.index.name = "e"
     return df
 
 

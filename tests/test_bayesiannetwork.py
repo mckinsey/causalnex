@@ -745,6 +745,34 @@ class TestFitLatentCPDs:
             bn.add_node("d", [("z", "d")], [])
             bn.fit_latent_cpds("d", lv_states, df)
 
+    def test_fit_additional_nodes_lv(self):
+        """An error should be raised if bn has unfitted additional nodes"""
+
+        with pytest.raises(
+            ValueError,
+            match=r"Node\(s\) \['an'\] have not had their states *",
+        ):
+            df, sm, _, _ = naive_bayes_plus_parents()
+
+            df["lv"] = np.nan
+            df["an"] = np.random.randint(0, 2, df.shape[0])
+            df["z"] = np.random.randint(0, 2, df.shape[0])
+
+            sm = StructureModel(list(sm.edges))
+            bn = BayesianNetwork(sm)
+
+            bn.fit_node_states_and_cpds(df.drop(["lv"], axis=1))
+
+            assert "an" not in bn.nodes
+            assert "an" not in bn.cpds
+
+            bn.add_node("lv", [("z", "lv"), ("an", "lv")], [])
+
+            assert "an" in bn.nodes
+            assert "an" not in bn.cpds
+
+            bn.fit_latent_cpds("lv", [0, 1, 2], df)
+
 
 class TestSetCPD:
     """Test behaviour of adding a self-defined cpd"""
@@ -766,6 +794,12 @@ class TestSetCPD:
             val == val_after_adding
             for val, val_after_adding in zip(*(cpd, cpd_after_adding))
         )
+
+    def test_set_parentless_cpd(self, bn, parentless_cpd):
+        """The CPD of the target node should be the same as the self-defined table after adding"""
+
+        bn.set_cpd("e", parentless_cpd)
+        assert bn.cpds["e"].values.tolist() == parentless_cpd.values.tolist()
 
     def test_set_cpd_to_non_existent_node(self, bn, good_cpd):
         """Should raise error if adding a cpd to a non-existing node in Bayesian Network"""
@@ -834,7 +868,7 @@ class TestSetCPD:
         """Should raise an error when setting bad parent node states index"""
 
         bad_cpd = good_cpd
-        bad_cpd.columns.set_levels(["test1", "test2"], level=0, inplace=True)
+        bad_cpd.columns = bad_cpd.columns.set_levels(["test1", "test2"], level=0)
 
         with pytest.raises(
             IndexError,

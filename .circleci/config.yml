@@ -87,6 +87,18 @@ jobs:
       PYTHON_VERSION: '3.8'
     <<: *unit_test_steps
 
+  unit_tests_39:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.9'
+    <<: *unit_test_steps
+
+  unit_tests_310:
+    docker: *python
+    environment:
+      PYTHON_VERSION: '3.10'
+    <<: *unit_test_steps
+
   linters_37:
     docker: *python
     environment:
@@ -127,6 +139,8 @@ workflows:
       - unit_tests_36
       - unit_tests_37
       - unit_tests_38
+      - unit_tests_39
+      - unit_tests_310
       - linters_37
       - docs
       - all_circleci_checks_succeeded:
@@ -134,5 +148,7 @@ workflows:
             - unit_tests_36
             - unit_tests_37
             - unit_tests_38
+            - unit_tests_39
+            - unit_tests_310
             - linters_37
             - docs

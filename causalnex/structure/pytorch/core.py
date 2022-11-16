@@ -131,6 +131,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         for layer in layers:
             layer.reset_parameters()
+            layer.to(self.device)
 
         # set the bounds as an attribute on the weights object
         self.dag_layer.weight.bounds = bounds
@@ -148,6 +149,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def dag_layer_bias(self) -> Union[torch.Tensor, None]:
         """
         dag_layer bias is the bias of the first fully connected layer which determines the causal structure.
+
         Returns:
             dag_layer bias if use_bias is True, otherwise None
         """
@@ -157,6 +159,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def dag_layer_weight(self) -> torch.Tensor:
         """
         dag_layer weight is the weight of the first fully connected layer which determines the causal structure.
+
         Returns:
             dag_layer weight
         """
@@ -166,6 +169,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
     def loc_lin_layer_weights(self) -> torch.Tensor:
         """
         loc_lin_layer weights are the weight of hidden layers after the first fully connected layer.
+
         Returns:
             loc_lin_layer weights
         """
@@ -257,6 +261,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         for n_iter in range(max_iter):
             rho, alpha, h = self._dual_ascent_step(X_torch, rho, alpha, h, rho_max)
+
             if h <= h_tol or rho >= rho_max:
                 break
             if n_iter == max_iter - 1 and h > h_tol:
@@ -322,12 +327,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 flatten vector of bound constraints for each parameter in numpy form
             """
             bounds = []
+
             for p in params:
                 try:
                     b = p.bounds
                 except AttributeError:
                     b = [(None, None)] * p.numel()
                 bounds += b
+
             return bounds
 
         def _get_flat_params(params: List[torch.Tensor]) -> np.ndarray:
@@ -357,8 +364,10 @@ class NotearsMLP(nn.Module, BaseEstimator):
                 flat_params: parameters in the form of flatten vector
             """
             offset = 0
-            flat_params_torch = torch.from_numpy(flat_params).to(
-                torch.get_default_dtype()
+            flat_params_torch = (
+                torch.from_numpy(flat_params)
+                .to(torch.get_default_dtype())
+                .to(self.device)
             )
             for p in params:
                 n_params = p.numel()
@@ -404,8 +413,8 @@ class NotearsMLP(nn.Module, BaseEstimator):
         params = optimizer.param_groups[0]["params"]
         flat_params = _get_flat_params(params)
         bounds = _get_flat_bounds(params)
-
         h_new = np.inf
+
         while (rho < rho_max) and (h_new > 0.25 * h or h_new == np.inf):
             # Magic
             sol = sopt.minimize(
@@ -420,6 +429,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
             if h_new > 0.25 * h:
                 rho *= 10
+
         alpha += rho * h_new
         return rho, alpha, h_new
 
@@ -441,11 +451,13 @@ class NotearsMLP(nn.Module, BaseEstimator):
 
         # modify the h(W) matrix to deal with expanded columns
         original_idxs = []
+
         for dist_type in self.dist_types:
             # modify the weight matrix to prevent spurious cycles with expended columns
             square_weight_mat = dist_type.modify_h(square_weight_mat)
             # gather the original idxs
             original_idxs.append(dist_type.idx)
+
         # original size is largest original index
         original_size = np.max(original_idxs) + 1
         # subselect the top LH corner of matrix which corresponds to original data
@@ -483,14 +495,17 @@ class NotearsMLP(nn.Module, BaseEstimator):
             l2 regularisation term.
         """
         reg = 0.0
-        reg += torch.sum(self.dag_layer_weight ** 2)
+        reg += torch.sum(self.dag_layer_weight**2)
+
         for layer in self.loc_lin_layer_weights:
-            reg += torch.sum(layer.weight ** 2)
+            reg += torch.sum(layer.weight**2)
 
         # calculate the total number of elements used in the above sums
         n_elements = self.dag_layer_weight.numel()
+
         for layer in self.loc_lin_layer_weights:
             n_elements = n_elements + layer.weight.numel()
+
         return reg / n_elements * n_features
 
     def _calculate_adj(self, X: torch.Tensor, mean_effect: bool) -> torch.Tensor:
@@ -500,7 +515,6 @@ class NotearsMLP(nn.Module, BaseEstimator):
         For the linear case, this is just dag_layer_weight.
         For the nonlinear case, approximate the relationship using the gradient of X_hat wrt X.
         """
-
         # for the linear case, save compute by just returning the dag_layer weights
         if len(self.dims) <= 2:
             adj = (
@@ -511,12 +525,14 @@ class NotearsMLP(nn.Module, BaseEstimator):
             return adj
 
         _, n_features = X.shape
+
         # get the data X and reconstruction X_hat
         X = X.clone().requires_grad_()
         X_hat = self(X).sum(dim=0)  # shape = (n_features,)
 
-        adj = []
         # iterate over sums of reconstructed features
+        adj = []
+
         for j in range(n_features):
 
             # calculate the gradient of X_hat wrt X
@@ -528,6 +544,7 @@ class NotearsMLP(nn.Module, BaseEstimator):
             else:
                 # otherwise, use the average L1 of the gradient as the W
                 adj.append(torch.abs(ddx).mean(dim=0).unsqueeze(0))
+
         adj = torch.cat(adj, dim=0)
 
         # transpose to get the adjacency matrix
