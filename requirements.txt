@@ -13,3 +13,4 @@ torch>=1.7, <2.0
 wheel>=0.37.0; python_version < '3.7'
 wheel>=0.38.0; python_version >= '3.7'
 wrapt>=1.11.0, <1.13
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
