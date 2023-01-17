@@ -1,6 +1,14 @@
 # Upcoming release
 
+# Release 0.11.1
+
 * Add python 3.9, 3.10 support
+* Unlock Scipy restrictions
+* Fix bug: infinite loop on lv inference engine
+* Fix DAGLayer moving out of gpu during optimization step of Pytorch learning
+* Fix CPD comparison of floating point - rounding issue
+* Fix set_cpd for parentless nodes that are not MultiIndex
+* Add Docker files for development on a dockerized environment
 
 # Release 0.11.0
 * Add expectation-maximisation (EM) algorithm to learn with latent variables
