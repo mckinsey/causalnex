@@ -50,7 +50,7 @@ class DAGClassifier(ClassifierMixin, DAGBase):
 
     Example:
     ::
-        >>> from causalnex.sklearn import DAGRegressor
+        >>> from causalnex.structure import DAGClassifier
         >>>
         >>> clf = DAGClassifier(threshold=0.1)
         >>> clf.fit(X_train, y_train)
