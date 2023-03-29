@@ -1,3 +1,4 @@
+ipython>=8.10.0 # Required by Snyk
 networkx~=2.5
 numpy>=1.14.2, <1.24
 pandas>=1.0, <2.0
@@ -6,11 +7,8 @@ pgmpy>=0.1.14, <0.1.20
 scikit-learn>=0.22.0, <0.25.0, !=0.22.2.post1, !=0.24.1; python_version < '3.9'
 scikit-learn>=0.24.0, <0.25.0, !=0.24.1; python_version == '3.9'
 scikit-learn>=0.25.0; python_version == '3.10'
-scipy>=1.2.0, <1.7; python_version < '3.8'
-scipy>=1.7; python_version >= '3.8'
-setuptools<=60; python_version <= '3.6'
-setuptools>=65.5.1; python_version > '3.6'
+scipy>=1.7
+setuptools>=65.5.1
 torch>=1.7, <2.0
-wheel>=0.37.0; python_version < '3.7'
-wheel>=0.38.0; python_version >= '3.7'
+wheel>=0.38.0
 wrapt>=1.11.0, <1.13

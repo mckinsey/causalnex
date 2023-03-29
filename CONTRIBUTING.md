@@ -148,8 +148,6 @@ make build-docs
 
 This command will only work on Unix-like systems and requires `pandoc` to be installed.
 
-> ❗ Running `make build-docs` in a Python 3.5 environment may sometimes yield multiple warning messages like the following: `WARNING: toctree contains reference to nonexisting document '04_user_guide/04_user_guide'`. You can simply ignore them or switch to Python 3.6+ when building documentation.
-
 ## Developing in Docker
 The Docker images have all the necessary dependencies built in. To develop using the docker containers do the following
 

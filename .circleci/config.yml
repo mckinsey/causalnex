@@ -116,17 +116,6 @@ utils:
       - run: *unit_tests
 ###############################################################################
 jobs:
-  unit_tests_36:
-    docker: *python
-    environment:
-      PYTHON_VERSION: '3.6'
-    <<: *unit_test_steps
-
-  unit_tests_37:
-    docker: *python
-    environment:
-      PYTHON_VERSION: '3.7'
-    <<: *unit_test_steps
 
   unit_tests_38:
     docker: *python
@@ -146,16 +135,6 @@ jobs:
       PYTHON_VERSION: '3.10'
     <<: *unit_test_steps
 
-  unit_tests_windows_36:
-    environment:
-      PYTHON_VERSION: '3.6'
-    <<: *unit_test_steps_windows
-
-  unit_tests_windows_37:
-    environment:
-      PYTHON_VERSION: '3.7'
-    <<: *unit_test_steps_windows
-
   unit_tests_windows_38:
     environment:
       PYTHON_VERSION: '3.8'
@@ -171,10 +150,10 @@ jobs:
       PYTHON_VERSION: '3.10'
     <<: *unit_test_steps_windows
 
-  linters_37:
+  linters_38:
     docker: *python
     environment:
-      PYTHON_VERSION: '3.7'
+      PYTHON_VERSION: '3.8'
     steps:
       - checkout
       - run: *prepare_container
@@ -187,7 +166,7 @@ jobs:
   docs:
     docker: *python
     environment:
-      PYTHON_VERSION: '3.7'
+      PYTHON_VERSION: '3.8'
     steps:
       - checkout
       - run: *prepare_container
@@ -208,29 +187,21 @@ workflows:
   version: 2
   regular:
     jobs:
-      - unit_tests_36
-      - unit_tests_37
       - unit_tests_38
       - unit_tests_39
       - unit_tests_310
-      - linters_37
+      - linters_38
       - docs
-      - unit_tests_windows_36
-      - unit_tests_windows_37
       - unit_tests_windows_38
       - unit_tests_windows_39
       - unit_tests_windows_310
       - all_circleci_checks_succeeded:
           requires:
-            - unit_tests_36
-            - unit_tests_37
             - unit_tests_38
             - unit_tests_39
             - unit_tests_310
-            - linters_37
+            - linters_38
             - docs
-            - unit_tests_windows_36
-            - unit_tests_windows_37
             - unit_tests_windows_38
             - unit_tests_windows_39
             - unit_tests_windows_310
