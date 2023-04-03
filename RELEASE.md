@@ -1,4 +1,7 @@
 # Upcoming release
+* Support newer version of Numpy
+* Support newer version of Scikit-learn
+* Remove python 3.6, 3.7 support
 
 # Release 0.11.1
 
