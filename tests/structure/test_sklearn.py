@@ -26,15 +26,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
+import os
+
+import IPython
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
 import torch
-from IPython.display import Image
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from sklearn.exceptions import NotFittedError
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import KFold, cross_val_score
@@ -123,28 +122,14 @@ class TestDAGSklearn:
         X = np.random.normal(size=(100, 2))
         m.fit(X, y)
 
-        # plot with no passed axes
-        plot = m.plot_dag(enforce_dag=enforce_dag)
-        assert isinstance(plot, tuple)
-        assert isinstance(plot[0], Figure)
-        assert isinstance(plot[1], Axes)
-
-        # plot with passed axes
-        _, ax = plt.subplots()
-        plot = m.plot_dag(enforce_dag=enforce_dag, ax=ax)
-        assert isinstance(plot, tuple)
-        assert plot[0] is None
-        assert isinstance(plot[1], Axes)
-
-        # plot with no passed axes
-        plot = m.plot_dag(enforce_dag=enforce_dag)
-        assert isinstance(plot, tuple)
-        assert isinstance(plot[0], Figure)
-        assert isinstance(plot[1], Axes)
-
-        # plot with Ipython
-        plot = m.plot_dag(enforce_dag=enforce_dag, use_mpl=False)
-        assert isinstance(plot, Image)
+        html = m.plot_dag(
+            enforce_dag=enforce_dag,
+            plot_structure_kwargs={"plot_options": {}},
+            output_filename="plot.html",
+        )
+        assert os.path.exists("./plot.html")
+        os.remove("./plot.html")
+        assert isinstance(html, IPython.lib.display.IFrame)
 
     @pytest.mark.parametrize(
         "model, y",
