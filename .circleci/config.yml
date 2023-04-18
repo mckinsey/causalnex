@@ -24,6 +24,7 @@ utils:
       conda create --name=causalnex_env python=${PYTHON_VERSION} -y
       conda activate causalnex_env
       conda install -y virtualenv
+      pip install cython
       pip install -U pip setuptools wheel
       sudo apt-get install graphviz
 
