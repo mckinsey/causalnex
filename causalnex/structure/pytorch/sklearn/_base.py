@@ -31,24 +31,17 @@ This module contains the implementation of ``DAGBase``.
 ``DAGBase`` is a class which provides an interface and common function for sklearn style NOTEARS functions.
 """
 import copy
-import warnings
 from abc import ABCMeta
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, List, Union
 
 import numpy as np
 import pandas as pd
+from IPython.lib.display import IFrame
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.validation import check_is_fitted, check_X_y
 
-from causalnex.plots import (
-    EDGE_STYLE,
-    NODE_STYLE,
-    display_plot_ipython,
-    display_plot_mpl,
-    plot_structure,
-)
-from causalnex.plots.display import Axes, Figure, Image
+from causalnex.plots import EDGE_STYLE, NODE_STYLE, display_plot_ipython, plot_structure
 from causalnex.structure.pytorch import notears
 
 
@@ -350,30 +343,35 @@ class DAGBase(
 
     def plot_dag(
         self,
+        output_filename: str,
         enforce_dag: bool = False,
-        plot_structure_kwargs: Dict = None,
-        use_mpl: bool = True,
-        ax: Axes = None,
-        pixel_size_in: float = 0.01,
-    ) -> Union[Tuple[Figure, Axes], Image]:
+        plot_structure_kwargs: Dict[str, Dict] = None,
+        layout_kwargs: Dict[str, Dict] = None,
+    ) -> IFrame:
         """
         Plot the DAG of the fitted model.
         Args:
             enforce_dag: Whether to threshold the model until it is a DAG.
             Does not alter the underlying model.
 
-            ax: Matplotlib axes to plot the model on.
-            If None, creates axis.
-
-            pixel_size_in: Scaling multiple for the plot.
-
             plot_structure_kwargs: Dictionary of kwargs for the causalnex plotting module.
-
-            use_mpl: Whether to use matplotlib as the backend.
-            If False, ax and pixel_size_in are ignored.
+            layout_kwargs: Dictionary to set the `layout` and `physics` of the graph.
+            Example:
+            ::
+                >>> layout_kwargs = {
+                        "physics": {
+                            "solver": "repulsion"
+                            },
+                        "layout": {
+                            "hierarchical": {
+                                "enabled": True
+                                }
+                            }
+                        }
+            output_filename: If provided, write html to a given path, e.g. "./plot.html"
 
         Returns:
-            Plot of the DAG.
+            Plot of the DAG with the proper encoding to run on Windows machines.
         """
 
         # handle thresholding
@@ -384,23 +382,17 @@ class DAGBase(
 
         # handle the plot kwargs
         plt_kwargs_default = {
-            "graph_attributes": {"scale": "0.5"},
             "all_node_attributes": NODE_STYLE.WEAK,
             "all_edge_attributes": EDGE_STYLE.WEAK,
         }
-        plt_kwargs = (
-            plot_structure_kwargs if plot_structure_kwargs else plt_kwargs_default
+
+        plt_kwargs = plt_kwargs_default
+
+        if plot_structure_kwargs:
+            plt_kwargs.update(plot_structure_kwargs)
+
+        return display_plot_ipython(
+            viz=plot_structure(graph, **plt_kwargs),
+            layout_kwargs=layout_kwargs,
+            output_filename=output_filename,
         )
-        prog = plt_kwargs.get("prog", "neato")
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-
-            # get pygraphviz plot:
-            viz = plot_structure(graph, **plt_kwargs)
-
-        if use_mpl is True:
-            return display_plot_mpl(
-                viz=viz, prog=prog, ax=ax, pixel_size_in=pixel_size_in
-            )
-        return display_plot_ipython(viz=viz, prog=prog)
