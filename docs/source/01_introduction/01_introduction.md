@@ -29,7 +29,7 @@ You can also check out the resources section for answers to frequently asked que
 We have designed the documentation in general, and the tutorial in particular, for beginners to get started using Bayesian Networks on their projects. If you an have elementary knowledge of Python and Bayesian Networks then you may find the CausalNex learning curve more challenging. However, we have simplified the tutorial by providing all the Python functions necessary to create your first CausalNex project.
 
 Note: There are a number of excellent online resources for learning Python, but be aware that
-you should choose those that reference Python 3, as CausalNex is built for Python 3.6+.
+you should choose those that reference Python 3, as the latest versions of CausalNex are built for Python 3.8+.
 There are many curated lists of online resources, such as:
 
 - [Official Python programming language website](https://www.python.org/)

@@ -25,20 +25,19 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from importlib import reload
+from collections import namedtuple
 
-import matplotlib.pyplot as plt
-import pytest
-from IPython.display import Image
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
-from mock import patch
-
-from causalnex.plots import color_gradient_string, display, plot_structure
+from causalnex.plots import EDGE_STYLE, GRAPH_STYLE, plot_structure
 from causalnex.structure import StructureModel
 
+_style = namedtuple("Style", ["WEAK", "NORMAL", "STRONG"])
 
-class TestToPygraphviz:
+default_edge_color = EDGE_STYLE.NORMAL["color"]
+bgcolor = GRAPH_STYLE["bgcolor"]
+cdn_resources = GRAPH_STYLE["cdn_resources"]
+
+
+class TestToPyvis:
     # pylint: disable=no-member
 
     def test_all_nodes_exist(self):
@@ -47,7 +46,7 @@ class TestToPygraphviz:
         sm.add_node("c")
         a_graph = plot_structure(sm)
 
-        assert all(node in a_graph.nodes() for node in ["a", "b", "c"])
+        assert all(node in a_graph.get_nodes() for node in ["a", "b", "c"])
 
     def test_all_edges_exist(self):
         """All edges in original graph should exist in pygraphviz graph"""
@@ -55,32 +54,28 @@ class TestToPygraphviz:
         sm = StructureModel(edges)
         a_graph = plot_structure(sm)
 
-        assert all(edge in a_graph.edges() for edge in edges)
+        a_graph_edges_list = [(ed["from"], ed["to"]) for ed in a_graph.edges]
 
-    def test_has_layout(self):
-        """Returned AGraph should have an existing layout"""
-        sm = StructureModel([("a", "b")])
-        a_graph = plot_structure(sm)
-        assert a_graph.has_layout
+        assert all(edge in a_graph_edges_list for edge in edges)
 
     def test_all_node_attributes(self):
         """all node attributes should be set correctly"""
         sm = StructureModel([("a", "b")])
         a_graph = plot_structure(sm)
 
-        default_color = a_graph.get_node("a").attr["color"]
+        default_color = a_graph.get_node("a")["color"]["background"]
         test_color = "black"
 
         assert default_color != test_color
         assert all(
-            a_graph.get_node(node).attr["color"] != test_color
-            for node in a_graph.nodes()
+            a_graph.get_node(node)["color"] != test_color
+            for node in a_graph.get_nodes()
         )
 
         a_graph = plot_structure(sm, all_node_attributes={"color": test_color})
         assert all(
-            a_graph.get_node(node).attr["color"] == test_color
-            for node in a_graph.nodes()
+            a_graph.get_node(node)["color"] == test_color
+            for node in a_graph.get_nodes()
         )
 
     def test_all_edge_attributes(self):
@@ -88,170 +83,69 @@ class TestToPygraphviz:
         sm = StructureModel([("a", "b"), ("b", "c")])
         a_graph = plot_structure(sm)
 
-        default_color = a_graph.get_edge("a", "b").attr["color"]
-        test_color = "black"
+        test_color = "white"
 
-        assert default_color != test_color
-        assert all(
-            a_graph.get_edge(u, v).attr["color"] != test_color
-            for u, v in a_graph.edges()
-        )
+        assert all(obj["color"] == default_edge_color for obj in a_graph.edges)
 
         a_graph = plot_structure(sm, all_edge_attributes={"color": test_color})
-        assert all(
-            a_graph.get_edge(u, v).attr["color"] == test_color
-            for u, v in a_graph.edges()
-        )
+        assert all(obj["color"] == test_color for obj in a_graph.edges)
 
-    def test_node_attriibutes(self):
+    def test_node_attributes(self):
         """specific node attributes should be set correctly"""
 
         sm = StructureModel([("a", "b"), ("b", "c")])
         a_graph = plot_structure(sm)
 
-        default_color = a_graph.get_node("a").attr["color"]
-        test_color = "black"
+        default_color = a_graph.get_node("a")["color"]
+        test_color = "white"
 
         assert default_color != test_color
         assert all(
-            a_graph.get_node(node).attr["color"] == default_color
-            for node in a_graph.nodes()
+            a_graph.get_node(node)["color"] == default_color
+            for node in a_graph.get_nodes()
         )
 
         a_graph = plot_structure(sm, node_attributes={"a": {"color": test_color}})
         assert all(
-            a_graph.get_node(node).attr["color"] == default_color
-            for node in a_graph.nodes()
+            a_graph.get_node(node)["color"] == default_color
+            for node in a_graph.get_nodes()
             if node != "a"
         )
-        assert a_graph.get_node("a").attr["color"] == test_color
+        assert a_graph.get_node("a")["color"] == test_color
 
-    def test_edge_attriibutes(self):
+    def test_edge_attributes(self):
         """specific edge attributes should be set correctly"""
 
         sm = StructureModel([("a", "b"), ("b", "c")])
         a_graph = plot_structure(sm)
 
-        default_color = a_graph.get_edge("a", "b").attr["color"]
-        test_color = "black"
+        default_color = a_graph.get_node("a")["color"]
+        test_color = "white"
 
         assert default_color != test_color
-        assert all(
-            a_graph.get_edge(u, v).attr["color"] == default_color
-            for u, v in a_graph.edges()
-        )
+        assert all("color" in obj for obj in a_graph.edges)
 
         a_graph = plot_structure(
             sm, edge_attributes={("a", "b"): {"color": test_color}}
         )
         assert all(
-            a_graph.get_edge(u, v).attr["color"] == default_color
-            for u, v in a_graph.edges()
-            if (u, v) != ("a", "b")
+            edge["color"] == default_edge_color
+            for edge in a_graph.edges
+            if edge["from"] != "a" and edge["to"] != "b"
         )
-        assert a_graph.get_edge("a", "b").attr["color"] == test_color
 
-    def test_graph_attributes(self):
-        """graph attributes should be set correctly"""
+        assert all(
+            edge["color"] == test_color
+            for edge in a_graph.edges
+            if edge["from"] == "a" and edge["to"] == "b"
+        )
+
+    def test_default_graph_attributes(self):
+        """default graph attributes should be set correctly"""
 
         sm = StructureModel([("a", "b")])
 
         a_graph = plot_structure(sm)
-        assert "label" not in a_graph.graph_attr.keys()
-
-        a_graph = plot_structure(sm, graph_attributes={"label": "test"})
-        assert a_graph.graph_attr["label"] == "test"
-
-    def test_prog(self):
-        """Layout should be based on given prog"""
-        sm = StructureModel([("a", "b")])
-        a = plot_structure(sm, prog="neato")
-        b = plot_structure(sm, prog="neato")
-        c = plot_structure(sm, prog="dot")
-
-        assert str(a) == str(b)
-        assert str(a) != str(c)
-
-    @patch("networkx.nx_agraph.to_agraph", side_effect=ImportError())
-    def test_install_warning(self, mocked_to_agraph):
-        sm = StructureModel()
-        with pytest.raises(Warning, match="Pygraphviz not installed"):
-            _ = plot_structure(sm)
-        mocked_to_agraph.assert_called_once()
-
-
-class TestColorGradientString:
-    def test_starts_with_color(self):
-        """string should start with provided colour"""
-        s = color_gradient_string("#ffffff33", "#ffffffaa", 30)
-        assert s.startswith("#ffffff33")
-
-    def test_ends_with_color(self):
-        """string should end with provided colour"""
-        s = color_gradient_string("#ffffff33", "#ffffffaa", 1)
-        assert s.endswith("#ffffffaa;0.50")
-
-    def test_correct_num_steps(self):
-        """string should have the correct number of steps"""
-        for steps in range(1, 10):
-            s = color_gradient_string("#ffffff33", "#ffffffaa", steps)
-            assert s.count(":") == steps
-
-    def test_expected_string(self):
-        """should produce the expected reference example"""
-        s = color_gradient_string("#00000000", "#99999999", 9)
-        expected = ":".join(["#" + str(i) * 8 + ";0.10" for i in range(10)])
-        assert s == expected
-
-
-class TestDisplay:
-    def test_display_importerror_ipython(self):
-        sm = StructureModel([("a", "b")])
-        viz = plot_structure(sm, prog="neato")
-        with patch.dict("sys.modules", {"IPython.display": None}):
-            reload(display)
-            with pytest.raises(
-                ImportError,
-                match=r"display_plot_ipython method requires IPython installed.",
-            ):
-                display.display_plot_ipython(viz)
-        # NOTE: must reload display again after patch exit
-        reload(display)
-
-    def test_display_importerror_mpl(self):
-        sm = StructureModel([("a", "b")])
-        viz = plot_structure(sm, prog="neato")
-        with patch.dict("sys.modules", {"matplotlib": None}):
-            reload(display)
-            with pytest.raises(
-                ImportError,
-                match=r"display_plot_mpl method requires matplotlib installed.",
-            ):
-                display.display_plot_mpl(viz)
-        # NOTE: must reload display again after patch exit
-        reload(display)
-
-    def test_agraph_import(self):
-        with patch.dict("sys.modules", {"pygraphviz.agraph": None}):
-            reload(display)
-        reload(display)
-
-    def test_return_types_ipython(self):
-        sm = StructureModel([("a", "b")])
-        viz = plot_structure(sm, prog="neato")
-        d = display.display_plot_ipython(viz)
-        assert isinstance(d, Image)
-
-    def test_return_types_mpl(self):
-        sm = StructureModel([("a", "b")])
-        viz = plot_structure(sm, prog="neato")
-        d = display.display_plot_mpl(viz)
-        assert isinstance(d, tuple)
-        assert isinstance(d[0], Figure)
-        assert isinstance(d[1], Axes)
-
-        _, ax = plt.subplots()
-        d = display.display_plot_mpl(viz, ax=ax)
-        assert isinstance(d, tuple)
-        assert d[0] is None
-        assert isinstance(d[1], Axes)
+        assert not a_graph.widget
+        assert a_graph.bgcolor == bgcolor
+        assert a_graph.cdn_resources == cdn_resources

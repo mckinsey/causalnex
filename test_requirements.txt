@@ -2,13 +2,11 @@
 
 Cython>=0.29, <1.0
 flake8>=3.5, <4.0
-ipython>=7.0, <7.17
 isort>=4.3.16, <5.0
 matplotlib~=3.3
 mdlp-discretization~=0.3.3
 mock>=2.0.0, <3.0
 pre-commit>=2.9.2
-pygraphviz>=1.5, <2.0
 pylint>=2.7.2, <3.0
 pytest-cov>=2.5, <3.0
 pytest-mock>=1.7.1,<2.0
