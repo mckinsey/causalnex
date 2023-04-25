@@ -54,10 +54,7 @@ with open("test_requirements.txt", "r", encoding="utf-8") as f:
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     readme = f.read()
 
-extras_require = {
-    "plot": ["pygraphviz>=1.5, <2.0"],
-    "discretiser": ["mdlp-discretization~=0.3.3"],
-}
+extras_require = {"discretiser": ["mdlp-discretization~=0.3.3"]}
 extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
 
 setup(
@@ -68,7 +65,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/quantumblacklabs/causalnex",
-    python_requires=">=3.6, <3.11",
+    python_requires=">=3.8, <3.11",
     author="QuantumBlack Labs",
     author_email="causalnex@quantumblack.com",
     packages=find_packages(exclude=["docs*", "tests*", "tools*"]),
@@ -78,8 +75,6 @@ setup(
     keywords="Causal Reasoning, Bayesian Network, Inference, Structure Learning, Do-Calculus",
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

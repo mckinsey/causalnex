@@ -25,97 +25,54 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Methods to display styled pygraphgiz plots."""
+"""Methods to display styled pyvis plots."""
+import json
+from html import escape
+from typing import Dict
 
-import io
-from typing import Any, Tuple
-
-try:
-    from pygraphviz.agraph import AGraph
-except ImportError:
-    AGraph = Any
-
-try:
-    from IPython.display import Image
-except ImportError:
-    Image = Any
-
-try:
-    import matplotlib.pyplot as plt
-    from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
-except ImportError:
-    Axes = Any
-    Figure = Any
+from IPython.lib.display import IFrame
+from pyvis.network import Network
 
 
-def display_plot_ipython(viz: AGraph, prog: str = "neato") -> Image:
+def display_plot_ipython(
+    viz: Network,
+    output_filename: str,
+    layout_kwargs: Dict[str, Dict] = None,
+) -> IFrame:
     """
-    Displays a pygraphviz object using ipython.
-
+    Displays a PyVis object using ipython.
     Args:
-        viz: pygraphviz object to render.
-
-        prog: The graph layout. Avaliable are:
-        dot, neato, fdp, sfdp, twopi and circo
-
+        viz: pyvis object to render.
+        output_filename: write html to a given path, e.g. "./plot.html". File as to end in ".html"
+        layout_kwargs: Dictionary to set the `layout` and `physics` of the graph.
+            Example:
+            ::
+                >>> layout_kwargs = {
+                        "physics": {
+                            "solver": "repulsion"
+                            },
+                        "layout": {
+                            "hierarchical": {
+                                "enabled": True
+                                }
+                            }
+                        }
     Returns:
-        IPython Image object. Renders in a notebook.
-
+        IPython IFrame object. Renders in a notebook.
     Raises:
         ImportError: if IPython is not installed (optional dependency).
     """
+    layout_kwargs = layout_kwargs or {}
+    viz.set_options(options=json.dumps(layout_kwargs))
 
-    if Image is Any:
-        raise ImportError("display_plot_ipython method requires IPython installed.")
+    html = viz.generate_html()
 
-    return Image(viz.draw(format="png", prog=prog))
+    with open(output_filename, mode="w", encoding="UTF-8") as f:
+        f.write(html)
 
-
-def display_plot_mpl(
-    viz: AGraph,
-    prog: str = "neato",
-    ax: Axes = None,
-    pixel_size_in: float = 0.01,
-) -> Tuple[Figure, Axes]:
-    """
-    Displays a pygraphviz object using matplotlib.
-
-    Args:
-        viz: pygraphviz object to render.
-
-        prog: The graph layout. Avaliable are:
-        dot, neato, fdp, sfdp, twopi and circo
-
-        ax: Optional matplotlib axes to plot on.
-
-        pixel_size_in: Scaling multiple for the plot.
-
-    Returns:
-        IPython Image object. Renders in a notebook.
-
-    Raises:
-        ImportError: if matplotlib is not installed (optional dependency).
-    """
-
-    if Figure is Any:
-        raise ImportError("display_plot_mpl method requires matplotlib installed.")
-
-    # bytes:
-    s = viz.draw(format="png", prog=prog)
-    # convert to numpy array
-    array = plt.imread(io.BytesIO(s))
-    x_dim, y_dim, _ = array.shape
-
-    # handle passed axis
-    if ax is not None:
-        ax.imshow(array)
-        ax.axis("off")
-        return None, ax
-
-    # handle new axis
-    f, ax = plt.subplots(1, 1, figsize=(y_dim * pixel_size_in, x_dim * pixel_size_in))
-    ax.imshow(array)
-    ax.axis("off")
-    f.tight_layout(pad=0.0)
-    return f, ax
+    return IFrame(
+        src=output_filename,
+        width=viz.width,
+        height=viz.height,
+        extras=[f"srcdoc='{escape(viz.generate_html(notebook=False))}'"],
+    )
