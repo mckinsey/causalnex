@@ -29,22 +29,13 @@
 """
 ``causalnex.plots`` provides functionality to visualise structure models.
 """
-
 __all__ = [
     "plot_structure",
     "NODE_STYLE",
     "EDGE_STYLE",
     "GRAPH_STYLE",
-    "color_gradient_string",
     "display_plot_ipython",
-    "display_plot_mpl",
 ]
 
-from .display import display_plot_ipython, display_plot_mpl
-from .plots import (
-    EDGE_STYLE,
-    GRAPH_STYLE,
-    NODE_STYLE,
-    color_gradient_string,
-    plot_structure,
-)
+from .display import display_plot_ipython
+from .plots import EDGE_STYLE, GRAPH_STYLE, NODE_STYLE, plot_structure

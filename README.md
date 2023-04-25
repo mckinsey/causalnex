@@ -5,7 +5,7 @@
 | Theme | Status                                                                                                                                                                                                                 |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Latest Release | [![PyPI version](https://badge.fury.io/py/causalnex.svg)](https://pypi.org/project/causalnex/)                                                                                                                         |
-| Python Version | [![Python Version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9%20%7C%203.10-blue.svg)](https://pypi.org/project/causalnex/)                                                            |
+| Python Version | [![Python Version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue.svg)](https://pypi.org/project/causalnex/)                                                            |
 | `master` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master)   |
 | `develop` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop) |
 | Documentation Build | [![Documentation](https://readthedocs.org/projects/causalnex/badge/?version=latest)](https://causalnex.readthedocs.io/)                                                                                                |
@@ -52,14 +52,7 @@ CausalNex is a Python package. To install it, simply run:
 pip install causalnex
 ```
 
-Since pygraphviz can be difficult to install, esp. on Windows machines, the requirement is optional.
-If you want to use the causalnex native plotting tools, you can use
-```bash
-pip install "causalnex[plot]"
-```
-Alternatively, you can use the `networkx` drawing functionality for visualisations with fewer dependencies.
-
-Use `all` for a full installation of dependencies (only the plotting right now):
+Use `all` for a full installation of dependencies:
 ```bash
 pip install "causalnex[all]"
 ```

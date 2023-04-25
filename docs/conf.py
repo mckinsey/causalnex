@@ -82,7 +82,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -390,6 +390,10 @@ def _prepare_build_dir(app, config):
     copy_tree(str(build_root / "css"), str(build_out / "_static" / "css"))
     copy_tree(
         str(build_root / "04_user_guide/images"), str(build_out / "04_user_guide")
+    )
+    copy_tree(
+        str(build_root / "03_tutorial/supporting_files"),
+        str(build_out / "03_tutorial/supporting_files"),
     )
     shutil.rmtree(str(build_root / "css"))
 

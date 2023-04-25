@@ -51,4 +51,4 @@ do
 done
 
 # Build Sphinx documentation
-sphinx-build -v -c docs/ -Ea -D language=en docs/build/ docs/build/html
+sphinx-build -v -c docs/ -Ea docs/build/ docs/build/html

@@ -277,7 +277,7 @@ def _matrices_to_structure_model(
     sm.add_nodes_from(lag_cols)
     sm.add_edges_from(
         [
-            (lag_cols[i], lag_cols[j], dict(weight=w_est[i, j]))
+            (lag_cols[i], lag_cols[j], {"weight": w_est[i, j]})
             for i in range(w_est.shape[0])
             for j in range(w_est.shape[1])
             if w_est[i, j] != 0
@@ -285,7 +285,7 @@ def _matrices_to_structure_model(
     )
     sm.add_edges_from(
         [
-            (lag_cols[i + w_est.shape[0]], lag_cols[j], dict(weight=a_est[i, j]))
+            (lag_cols[i + w_est.shape[0]], lag_cols[j], {"weight": a_est[i, j]})
             for i in range(a_est.shape[0])
             for j in range(a_est.shape[1])
             if a_est[i, j] != 0

@@ -25,6 +25,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import multiprocessing
 import os
 import warnings
@@ -94,45 +95,32 @@ def plot_pretty_structure(
 ):
     """
     Utility function to plot our networks in a pretty format
-
     Args:
         g: Structure model (directed acyclic graph)
         edges_to_highlight: List of edges to highlight in the plots
         default_weight: Default edge weight
         weighted: Whether the graph is weighted
-
     Returns:
         a styled pygraphgiz graph that can be rendered as an image
     """
-    graph_attributes = {
-        "splines": "spline",  # I use splies so that we have no overlap
-        "ordering": "out",
-        "ratio": "fill",  # This is necessary to control the size of the image
-        "size": "16,9!",  # Set the size of the final image. (this is a typical presentation size)
-        "fontcolor": "#FFFFFFD9",
-        "fontname": "Helvetica",
-        "fontsize": 24,
-        "labeljust": "c",
-        "labelloc": "c",
-        "pad": "1,1",
-        "nodesep": 0.8,
-        "ranksep": ".5 equally",
-    }
+
     # Making all nodes hexagonal with black coloring
-    node_attributes = {
-        node: {
-            "shape": "hexagon",
-            "width": 2.2,
-            "height": 2,
-            "fillcolor": "#000000",
-            "penwidth": "10",
-            "color": "#4a90e2d9",
-            "fontsize": 24,
-            "labelloc": "c",
-            "labeljust": "c",
-        }
-        for node in g.nodes
+    all_node_attributes = {
+        "font": {
+            "color": "#FFFFFFD9",
+            "face": "Helvetica",
+            "size": 20,
+        },
+        "shape": "hexagon",
+        "borderWidth": 2,
+        "color": {
+            "border": "#4a90e2d9",
+            "background": "grey",
+            "highlight": {"border": "#0059b3", "background": "#80bfff"},
+        },
+        "mass": 3,
     }
+
     # Customising edges
     if weighted:
         edge_weights = [
@@ -144,18 +132,17 @@ def plot_pretty_structure(
     edge_attributes = {
         (u, v): {
             "penwidth": w * 20 + 2,  # Setting edge thickness
-            "weight": int(w),  # Higher "weight"s mean shorter edges
+            "width": int(10 * w),  # Higher "weight"s mean shorter edges
             "arrowsize": 2 - 2.0 * w,  # Avoid too large arrows
             "arrowtail": "dot",
             "color": "#DF5F00" if ((u, v) in set(edges_to_highlight)) else "#888888",
         }
         for u, v, w in edge_weights
     }
+
     return plot_structure(
         g,
-        prog="dot",
-        graph_attributes=graph_attributes,
-        node_attributes=node_attributes,
+        all_node_attributes=all_node_attributes,
         edge_attributes=edge_attributes,
     )
 
@@ -170,7 +157,7 @@ def display_colored_df(df: pd.DataFrame):
 
     def display_df_as_img(df):
         temp_file_name = "./temp.png"
-        dataframe_image.export(df, temp_file_name)
+        dataframe_image.export(df, temp_file_name, fontsize=4, dpi=800)
 
         with open(temp_file_name, "rb") as file:
             display(Image(file.read()))
@@ -517,3 +504,44 @@ def _compute_auc_lv_stub(
     )
     _, auc = roc_auc_lv(y_true, y_pred)
     return auc
+
+
+opt = {
+    "physics": {
+        "forceAtlas2Based": {
+            "nodeDistance": 500,
+            "springLength": 100,
+            "springConstant": 0.8,
+            "centralGravity": 0.01,
+            #         "avoidOverlap": 0.3
+        },
+        "minVelocity": 0.75,
+        "solver": "forceAtlas2Based",
+        "timestep": 0.6,
+    }
+}
+plot_options = {"pyvis_options": json.dumps(opt)}
+
+opt_2 = {
+    "layout": {
+        "hierarchical": {
+            "enabled": True,
+            "direction": "UD",  # UD means that the hierarchy is displayed up to down
+            "sortMethod": "directed",
+            "nodeSpacing": 300,
+            "treeSpacing": 200,
+            "levelSeparation": 100,
+            "shakeTowards": "roots",
+        }
+    },
+    "physics": {
+        "solver": "hierarchicalRepulsion",
+        "hierarchicalRepulsion": {
+            "nodeDistance": 200,
+            "springLength": 100,
+            "springConstant": 0.1,
+            "centralGravity": 0,
+        },
+    },
+}
+plot_options_2 = {"pyvis_options": json.dumps(opt_2)}
