@@ -2,7 +2,7 @@ version: 2
 
 images:
   python: &python
-    - image: circleci/buildpack-deps:stretch-browsers
+    - image: circleci/buildpack-deps
 
 machines:
   win-python: &win-python
@@ -62,10 +62,7 @@ utils:
       conda install -y virtualenv
       pip install -U pip setuptools wheel
       conda install -y cython
-      conda install -c anaconda graphviz=2.50.0 # to be able to import pygraphviz
       pip install -r requirements.txt -U
-      #pip install --global-option=build_ext --global-option="-IC:\Program Files\Graphviz\include" --global-option="-LC:\Program Files\Graphviz\lib" pygraphviz
-      pip install --global-option=build_ext --global-option="-IC:\tools\miniconda3\pkgs\graphviz-2.50.0-hdb8b0d4_0\Library\include" --global-option="-LC:\tools\miniconda3\pkgs\graphviz-2.50.0-hdb8b0d4_0\Library\lib" pygraphviz
       pip install -r test_requirements.txt -U
       pip install ".[pytorch]"
 

@@ -49,7 +49,7 @@ class TestToPyvis:
         assert all(node in a_graph.get_nodes() for node in ["a", "b", "c"])
 
     def test_all_edges_exist(self):
-        """All edges in original graph should exist in pygraphviz graph"""
+        """All edges in original graph should exist in graph"""
         edges = [(str(a), str(a + b + 1)) for a in range(2) for b in range(3)]
         sm = StructureModel(edges)
         a_graph = plot_structure(sm)

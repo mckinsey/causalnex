@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -y && apt install -y python3.8 python3-pip libgraphviz-dev graphviz
+RUN apt-get update -y && apt install -y python3.8 python3-pip
 RUN ln -s $(which python3) /usr/local/bin/python
 #COPY requirements.txt test_requirements.txt tmp/
 COPY . /tmp
