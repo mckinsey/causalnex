@@ -1,0 +1,61 @@
+name: Feature Request Form
+description: Request for new feature
+title: "[Feature Request]: "
+labels: ["enhancement", "triage"]
+assignees:
+  - null
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for for using CausalNex
+        ## Before You Submit
+        - [ ] The feature you are about to request has not been suggested yet
+        - [ ] You have searched through the existing issues
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: Provide a brief summary of the feature you would like to suggest.
+      placeholder: Provide a brief summary of the feature you would like to suggest.
+    validations:
+      required: true
+  - type: textarea
+    id: feature-reason
+    attributes:
+      label: Why is this feature needed?
+      description: Please explain why this feature would be useful and how it would benefit the project.
+      placeholder: Please explain why this feature would be useful and how it would benefit the project.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the feature request here.
+    validations:
+      required: false
+  - type: textarea
+    id: code-output
+    attributes:
+      label: Possible implementation
+      description: Please copy and paste any relevant code snippet. This will be automatically formatted into code, so no need for backticks.
+      render: Python
+      placeholder: print("hello world")
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

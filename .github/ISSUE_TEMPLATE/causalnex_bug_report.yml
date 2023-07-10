@@ -1,0 +1,69 @@
+name: Bug Report Form
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - null
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        ## Before You Submit
+        - [ ] The issue you are about to raise has not been reported yet
+        - [ ] You have tested it on the latest (master branch) version of CausalNex
+        - [ ] You are able to reproduce it
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Short description of the problem here.
+      description: Short description of the problem including steps to reproduce the problem.
+      placeholder: Add a description here
+    validations:
+      required: true
+  - type: input
+    id: causalnex-version
+    attributes:
+      label: CausalNex Version
+      description: Please add the CLI output for `python -c "import causalnex; print(causalnex.__version__)"`
+      placeholder: ex. 0.12.0
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Please add the CLI output for `python --version`
+      placeholder: ex. 3.10
+    validations:
+      required: true
+  - type: textarea
+    id: code-output
+    attributes:
+      label: Relevant code snippet
+      description: Please copy and paste any relevant code snippet. This will be automatically formatted into code, so no need for backticks.
+      render: Python
+      placeholder: print("hello world")
+  - type: textarea
+    id: logs-output
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+      placeholder: "ZeroDivisionError: division by zero"
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
