@@ -64,13 +64,13 @@ A *cycle* is a path in which the starting node of its first edge equals the endi
 A *directed acyclic graph* is a directed graph that has no cycles.
 
 <figure>
-    <img src="graph.png" width="210"/>
+    <img src="images/graph.png" width="210"/>
     <figcaption>Figure 1: A simple directed acyclic graph.</figcaption>
 </figure>
 
 
 <figure>
-    <img src="graph_definitions.png" width="350"/>
+    <img src="images/graph_definitions.png" width="350"/>
     <figcaption>Figure 2: A more complex graph with a cycle and an isolated node.
     This graph can be turned into a DAG by removing one of the edges forming a cycle: (F, G), (E, F) or (G, E).</figcaption>
 </figure>
@@ -94,7 +94,7 @@ Even though we are interested in the joint distribution of the variables in the 
 Let's consider an example of a simple Bayesian network shown in figure below. It shows how the actions of customer relationship managers (emails sent and meetings held) affect the bank's income.
 
 <figure>
-    <img src="BN.png" width="700"/>
+    <img src="images/BN.png" width="700"/>
     <figcaption>Figure 3: A Bayesian Network describing a banking case study. Tables attributed to the nodes show the CPDs of the corresponding variables given their parents (if present).</figcaption>
 </figure>
 
