@@ -76,7 +76,7 @@ class BBN:
         # variable it 'introduced'.
         # Note that we cannot record
         # this duing Node instantiation
-        # becuase at that point we do
+        # because at that point we do
         # not yet know *which* of the
         # variables in the argument
         # list is the one being modeled
@@ -220,7 +220,7 @@ class JoinTree(UndirectedGraph):
 
         # Step 2: Note that in H&D the assignments are
         # done as part of step 2 however we have
-        # seperated the assignment algorithm out and
+        # separated the assignment algorithm out and
         # done these prior to step 1.
         # Now for each assignment we want to
         # generate a truth-table from the
@@ -302,7 +302,7 @@ class JoinTree(UndirectedGraph):
                 # once and once only. The example
                 # in H&D just happens to be a clique
                 # that f_a could have been assigned
-                # to but wasnt presumably because
+                # to but wasn't presumably because
                 # it got assigned somewhere else.
                 pass
                 # continue
@@ -313,7 +313,7 @@ class JoinTree(UndirectedGraph):
             family = set(args)
             # At this point we need to know which *variable*
             # a BBN node represents. Up to now we have
-            # not *explicitely* specified this, however
+            # not *explicitly* specified this, however
             # we have been following some conventions
             # so we could just use this convention for
             # now. Need to come back to this to
@@ -426,8 +426,8 @@ class JoinTree(UndirectedGraph):
         for node in self.clique_nodes:
             if bbn_node.name in [n.name for n in node.clique.nodes]:
                 containing_nodes.append(node)
-                # In theory it doesnt matter which one we
-                # use so we could bale out after we
+                # In theory it doesn't matter which one we
+                # use so we could able out after we
                 # find the first one
                 # TODO: With some better indexing we could
                 # avoid searching for this node every time...
@@ -540,7 +540,7 @@ class JoinTreeCliqueNode(UndirectedNode):
 
         logging.debug(" Send the summed marginals to the target: %s ", str(sepset_node))
 
-        # Step 2 absorbtion
+        # Step 2 absorption
         self.absorb(sepset_node, target)
 
     def project(self, sepset_node):
@@ -572,7 +572,7 @@ class JoinTreeCliqueNode(UndirectedNode):
         # Assign a new potential tt to
         # Y (the target)
         logging.debug(
-            "Absorb potentails from sepset node %s into clique %s",
+            "Absorb potentials from sepset node %s into clique %s",
             sepset.name,
             target.name,
         )
@@ -650,7 +650,7 @@ class SepSet(object):
         cliques are in different trees,
         means that effectively we are
         collapsing the two trees into
-        one. We will explicitely perform
+        one. We will explicitly perform
         this collapse by adding the
         sepset node into the tree
         and adding edges between itself

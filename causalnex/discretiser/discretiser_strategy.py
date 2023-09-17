@@ -245,7 +245,7 @@ class MDLPSupervisedDiscretiserMethod(AbstractSupervisedDiscretiserMethod):
 
         Args:
             min_depth: The minimum depth of the interval splitting.
-            min_split: The minmum size to split a bin
+            min_split: The minimum size to split a bin
             dtype: The type of the array returned by the `transform()` method
             **dlp_args: keyword arguments, which are parameters used for `mdlp.discretization.MDLP`
         Raises:

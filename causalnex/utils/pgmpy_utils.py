@@ -113,7 +113,7 @@ def cpd_multiplication(
 
     Args:
         cpds: cpds to multiply
-        normalize: wether to normalise the columns, so that each column sums to 1
+        normalize: whether to normalise the columns, so that each column sums to 1
 
     Returns:
         Pandas dataframe containing the resulting product, looking like a cpd

@@ -620,7 +620,7 @@ def gen_stationary_dyn_net_and_df(  # pylint: disable=R0913, R0914
         w_decay: exponent of weights decay for slices that are farther apart. Default is 1.0, which implies no decay
         sem_type: {linear-gauss,linear-exp,linear-gumbel}
         noise_scale: scale parameter of noise distribution in linear SEM
-        max_data_gen_trials: maximun number of attempts until obtaining a seemingly stationary model
+        max_data_gen_trials: maximum number of attempts until obtaining a seemingly stationary model
     Returns:
         Tuple with:
         - the model created,as a Structure model

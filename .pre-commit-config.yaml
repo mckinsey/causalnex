@@ -22,6 +22,14 @@ repos:
     -   id: flake8
         exclude: ^causalnex/ebaybbn
 
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.2.5
+    hooks:
+    -   id: codespell
+        args:
+            - --skip=docs/source/*
+            - --ignore-words-list=fro,jaques,fpr,te
+
 -   repo: https://github.com/pre-commit/mirrors-isort
     rev: v4.3.21
     hooks:

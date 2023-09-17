@@ -176,7 +176,7 @@ class TestDistTypeClasses:
         # check size of column expansion
         assert X.shape[1] == 6
 
-        # check that the correct indecies are pulled out
+        # check that the correct indices are pulled out
         assert dist_types[0].idx_group == [0, 2, 3]
         assert dist_types[1].idx_group == [1, 4, 5]
         # test that the expanded get_columns works

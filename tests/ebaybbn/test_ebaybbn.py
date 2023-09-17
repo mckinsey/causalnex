@@ -287,7 +287,7 @@ class TestBBN:
 
     def test_initialize_potentials(self, huang_darwiche_jt, huang_darwiche_dag):
         # Seems like there can be multiple assignments so
-        # for this test we will set the assignments explicitely
+        # for this test we will set the assignments explicitly
         cliques = {node.name: node for node in huang_darwiche_jt.nodes}
         bbn_nodes = {node.name: node for node in huang_darwiche_dag.nodes}
         assignments = {
