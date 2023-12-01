@@ -223,7 +223,7 @@ Once the graph has been determined, the `BayesianNetwork` can be initialised and
 
 Maximum likelihood or Bayesian parameter estimation can be used for learning the CPDs.
 > When learning CPDs of the BN,
-> - The dicscretised data should be used (either high or low granularity of features and target variables can be used);
+> - The discretised data should be used (either high or low granularity of features and target variables can be used);
 > - Overfitting and underfitting of CPDs can be avoided with an appropriate train/test split of the data.
 
 ```python
