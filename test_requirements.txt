@@ -2,6 +2,7 @@
 
 Cython>=0.29, <1.0
 flake8>=3.5, <4.0
+fonttools~=4.43.0 # dependency of matplotlib, pinned to avoid a vulnerability
 isort>=4.3.16, <5.0
 matplotlib~=3.3
 mdlp-discretization~=0.3.3
@@ -13,4 +14,3 @@ pytest-mock>=1.7.1,<2.0
 pytest>=4.3.0,<6.0; python_version < '3.10'
 pytest>=6.2.5; python_version >= '3.10'
 pillow>=10.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
-fonttools=4.43.0 # dependency of matplotlib, pinned to avoid a vulnerability
