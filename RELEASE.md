@@ -147,7 +147,7 @@ This work was later turned into a product thanks to the following contributors:
 , [Zain Patel](https://www.linkedin.com/in/zain-patel/)
 , [Wesley Leong](https://www.linkedin.com/in/wesleyleong/)
 , [Yetunde Dada](https://github.com/yetudada)
-, [Viktoriia Oliinyk](https://www.linkedin.com/in/victoria-oleynik/)
+, [Viktoriia Oliinyk](https://www.linkedin.com/in/viktoriiaoliinyk/)
 , [Roxana Pamfil](https://www.linkedin.com/in/roxana-pamfil-1192053b/)
 , [Nisara Sriwattanaworachai](https://www.linkedin.com/in/nisara-sriwattanaworachai-795b357/)
 , [Nikolaos Tsaousis](https://www.linkedin.com/in/ntsaousis/)
