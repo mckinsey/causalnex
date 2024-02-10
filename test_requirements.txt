@@ -2,6 +2,7 @@
 
 Cython>=0.29, <1.0
 flake8>=3.5, <4.0
+fonttools~=4.43.0 # dependency of matplotlib, pinned to avoid a vulnerability
 isort>=4.3.16, <5.0
 matplotlib~=3.3
 mdlp-discretization~=0.3.3
