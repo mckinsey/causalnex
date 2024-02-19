@@ -49,7 +49,8 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
-    w_threshold: float = 0.0,
+    tau_w: float = 0.0,
+    tau_a: float = 0.0,
     tabu_edges: List[Tuple[int, int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
@@ -116,7 +117,8 @@ def from_pandas_dynamic(  # pylint: disable=too-many-arguments
         lambda_a,
         max_iter,
         h_tol,
-        w_threshold,
+        tau_w,
+        tau_a,
         tabu_edges,
         tabu_parent_nodes,
         tabu_child_nodes,
@@ -162,7 +164,8 @@ def from_numpy_dynamic(  # pylint: disable=too-many-arguments
     lambda_a: float = 0.1,
     max_iter: int = 100,
     h_tol: float = 1e-8,
-    w_threshold: float = 0.0,
+    tau_w: float = 0.0,
+    tau_a: float = 0.0,
     tabu_edges: List[Tuple[int, int, int]] = None,
     tabu_parent_nodes: List[int] = None,
     tabu_child_nodes: List[int] = None,
@@ -246,8 +249,8 @@ def from_numpy_dynamic(  # pylint: disable=too-many-arguments
         X, Xlags, bnds, lambda_w, lambda_a, max_iter, h_tol
     )
 
-    w_est[np.abs(w_est) < w_threshold] = 0
-    a_est[np.abs(a_est) < w_threshold] = 0
+    w_est[np.abs(w_est) < tau_w] = 0
+    a_est[np.abs(a_est) < tau_a] = 0
     sm = _matrices_to_structure_model(w_est, a_est)
     return sm
 
