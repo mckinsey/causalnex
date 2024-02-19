@@ -331,7 +331,7 @@ class TestMixedDataGen:
             seed=seed,
         )
 
-        atol = 0.02  # at least 2% difference bewteen joint & factored!
+        atol = 0.02  # at least 2% difference between joint & factored!
         # 1. dependent links
         # 0 -> 1 (we look at the class with the highest deviation from uniform
         # to avoid small values)

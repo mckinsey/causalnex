@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && apt install -y python3.8 python3-pip
 RUN ln -s $(which python3) /usr/local/bin/python
-# Copy all files to container as intalling .[pytorch] requires setup.py, which requires other files
+# Copy all files to container as installing .[pytorch] requires setup.py, which requires other files
 COPY . /tmp
 WORKDIR /tmp
 

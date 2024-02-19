@@ -716,7 +716,7 @@ class TestFromNumpyLasso:
         """
         The optimisation in notears lasso involves reshaping the initial similarity matrix
         into two strictly positive matrixes (w+ and w-) and imposing a non negativity constraint
-        to the solver. We test here if these two contraints are imposed.
+        to the solver. We test here if these two constraints are imposed.
 
         We check if:
         (1) bounds impose non negativity constraint
