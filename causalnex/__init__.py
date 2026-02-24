@@ -32,4 +32,12 @@ causalnex toolkit for causal reasoning (Bayesian Networks / Inference)
 
 __version__ = "0.12.1"
 
-__all__ = ["structure", "discretiser", "evaluation", "inference", "network", "plots"]
+__all__ = [
+    "structure",
+    "discretiser",
+    "evaluation",
+    "inference",
+    "network",
+    "plots",
+    "global_graph",
+]

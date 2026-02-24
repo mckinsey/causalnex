@@ -40,7 +40,14 @@ import networkx as nx
 import pandas as pd
 from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
 from pgmpy.factors.discrete.CPD import TabularCPD
-from pgmpy.models import BayesianNetwork as BayesianModel
+try:
+    from pgmpy.models import BayesianNetwork as BayesianModel
+    # Newer pgmpy raises ImportError inside BayesianNetwork.__init__
+    # Test that the class is actually usable
+    _test = BayesianModel()
+    del _test
+except (ImportError, TypeError):
+    from pgmpy.models import DiscreteBayesianNetwork as BayesianModel
 
 from causalnex.estimator.em import EMSingleLatentVariable
 from causalnex.structure import StructureModel

@@ -339,45 +339,34 @@ class InferenceEngine:
 
     def _create_node_function(self, name: str, args: Tuple[str]):
         """Creates a new function that describes a node in the ``BayesianNetwork``."""
+        cpds = self._cpds
+        target = args[0]
+        parents = args[1:]
 
-        def template() -> float:
-            """Template node function."""
-            # use inspection to determine arguments to the function
-            # initially there are none present, but caller will add appropriate arguments to the function
-            # getargvalues was "inadvertently marked as deprecated in Python 3.5"
-            # https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
-            arg_spec = inspect.getargvalues(inspect.currentframe())  # pragma: no cover
+        # Build function dynamically with the correct signature so that
+        # inspect-based callers (ebaybbn) see the right argument names.
+        params = ", ".join(args)
 
-            return self._cpds[arg_spec.args[0]][  # target name
-                arg_spec.locals[arg_spec.args[0]]
-            ][  # target state
-                tuple((arg, arg_spec.locals[arg]) for arg in arg_spec.args[1:])
-            ]  # conditions
+        # Build the conditions tuple literal:
+        # 0 parents -> ()
+        # 1 parent  -> (('parent', parent),)  [trailing comma for 1-tuple]
+        # N parents -> (('p1', p1), ('p2', p2))
+        if not parents:
+            cond_expr = "()"
+        else:
+            items = [f"('{p}', {p})" for p in parents]
+            if len(items) == 1:
+                cond_expr = f"({items[0]},)"
+            else:
+                cond_expr = f"({', '.join(items)})"
 
-        code = template.__code__
-        pos_count = (
-            [code.co_posonlyargcount] if hasattr(code, "co_posonlyargcount") else []
+        func_code = (
+            f"def {name}({params}):\n"
+            f"    return _cpds['{target}'][{target}][{cond_expr}]\n"
         )
-        template.__code__ = types.CodeType(
-            len(args),
-            *pos_count,
-            code.co_kwonlyargcount,
-            len(args),
-            code.co_stacksize,
-            code.co_flags,
-            code.co_code,
-            code.co_consts,
-            code.co_names,
-            args,
-            code.co_filename,
-            name,
-            code.co_firstlineno,
-            code.co_lnotab,
-            code.co_freevars,
-            code.co_cellvars,
-        )
-        template.__name__ = name
-        return template
+        local_ns = {}  # type: dict
+        exec(func_code, {"_cpds": cpds}, local_ns)  # noqa: S102
+        return local_ns[name]
 
     def _create_node_functions(self) -> Dict[str, Callable]:
         """
