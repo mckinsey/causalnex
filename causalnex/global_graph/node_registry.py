@@ -1,131 +1,86 @@
 """
 Node taxonomy and naming conventions for the global relationship graph.
 
+.. deprecated::
+    The hardcoded ``NodeType`` enum and ``NODE_REGISTRY`` dict are retained
+    for backward compatibility.  New code should use
+    :class:`~causalnex.global_graph.registry.OntologyRegistry` which loads
+    node types and instances from YAML config files (or any pluggable
+    backend).
+
 All node names must match the regex ``^[0-9a-zA-Z_]+$`` (enforced by
-``InferenceEngine``). A prefixed naming convention encodes the node type:
-
-- ``fig_`` — world figures (politicians, CEOs, central bankers)
-- ``evt_`` — news events (wars, sanctions, policy decisions)
-- ``res_`` — resources / commodities (oil, wheat, semiconductors)
-- ``cur_`` — currencies (USD, EUR, CNY strength indices)
-- ``ctr_`` — country economic metrics (GDP, trade volume)
-
-Node states are ordinal integers: 0 = low/none, 1 = medium/minor, 2 = high/major.
+``InferenceEngine``).
 """
 
 import re
 from enum import Enum
 from typing import Dict
 
+from causalnex.global_graph.registry import (  # noqa: F401 — re-exported
+    OntologyRegistry,
+    get_default_registry,
+    validate_node_name,
+)
+
 
 _NODE_NAME_RE = re.compile(r"^[0-9a-zA-Z_]+$")
 
 
 class NodeType(str, Enum):
-    """Enumeration of supported node types."""
+    """Legacy enumeration of node types.
 
+    Kept for backward compatibility.  The canonical source of truth is now
+    the ``node_types.yaml`` config file, loaded via
+    :class:`~causalnex.global_graph.registry.OntologyRegistry`.
+    """
+
+    # Original 5 types
     FIGURE = "figure"
     EVENT = "event"
     RESOURCE = "resource"
     CURRENCY = "currency"
     COUNTRY = "country"
 
-
-# Default set of nodes for the global relationship graph.
-# Users can extend this registry and pass it into ``build_expert_skeleton``.
-NODE_REGISTRY: Dict[str, Dict] = {
-    # World figures
-    "fig_biden": {
-        "type": NodeType.FIGURE,
-        "label": "Biden",
-        "domain": "politics",
-    },
-    "fig_powell": {
-        "type": NodeType.FIGURE,
-        "label": "Jerome Powell",
-        "domain": "finance",
-    },
-    "fig_mbs": {
-        "type": NodeType.FIGURE,
-        "label": "MBS",
-        "domain": "politics",
-    },
-    # News events
-    "evt_ukraine_war": {
-        "type": NodeType.EVENT,
-        "label": "Ukraine War",
-        "domain": "geopolitical",
-    },
-    "evt_fed_rate_hike": {
-        "type": NodeType.EVENT,
-        "label": "Fed Rate Hike",
-        "domain": "economic",
-    },
-    "evt_opec_cut": {
-        "type": NodeType.EVENT,
-        "label": "OPEC Cut",
-        "domain": "economic",
-    },
-    # Resources / commodities
-    "res_oil_brent": {
-        "type": NodeType.RESOURCE,
-        "label": "Brent Oil",
-        "domain": "energy",
-    },
-    "res_semiconductor": {
-        "type": NodeType.RESOURCE,
-        "label": "Semiconductors",
-        "domain": "tech",
-    },
-    "res_wheat": {
-        "type": NodeType.RESOURCE,
-        "label": "Wheat",
-        "domain": "agriculture",
-    },
-    # Currencies
-    "cur_usd_strength": {
-        "type": NodeType.CURRENCY,
-        "label": "USD Strength",
-        "domain": "forex",
-    },
-    "cur_eur_strength": {
-        "type": NodeType.CURRENCY,
-        "label": "EUR Strength",
-        "domain": "forex",
-    },
-    "cur_cny_strength": {
-        "type": NodeType.CURRENCY,
-        "label": "CNY Strength",
-        "domain": "forex",
-    },
-    # Country economic metrics
-    "ctr_russia_gdp": {
-        "type": NodeType.COUNTRY,
-        "label": "Russia GDP",
-        "domain": "economics",
-    },
-    "ctr_usa_gdp": {
-        "type": NodeType.COUNTRY,
-        "label": "USA GDP",
-        "domain": "economics",
-    },
-    "ctr_china_trade": {
-        "type": NodeType.COUNTRY,
-        "label": "China Trade",
-        "domain": "economics",
-    },
-}
+    # Extended types (mapped from config for convenience)
+    SOVEREIGN_STATE = "sovereign_state"
+    POLITICAL_FIGURE = "political_figure"
+    INTL_ORGANIZATION = "intl_organization"
+    COMMODITY = "commodity"
+    FINANCIAL_MARKET = "financial_market"
+    CORPORATION = "corporation"
+    INDUSTRY = "industry"
+    CENTRAL_BANK = "central_bank"
+    TRADE_ROUTE = "trade_route"
+    MILITARY = "military"
+    ENERGY_INFRA = "energy_infra"
+    TECH_INFRA = "tech_infra"
+    DEMOGRAPHICS = "demographics"
+    MEDIA = "media"
+    REGULATORY = "regulatory"
+    GEOPOLITICAL_EVENT = "geopolitical_event"
+    CLIMATE = "climate"
+    PUBLIC_HEALTH = "public_health"
+    SOCIAL_MOVEMENT = "social_movement"
 
 
-def validate_node_name(name: str) -> bool:
-    """Return ``True`` if *name* satisfies the ``InferenceEngine`` regex.
+def _build_legacy_registry() -> Dict[str, Dict]:
+    """Build the legacy ``NODE_REGISTRY`` dict from the YAML config.
 
-    Raises:
-        ValueError: when *name* does not match ``^[0-9a-zA-Z_]+$``.
+    Maps the config-based ``type`` field to a :class:`NodeType` enum value
+    where possible, falling back to the raw string.
     """
-    if not _NODE_NAME_RE.match(name):
-        raise ValueError(
-            f"Node name '{name}' is invalid. "
-            "Names must match ^[0-9a-zA-Z_]+$ (no spaces, hyphens, etc.)."
-        )
-    return True
+    registry = get_default_registry()
+    result: Dict[str, Dict] = {}
+    for node_id, meta in registry.nodes.items():
+        entry = dict(meta)
+        raw_type = entry.get("type", "")
+        try:
+            entry["type"] = NodeType(raw_type)
+        except ValueError:
+            pass  # keep the raw string if no enum match
+        result[node_id] = entry
+    return result
+
+
+# Populated lazily from YAML on first access via module import.
+NODE_REGISTRY: Dict[str, Dict] = _build_legacy_registry()

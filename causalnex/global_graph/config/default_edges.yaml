@@ -1,0 +1,663 @@
+# ============================================================================
+# Default Expert Causal Edges for the Global Relationship Graph
+# ============================================================================
+#
+# Each entry defines a directed causal edge between two node instances.
+#
+# Schema per entry:
+#   source      : Node ID (must exist in default_nodes.yaml or user registry)
+#   target      : Node ID
+#   edge_type   : Must reference a key in edge_types.yaml
+#   origin      : "expert" (domain knowledge) or "learned" (data-driven)
+#   weight      : Optional strength (0.0–1.0), defaults to 1.0
+#   description : Optional human-readable explanation of WHY this edge exists
+#
+# These edges form the expert skeleton.  DYNOTEARS or other structure
+# learning can add "learned" edges on top.
+# ============================================================================
+
+# ===== POLITICAL FIGURES → EVENTS THEY TRIGGER =====
+
+- source: fig_putin
+  target: evt_ukraine_war
+  edge_type: triggers
+  origin: expert
+  description: "Putin's decisions directly control Russia's war posture in Ukraine"
+
+- source: fig_biden
+  target: evt_ukraine_war
+  edge_type: influences
+  origin: expert
+  description: "US policy under Biden shapes Western response to Ukraine war"
+
+- source: fig_biden
+  target: reg_us_sanctions
+  edge_type: controls
+  origin: expert
+  description: "Executive branch controls US sanctions policy via OFAC"
+
+- source: fig_xi_jinping
+  target: evt_taiwan_tensions
+  edge_type: triggers
+  origin: expert
+  description: "Xi's Taiwan policy drives cross-strait tension level"
+
+- source: fig_xi_jinping
+  target: evt_us_china_trade_war
+  edge_type: influences
+  origin: expert
+  description: "Xi's economic/trade policy shapes China's side of trade war"
+
+- source: fig_biden
+  target: evt_us_china_trade_war
+  edge_type: influences
+  origin: expert
+  description: "US trade policy (tariffs, tech bans) shapes trade war dynamics"
+
+- source: fig_mbs
+  target: evt_opec_cut
+  edge_type: triggers
+  origin: expert
+  description: "MBS as de facto Saudi ruler drives OPEC production decisions"
+
+- source: fig_powell
+  target: evt_fed_rate_decision
+  edge_type: triggers
+  origin: expert
+  description: "Fed chair directly sets US monetary policy"
+
+- source: fig_lagarde
+  target: cb_ecb
+  edge_type: leads
+  origin: expert
+  description: "ECB president leads EU monetary policy"
+
+- source: fig_modi
+  target: sov_india
+  edge_type: leads
+  origin: expert
+  description: "Modi leads Indian economic and foreign policy"
+
+# ===== EVENTS → COMMODITIES (DISRUPTION CHAINS) =====
+
+- source: evt_ukraine_war
+  target: res_oil_brent
+  edge_type: disrupts
+  origin: expert
+  description: "War disrupts Russian oil exports, affecting global supply"
+
+- source: evt_ukraine_war
+  target: res_wheat
+  edge_type: disrupts
+  origin: expert
+  description: "Ukraine and Russia are top wheat exporters; war disrupts grain supply"
+
+- source: evt_ukraine_war
+  target: res_natural_gas
+  edge_type: disrupts
+  origin: expert
+  description: "War disrupts Russian gas exports to Europe"
+
+- source: evt_opec_cut
+  target: res_oil_brent
+  edge_type: disrupts
+  origin: expert
+  description: "OPEC production cuts directly constrain global oil supply"
+
+- source: evt_taiwan_tensions
+  target: res_semiconductor
+  edge_type: disrupts
+  origin: expert
+  description: "Taiwan conflict risk threatens global semiconductor supply (TSMC)"
+
+- source: evt_us_china_trade_war
+  target: res_rare_earths
+  edge_type: disrupts
+  origin: expert
+  description: "China dominates rare earth processing; trade war threatens supply"
+
+- source: evt_us_china_trade_war
+  target: res_semiconductor
+  edge_type: disrupts
+  origin: expert
+  description: "US chip export bans and tariffs disrupt semiconductor trade"
+
+# ===== EVENTS → TRADE ROUTES =====
+
+- source: evt_ukraine_war
+  target: route_nordstream
+  edge_type: disrupts
+  origin: expert
+  description: "War led to Nord Stream pipeline sabotage/shutdown"
+
+# ===== COMMODITIES → CURRENCIES =====
+
+- source: res_oil_brent
+  target: cur_usd
+  edge_type: influences
+  origin: expert
+  description: "Oil priced in USD; high oil strengthens petrodollar dynamics"
+
+- source: res_oil_brent
+  target: cur_eur
+  edge_type: influences
+  origin: expert
+  description: "EU is net oil importer; oil price spikes weaken EUR"
+
+- source: res_gold
+  target: cur_usd
+  edge_type: influences
+  origin: expert
+  description: "Gold is inverse safe-haven to USD; gold rise signals USD weakness"
+
+# ===== CENTRAL BANKS → CURRENCIES & MARKETS =====
+
+- source: cb_fed
+  target: cur_usd
+  edge_type: sets_rate_for
+  origin: expert
+  description: "Fed interest rate directly drives USD strength"
+
+- source: cb_ecb
+  target: cur_eur
+  edge_type: sets_rate_for
+  origin: expert
+  description: "ECB rate decisions drive EUR strength"
+
+- source: cb_pboc
+  target: cur_cny
+  edge_type: sets_rate_for
+  origin: expert
+  description: "PBoC manages CNY exchange rate and monetary policy"
+
+- source: cb_boj
+  target: cur_jpy
+  edge_type: sets_rate_for
+  origin: expert
+  description: "BoJ yield curve control directly affects JPY"
+
+- source: cb_rbi
+  target: cur_inr
+  edge_type: sets_rate_for
+  origin: expert
+  description: "RBI rate decisions affect INR strength"
+
+- source: evt_fed_rate_decision
+  target: cb_fed
+  edge_type: triggers
+  origin: expert
+  description: "Fed rate decision is the mechanism through which the Fed acts"
+
+- source: cb_fed
+  target: mkt_sp500
+  edge_type: influences
+  origin: expert
+  description: "Fed policy drives US equity valuations"
+
+- source: cb_fed
+  target: mkt_us_treasury
+  edge_type: sets_rate_for
+  origin: expert
+  description: "Fed rate directly moves treasury yields"
+
+- source: cb_boj
+  target: mkt_nikkei
+  edge_type: influences
+  origin: expert
+  description: "BoJ monetary policy influences Japanese equity markets"
+
+# ===== CURRENCIES → SOVEREIGN STATE ECONOMIES =====
+
+- source: cur_usd
+  target: sov_usa
+  edge_type: influences
+  origin: expert
+  description: "USD strength affects US export competitiveness and GDP"
+
+- source: cur_eur
+  target: sov_germany
+  edge_type: influences
+  origin: expert
+  description: "EUR strength affects Germany's export-driven economy"
+
+- source: cur_cny
+  target: sov_china
+  edge_type: influences
+  origin: expert
+  description: "CNY level affects China's trade balance and growth"
+
+- source: cur_jpy
+  target: sov_japan
+  edge_type: influences
+  origin: expert
+  description: "JPY weakness boosts Japanese exports but raises import costs"
+
+- source: cur_inr
+  target: sov_india
+  edge_type: influences
+  origin: expert
+  description: "INR depreciation raises India's import bill (energy, gold)"
+
+# ===== OIL → PETROSTATES =====
+
+- source: res_oil_brent
+  target: sov_russia
+  edge_type: influences
+  origin: expert
+  description: "Russia is a petrostate; oil revenue is ~40% of federal budget"
+
+- source: res_oil_brent
+  target: sov_saudi_arabia
+  edge_type: influences
+  origin: expert
+  description: "Saudi economy fundamentally depends on oil exports"
+
+# ===== SANCTIONS → TARGETS =====
+
+- source: reg_us_sanctions
+  target: sov_russia
+  edge_type: sanctions
+  origin: expert
+  description: "US sanctions target Russian banks, oligarchs, and energy sector"
+
+- source: reg_eu_sanctions
+  target: sov_russia
+  edge_type: sanctions
+  origin: expert
+  description: "EU sanctions on Russia complement US measures"
+
+- source: reg_us_sanctions
+  target: corp_gazprom
+  edge_type: sanctions
+  origin: expert
+  description: "Gazprom targeted by Western energy sanctions"
+
+# ===== TRADE ROUTES → COMMODITIES & STATES =====
+
+- source: route_hormuz
+  target: res_oil_brent
+  edge_type: supplies
+  origin: expert
+  description: "~20% of global oil transits Strait of Hormuz daily"
+
+- source: route_suez
+  target: ind_logistics
+  edge_type: supplies
+  origin: expert
+  description: "~12% of global trade transits the Suez Canal"
+
+- source: route_malacca
+  target: sov_china
+  edge_type: supplies
+  origin: expert
+  description: "Most of China's oil imports transit Malacca Strait"
+
+- source: route_malacca
+  target: sov_japan
+  edge_type: supplies
+  origin: expert
+  description: "Japan depends on Malacca for energy imports"
+
+- source: route_nordstream
+  target: res_natural_gas
+  edge_type: supplies
+  origin: expert
+  description: "Nord Stream was primary Russian gas route to Europe"
+
+- source: route_nordstream
+  target: sov_germany
+  edge_type: supplies
+  origin: expert
+  description: "Germany was primary customer of Nord Stream gas"
+
+# ===== MILITARY → STATES & EVENTS =====
+
+- source: mil_us_forces
+  target: sov_usa
+  edge_type: defends
+  origin: expert
+  description: "US military provides national defense"
+
+- source: mil_nato_forces
+  target: org_nato
+  edge_type: defends
+  origin: expert
+  description: "NATO combined forces execute alliance defense"
+
+- source: mil_russia_forces
+  target: evt_ukraine_war
+  edge_type: escalates
+  origin: expert
+  description: "Russian military operations drive war escalation"
+
+- source: mil_pla
+  target: evt_taiwan_tensions
+  edge_type: escalates
+  origin: expert
+  description: "PLA military exercises and posturing drive Taiwan tensions"
+
+- source: sov_usa
+  target: mil_us_forces
+  edge_type: controls
+  origin: expert
+  description: "US government controls armed forces"
+
+- source: sov_china
+  target: mil_pla
+  edge_type: controls
+  origin: expert
+  description: "CCP controls the PLA"
+
+- source: sov_russia
+  target: mil_russia_forces
+  edge_type: controls
+  origin: expert
+  description: "Russian state controls armed forces"
+
+# ===== CORPORATIONS → INFRASTRUCTURE & SUPPLY =====
+
+- source: corp_tsmc
+  target: res_semiconductor
+  edge_type: supplies
+  origin: expert
+  description: "TSMC manufactures ~55% of global semiconductors"
+
+- source: corp_tsmc
+  target: tech_semiconductor_fabs
+  edge_type: controls
+  origin: expert
+  description: "TSMC operates the most advanced chip fabs globally"
+
+- source: corp_aramco
+  target: res_oil_brent
+  edge_type: supplies
+  origin: expert
+  description: "Aramco is world's largest oil producer"
+
+- source: corp_gazprom
+  target: res_natural_gas
+  edge_type: supplies
+  origin: expert
+  description: "Gazprom is a dominant natural gas producer"
+
+- source: corp_apple
+  target: corp_tsmc
+  edge_type: depends_on
+  origin: expert
+  description: "Apple depends on TSMC for chip manufacturing"
+
+# ===== INDUSTRIES ↔ COMMODITIES =====
+
+- source: ind_energy
+  target: res_oil_brent
+  edge_type: depends_on
+  origin: expert
+  description: "Energy sector fundamentally depends on oil supply/pricing"
+
+- source: ind_tech
+  target: res_semiconductor
+  edge_type: depends_on
+  origin: expert
+  description: "Tech sector depends on semiconductor supply"
+
+- source: ind_tech
+  target: res_rare_earths
+  edge_type: depends_on
+  origin: expert
+  description: "Electronics manufacturing requires rare earth elements"
+
+- source: ind_agriculture
+  target: res_wheat
+  edge_type: depends_on
+  origin: expert
+  description: "Agriculture sector output includes wheat production"
+
+- source: ind_defense
+  target: res_semiconductor
+  edge_type: depends_on
+  origin: expert
+  description: "Modern weapons systems require advanced semiconductors"
+
+# ===== CLIMATE → COMMODITIES & STATES =====
+
+- source: clim_el_nino
+  target: res_wheat
+  edge_type: impacts_output_of
+  origin: expert
+  description: "El Nino disrupts precipitation patterns affecting grain harvests"
+
+- source: clim_drought_horn_africa
+  target: ind_agriculture
+  edge_type: disrupts
+  origin: expert
+  description: "Prolonged drought devastates agricultural output"
+
+- source: clim_drought_horn_africa
+  target: demo_global_migration
+  edge_type: triggers
+  origin: expert
+  description: "Drought-driven food insecurity triggers climate migration"
+
+- source: clim_monsoon_south_asia
+  target: sov_india
+  edge_type: impacts_output_of
+  origin: expert
+  description: "Monsoon disruption affects Indian agriculture (~15% of GDP)"
+
+- source: clim_arctic_melt
+  target: route_hormuz
+  edge_type: influences
+  origin: expert
+  description: "Arctic shipping routes may reduce Hormuz dependency long-term"
+
+# ===== PUBLIC HEALTH → INDUSTRIES & STATES =====
+
+- source: health_pandemic_risk
+  target: ind_logistics
+  edge_type: disrupts
+  origin: expert
+  description: "Pandemics cause supply chain shutdowns and shipping delays"
+
+- source: health_pandemic_risk
+  target: ind_tech
+  edge_type: disrupts
+  origin: expert
+  description: "Pandemics disrupt tech manufacturing and workforce"
+
+- source: health_pharma_supply
+  target: sov_india
+  edge_type: depends_on
+  origin: expert
+  description: "India is the world's pharmacy; supplies ~20% of global generics"
+
+# ===== DEMOGRAPHICS & LABOR =====
+
+- source: demo_china_labor
+  target: sov_china
+  edge_type: influences
+  origin: expert
+  description: "China's labor force size drives manufacturing capacity"
+
+- source: demo_india_labor
+  target: ind_tech
+  edge_type: supplies
+  origin: expert
+  description: "India supplies large IT and tech labor force globally"
+
+- source: demo_eu_aging
+  target: sov_germany
+  edge_type: influences
+  origin: expert
+  description: "Aging population pressures German labor market and pensions"
+
+- source: demo_global_migration
+  target: mov_populism_wave
+  edge_type: triggers
+  origin: expert
+  description: "Immigration flows fuel populist anti-immigration movements"
+
+# ===== MEDIA → MOVEMENTS & FIGURES =====
+
+- source: media_social_platforms
+  target: mov_populism_wave
+  edge_type: propagates
+  origin: expert
+  description: "Social media amplifies populist messaging"
+
+- source: media_social_platforms
+  target: mov_climate_activism
+  edge_type: propagates
+  origin: expert
+  description: "Social media enables rapid climate activist mobilization"
+
+- source: media_xinhua
+  target: sov_china
+  edge_type: influences
+  origin: expert
+  description: "Xinhua shapes narrative supporting Chinese state interests"
+
+# ===== SOCIAL MOVEMENTS → POLICY & STATES =====
+
+- source: mov_populism_wave
+  target: evt_brexit_aftermath
+  edge_type: triggers
+  origin: expert
+  description: "Populist sentiment was a key driver of Brexit vote"
+
+- source: mov_climate_activism
+  target: reg_paris_accord
+  edge_type: influences
+  origin: expert
+  description: "Climate movement pressures governments to honor Paris commitments"
+
+- source: mov_deglobalization
+  target: evt_us_china_trade_war
+  edge_type: influences
+  origin: expert
+  description: "Economic nationalism drives decoupling and trade barriers"
+
+# ===== TRADE AGREEMENTS → STATES =====
+
+- source: reg_rcep
+  target: sov_china
+  edge_type: influences
+  origin: expert
+  description: "RCEP strengthens China's trade integration with Asia-Pacific"
+
+- source: reg_usmca
+  target: sov_usa
+  edge_type: regulates
+  origin: expert
+  description: "USMCA governs North American trade terms"
+
+# ===== ORGANIZATIONS → MEMBERS & POLICY =====
+
+- source: org_opec
+  target: evt_opec_cut
+  edge_type: triggers
+  origin: expert
+  description: "OPEC collectively decides production quotas"
+
+- source: org_nato
+  target: evt_ukraine_war
+  edge_type: influences
+  origin: expert
+  description: "NATO support and expansion decisions shape Ukraine war dynamics"
+
+- source: org_imf
+  target: sov_brazil
+  edge_type: influences
+  origin: expert
+  description: "IMF lending conditions affect emerging market economic policy"
+
+- source: org_eu
+  target: reg_eu_sanctions
+  edge_type: enforces
+  origin: expert
+  description: "EU institutions enforce the EU sanctions regime"
+
+- source: org_wto
+  target: evt_us_china_trade_war
+  edge_type: regulates
+  origin: expert
+  description: "WTO rules govern trade dispute resolution"
+
+# ===== FINANCIAL MARKETS → BROADER ECONOMY =====
+
+- source: mkt_sp500
+  target: sov_usa
+  edge_type: influences
+  origin: expert
+  description: "S&P 500 performance reflects and influences US economic confidence"
+
+- source: mkt_sse_composite
+  target: sov_china
+  edge_type: influences
+  origin: expert
+  description: "Shanghai market reflects Chinese economic health"
+
+- source: mkt_vix
+  target: mkt_sp500
+  edge_type: influences
+  origin: expert
+  description: "VIX spike signals fear, drives equity selloffs"
+
+- source: mkt_us_treasury
+  target: cur_usd
+  edge_type: influences
+  origin: expert
+  description: "Treasury yields attract foreign capital, strengthening USD"
+
+# ===== ENERGY INFRASTRUCTURE =====
+
+- source: eni_global_refining
+  target: res_oil_brent
+  edge_type: depends_on
+  origin: expert
+  description: "Refining capacity determines how much crude can be processed"
+
+- source: eni_global_lng
+  target: res_natural_gas
+  edge_type: depends_on
+  origin: expert
+  description: "LNG terminal capacity constrains gas trade flexibility"
+
+- source: eni_eu_grid
+  target: sov_germany
+  edge_type: powers
+  origin: expert
+  description: "EU grid reliability directly affects German industrial output"
+
+# ===== TECHNOLOGY INFRASTRUCTURE =====
+
+- source: tech_semiconductor_fabs
+  target: res_semiconductor
+  edge_type: supplies
+  origin: expert
+  description: "Fab capacity determines global chip supply"
+
+- source: tech_undersea_cables
+  target: ind_finance
+  edge_type: powers
+  origin: expert
+  description: "Financial markets depend on undersea cable connectivity"
+
+- source: tech_global_cloud
+  target: ind_tech
+  edge_type: powers
+  origin: expert
+  description: "Cloud infrastructure underlies modern tech industry"
+
+# ===== BITCOIN / CRYPTO =====
+
+- source: cur_btc
+  target: cur_usd
+  edge_type: competes_with
+  origin: expert
+  description: "Bitcoin positioned as alternative store of value to USD"
+
+- source: cb_fed
+  target: cur_btc
+  edge_type: influences
+  origin: expert
+  description: "Fed rate hikes typically reduce crypto risk appetite"

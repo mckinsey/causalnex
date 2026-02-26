@@ -3,7 +3,9 @@ Hybrid structure learning: expert skeleton + optional DYNOTEARS temporal edges.
 
 The graph is built in three layers:
 
-1. **Expert skeleton** — edges that are definitively true by domain knowledge.
+1. **Expert skeleton** — edges that are definitively true by domain knowledge,
+   loaded from the :class:`~causalnex.global_graph.registry.OntologyRegistry`
+   (backed by YAML config files by default).
 2. **DYNOTEARS learned edges** — inter-slice temporal relationships from
    time-series data (optional).
 3. **DAG enforcement** — cycle removal that prefers dropping learned edges
@@ -15,59 +17,85 @@ from typing import Dict, List, Optional, Tuple
 import networkx as nx
 
 from causalnex.structure import StructureModel
-from causalnex.global_graph.node_registry import validate_node_name
+from causalnex.global_graph.registry import (
+    OntologyRegistry,
+    get_default_registry,
+    validate_node_name,
+)
 
-
-# Default expert edges for the global relationship graph.
+# Legacy constant kept for backward compatibility.  New callers should pass
+# an ``OntologyRegistry`` to ``build_expert_skeleton`` instead.
 DEFAULT_EXPERT_EDGES: List[Tuple[str, str]] = [
-    # Figures → events they trigger
     ("fig_mbs", "evt_opec_cut"),
     ("fig_powell", "evt_fed_rate_hike"),
     ("fig_biden", "evt_ukraine_war"),
-    # Events → resources
     ("evt_ukraine_war", "res_oil_brent"),
     ("evt_ukraine_war", "res_wheat"),
     ("evt_opec_cut", "res_oil_brent"),
-    # Resources → currencies
     ("res_oil_brent", "cur_usd_strength"),
     ("res_oil_brent", "cur_eur_strength"),
-    # Fed rate → USD
     ("evt_fed_rate_hike", "cur_usd_strength"),
-    # Currencies → country metrics
     ("cur_usd_strength", "ctr_usa_gdp"),
     ("cur_eur_strength", "ctr_russia_gdp"),
-    # Oil → Russia GDP (petrostate)
     ("res_oil_brent", "ctr_russia_gdp"),
-    # China trade → semiconductors
     ("ctr_china_trade", "res_semiconductor"),
-    # CNY strength affected by China trade
     ("ctr_china_trade", "cur_cny_strength"),
 ]
 
 
 def build_expert_skeleton(
     edges: Optional[List[Tuple[str, str]]] = None,
+    registry: Optional[OntologyRegistry] = None,
 ) -> StructureModel:
     """Build a ``StructureModel`` from expert-defined causal edges.
+
+    Edge source priority:
+
+    1. If *edges* is provided, use that list directly (legacy mode).
+    2. Else if *registry* is provided, use ``registry.to_expert_edges()``.
+    3. Else load the default registry from the shipped YAML configs.
 
     Each edge is tagged with ``origin="expert"`` so that the DAG enforcement
     step can prioritise preserving them over data-learned edges.
 
+    When built from a registry, additional metadata (``edge_type``,
+    ``description``, ``weight``) is stored as edge attributes.
+
     Args:
-        edges: list of ``(cause, effect)`` tuples.  Falls back to
-            ``DEFAULT_EXPERT_EDGES`` when *None*.
+        edges: list of ``(cause, effect)`` tuples.
+        registry: an :class:`OntologyRegistry` instance.
 
     Returns:
         A ``StructureModel`` with expert edges.
     """
-    if edges is None:
-        edges = DEFAULT_EXPERT_EDGES
-
     sm = StructureModel()
-    for u, v in edges:
-        validate_node_name(u)
-        validate_node_name(v)
-        sm.add_edge(u, v, origin="expert")
+
+    if edges is not None:
+        # Legacy path: plain tuple list
+        for u, v in edges:
+            validate_node_name(u)
+            validate_node_name(v)
+            sm.add_edge(u, v, origin="expert")
+        return sm
+
+    # Registry path: rich metadata on edges
+    if registry is None:
+        registry = get_default_registry()
+
+    typed_edges = registry.to_typed_expert_edges()
+    for edge in typed_edges:
+        src = edge["source"]
+        tgt = edge["target"]
+        validate_node_name(src)
+        validate_node_name(tgt)
+        sm.add_edge(
+            src,
+            tgt,
+            origin=edge.get("origin", "expert"),
+            edge_type=edge.get("edge_type", ""),
+            weight=edge.get("weight", 1.0),
+            description=edge.get("description", ""),
+        )
 
     return sm
 

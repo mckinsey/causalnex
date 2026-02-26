@@ -1,0 +1,364 @@
+# ============================================================================
+# Relationship Type Definitions for the Global Relationship Graph
+# ============================================================================
+#
+# Each entry defines a *type* of directed edge between nodes.
+#
+# Schema per entry:
+#   label        : Human-readable verb/phrase
+#   category     : Broad grouping (trade, governance, conflict, …)
+#   directed     : Whether the relationship is inherently directional
+#   description  : What this relationship means causally
+#   typical_pairs: Common (source_type → target_type) pairs where this edge
+#                  is expected. Used for validation hints, not hard constraints.
+#
+# To add a new relationship type, append an entry — no code changes needed.
+# ============================================================================
+
+# --- Trade & Economics ---
+
+exports_to:
+  label: "Exports To"
+  category: "trade"
+  directed: true
+  description: "Source exports goods, services, or capital to target"
+  typical_pairs:
+    - [sovereign_state, sovereign_state]
+    - [corporation, sovereign_state]
+
+imports_from:
+  label: "Imports From"
+  category: "trade"
+  directed: true
+  description: "Source imports goods, services, or capital from target"
+  typical_pairs:
+    - [sovereign_state, sovereign_state]
+
+supplies:
+  label: "Supplies"
+  category: "trade"
+  directed: true
+  description: "Source is a critical supplier of a resource or component to target"
+  typical_pairs:
+    - [sovereign_state, commodity]
+    - [corporation, industry]
+    - [trade_route, sovereign_state]
+
+depends_on:
+  label: "Depends On"
+  category: "trade"
+  directed: true
+  description: "Source has a material dependency on target for functioning"
+  typical_pairs:
+    - [industry, commodity]
+    - [corporation, tech_infra]
+    - [sovereign_state, trade_route]
+    - [sovereign_state, energy_infra]
+
+competes_with:
+  label: "Competes With"
+  category: "trade"
+  directed: false
+  description: "Source and target are in direct competition (market share, influence, resources)"
+  typical_pairs:
+    - [corporation, corporation]
+    - [sovereign_state, sovereign_state]
+    - [currency, currency]
+
+# --- Governance & Regulation ---
+
+regulates:
+  label: "Regulates"
+  category: "governance"
+  directed: true
+  description: "Source imposes rules, constraints, or oversight on target"
+  typical_pairs:
+    - [regulatory, industry]
+    - [regulatory, corporation]
+    - [intl_organization, sovereign_state]
+    - [sovereign_state, corporation]
+
+sanctions:
+  label: "Sanctions"
+  category: "governance"
+  directed: true
+  description: "Source imposes economic or diplomatic sanctions on target"
+  typical_pairs:
+    - [sovereign_state, sovereign_state]
+    - [intl_organization, sovereign_state]
+    - [sovereign_state, corporation]
+
+member_of:
+  label: "Member Of"
+  category: "governance"
+  directed: true
+  description: "Source is a member or participant of target organization/agreement"
+  typical_pairs:
+    - [sovereign_state, intl_organization]
+    - [sovereign_state, regulatory]
+    - [corporation, intl_organization]
+
+enforces:
+  label: "Enforces"
+  category: "governance"
+  directed: true
+  description: "Source enforces the rules or mandates of target framework"
+  typical_pairs:
+    - [intl_organization, regulatory]
+    - [sovereign_state, regulatory]
+
+# --- Influence & Power ---
+
+influences:
+  label: "Influences"
+  category: "influence"
+  directed: true
+  description: "Source exerts soft power, persuasion, or indirect control over target"
+  typical_pairs:
+    - [political_figure, sovereign_state]
+    - [political_figure, intl_organization]
+    - [media, social_movement]
+    - [media, political_figure]
+    - [corporation, regulatory]
+
+leads:
+  label: "Leads"
+  category: "influence"
+  directed: true
+  description: "Source holds formal leadership position over target"
+  typical_pairs:
+    - [political_figure, sovereign_state]
+    - [political_figure, central_bank]
+    - [political_figure, intl_organization]
+
+controls:
+  label: "Controls"
+  category: "influence"
+  directed: true
+  description: "Source has direct operational control over target"
+  typical_pairs:
+    - [sovereign_state, military]
+    - [sovereign_state, central_bank]
+    - [corporation, tech_infra]
+    - [corporation, energy_infra]
+
+lobbies:
+  label: "Lobbies"
+  category: "influence"
+  directed: true
+  description: "Source lobbies or applies political pressure on target"
+  typical_pairs:
+    - [corporation, sovereign_state]
+    - [industry, regulatory]
+    - [social_movement, political_figure]
+
+# --- Causation & Events ---
+
+triggers:
+  label: "Triggers"
+  category: "causation"
+  directed: true
+  description: "Source action or state directly triggers target event or state change"
+  typical_pairs:
+    - [political_figure, geopolitical_event]
+    - [climate, geopolitical_event]
+    - [geopolitical_event, geopolitical_event]
+
+disrupts:
+  label: "Disrupts"
+  category: "causation"
+  directed: true
+  description: "Source event or condition disrupts normal functioning of target"
+  typical_pairs:
+    - [geopolitical_event, trade_route]
+    - [geopolitical_event, commodity]
+    - [climate, trade_route]
+    - [climate, commodity]
+    - [public_health, industry]
+
+destabilizes:
+  label: "Destabilizes"
+  category: "causation"
+  directed: true
+  description: "Source weakens the stability or resilience of target"
+  typical_pairs:
+    - [geopolitical_event, sovereign_state]
+    - [social_movement, sovereign_state]
+    - [public_health, sovereign_state]
+    - [climate, sovereign_state]
+
+escalates:
+  label: "Escalates"
+  category: "causation"
+  directed: true
+  description: "Source causes target conflict or tension to intensify"
+  typical_pairs:
+    - [military, geopolitical_event]
+    - [political_figure, geopolitical_event]
+    - [media, geopolitical_event]
+
+# --- Financial & Monetary ---
+
+sets_rate_for:
+  label: "Sets Rate For"
+  category: "monetary"
+  directed: true
+  description: "Source monetary authority sets interest/policy rate affecting target"
+  typical_pairs:
+    - [central_bank, currency]
+    - [central_bank, financial_market]
+
+pegged_to:
+  label: "Pegged To"
+  category: "monetary"
+  directed: true
+  description: "Source currency is pegged or closely tracks target currency/commodity"
+  typical_pairs:
+    - [currency, currency]
+    - [currency, commodity]
+
+invests_in:
+  label: "Invests In"
+  category: "financial"
+  directed: true
+  description: "Source allocates capital into target"
+  typical_pairs:
+    - [corporation, corporation]
+    - [sovereign_state, tech_infra]
+    - [sovereign_state, energy_infra]
+
+trades_on:
+  label: "Trades On"
+  category: "financial"
+  directed: true
+  description: "Source is listed or actively traded on target market"
+  typical_pairs:
+    - [corporation, financial_market]
+    - [commodity, financial_market]
+    - [currency, financial_market]
+
+# --- Infrastructure & Physical ---
+
+transits_through:
+  label: "Transits Through"
+  category: "infrastructure"
+  directed: true
+  description: "Source commodity or goods physically move through target route"
+  typical_pairs:
+    - [commodity, trade_route]
+    - [sovereign_state, trade_route]
+
+powers:
+  label: "Powers"
+  category: "infrastructure"
+  directed: true
+  description: "Source provides energy or computational power to target"
+  typical_pairs:
+    - [energy_infra, industry]
+    - [energy_infra, tech_infra]
+    - [commodity, energy_infra]
+
+connects:
+  label: "Connects"
+  category: "infrastructure"
+  directed: false
+  description: "Source and target are linked by physical or digital infrastructure"
+  typical_pairs:
+    - [tech_infra, sovereign_state]
+    - [trade_route, sovereign_state]
+
+# --- Security & Conflict ---
+
+threatens:
+  label: "Threatens"
+  category: "security"
+  directed: true
+  description: "Source poses a military, economic, or strategic threat to target"
+  typical_pairs:
+    - [military, sovereign_state]
+    - [sovereign_state, sovereign_state]
+
+defends:
+  label: "Defends"
+  category: "security"
+  directed: true
+  description: "Source provides military or strategic defense to target"
+  typical_pairs:
+    - [military, sovereign_state]
+    - [intl_organization, sovereign_state]
+
+arms:
+  label: "Arms / Equips"
+  category: "security"
+  directed: true
+  description: "Source provides weapons, military equipment, or training to target"
+  typical_pairs:
+    - [sovereign_state, military]
+    - [corporation, military]
+
+# --- Social & Demographic ---
+
+migrates_to:
+  label: "Migrates To"
+  category: "demographics"
+  directed: true
+  description: "Population flows from source region to target"
+  typical_pairs:
+    - [demographics, sovereign_state]
+    - [sovereign_state, sovereign_state]
+
+employs_from:
+  label: "Employs From"
+  category: "demographics"
+  directed: true
+  description: "Source draws labor from target population/region"
+  typical_pairs:
+    - [industry, demographics]
+    - [corporation, demographics]
+
+propagates:
+  label: "Propagates"
+  category: "information"
+  directed: true
+  description: "Source spreads information, narrative, or ideology to target"
+  typical_pairs:
+    - [media, social_movement]
+    - [media, political_figure]
+    - [social_movement, demographics]
+
+# --- Health & Environment ---
+
+spreads_to:
+  label: "Spreads To"
+  category: "health"
+  directed: true
+  description: "Source disease or environmental effect spreads to target"
+  typical_pairs:
+    - [public_health, sovereign_state]
+    - [climate, sovereign_state]
+
+impacts_output_of:
+  label: "Impacts Output Of"
+  category: "environment"
+  directed: true
+  description: "Source environmental condition affects production output of target"
+  typical_pairs:
+    - [climate, commodity]
+    - [climate, industry]
+    - [public_health, industry]
+
+# --- General / Cross-cutting ---
+
+correlates_with:
+  label: "Correlates With"
+  category: "statistical"
+  directed: false
+  description: "Learned statistical association (not necessarily causal)"
+  typical_pairs: []
+
+causes:
+  label: "Causes"
+  category: "causation"
+  directed: true
+  description: "Direct causal relationship established by domain expertise or intervention analysis"
+  typical_pairs: []

@@ -1,0 +1,594 @@
+# ============================================================================
+# Default Node Instances for the Global Relationship Graph
+# ============================================================================
+#
+# Each entry is a concrete node in the graph.  The key becomes the node ID
+# used in CausalNex (must match ^[0-9a-zA-Z_]+$).
+#
+# Schema per entry:
+#   type    : Must reference a key in node_types.yaml
+#   label   : Human-readable display name
+#   domain  : Free-text domain tag for filtering / grouping
+#
+# Extend this file to add nodes.  No code changes needed.
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Sovereign States & Territories
+# ---------------------------------------------------------------------------
+sov_usa:
+  type: sovereign_state
+  label: "United States"
+  domain: "north_america"
+
+sov_china:
+  type: sovereign_state
+  label: "China"
+  domain: "east_asia"
+
+sov_russia:
+  type: sovereign_state
+  label: "Russia"
+  domain: "eurasia"
+
+sov_germany:
+  type: sovereign_state
+  label: "Germany"
+  domain: "europe"
+
+sov_saudi_arabia:
+  type: sovereign_state
+  label: "Saudi Arabia"
+  domain: "middle_east"
+
+sov_india:
+  type: sovereign_state
+  label: "India"
+  domain: "south_asia"
+
+sov_japan:
+  type: sovereign_state
+  label: "Japan"
+  domain: "east_asia"
+
+sov_brazil:
+  type: sovereign_state
+  label: "Brazil"
+  domain: "south_america"
+
+sov_ukraine:
+  type: sovereign_state
+  label: "Ukraine"
+  domain: "europe"
+
+sov_taiwan:
+  type: sovereign_state
+  label: "Taiwan"
+  domain: "east_asia"
+
+# ---------------------------------------------------------------------------
+# 2. Political Figures & Leaders
+# ---------------------------------------------------------------------------
+fig_biden:
+  type: political_figure
+  label: "Biden"
+  domain: "us_politics"
+
+fig_xi_jinping:
+  type: political_figure
+  label: "Xi Jinping"
+  domain: "china_politics"
+
+fig_putin:
+  type: political_figure
+  label: "Putin"
+  domain: "russia_politics"
+
+fig_mbs:
+  type: political_figure
+  label: "MBS (Mohammed bin Salman)"
+  domain: "saudi_politics"
+
+fig_powell:
+  type: political_figure
+  label: "Jerome Powell"
+  domain: "us_monetary"
+
+fig_lagarde:
+  type: political_figure
+  label: "Christine Lagarde"
+  domain: "eu_monetary"
+
+fig_modi:
+  type: political_figure
+  label: "Narendra Modi"
+  domain: "india_politics"
+
+# ---------------------------------------------------------------------------
+# 3. International Organizations & Alliances
+# ---------------------------------------------------------------------------
+org_nato:
+  type: intl_organization
+  label: "NATO"
+  domain: "security_alliance"
+
+org_eu:
+  type: intl_organization
+  label: "European Union"
+  domain: "regional_bloc"
+
+org_opec:
+  type: intl_organization
+  label: "OPEC"
+  domain: "commodity_cartel"
+
+org_un:
+  type: intl_organization
+  label: "United Nations"
+  domain: "global_governance"
+
+org_imf:
+  type: intl_organization
+  label: "IMF"
+  domain: "financial_governance"
+
+org_brics:
+  type: intl_organization
+  label: "BRICS"
+  domain: "emerging_bloc"
+
+org_wto:
+  type: intl_organization
+  label: "WTO"
+  domain: "trade_governance"
+
+# ---------------------------------------------------------------------------
+# 4. Commodities & Natural Resources
+# ---------------------------------------------------------------------------
+res_oil_brent:
+  type: commodity
+  label: "Brent Crude Oil"
+  domain: "energy"
+
+res_natural_gas:
+  type: commodity
+  label: "Natural Gas"
+  domain: "energy"
+
+res_gold:
+  type: commodity
+  label: "Gold"
+  domain: "precious_metals"
+
+res_wheat:
+  type: commodity
+  label: "Wheat"
+  domain: "agriculture"
+
+res_semiconductor:
+  type: commodity
+  label: "Semiconductors"
+  domain: "technology"
+
+res_lithium:
+  type: commodity
+  label: "Lithium"
+  domain: "critical_minerals"
+
+res_rare_earths:
+  type: commodity
+  label: "Rare Earth Elements"
+  domain: "critical_minerals"
+
+res_copper:
+  type: commodity
+  label: "Copper"
+  domain: "industrial_metals"
+
+# ---------------------------------------------------------------------------
+# 5. Currencies & Monetary Instruments
+# ---------------------------------------------------------------------------
+cur_usd:
+  type: currency
+  label: "US Dollar (USD)"
+  domain: "forex"
+
+cur_eur:
+  type: currency
+  label: "Euro (EUR)"
+  domain: "forex"
+
+cur_cny:
+  type: currency
+  label: "Chinese Yuan (CNY)"
+  domain: "forex"
+
+cur_jpy:
+  type: currency
+  label: "Japanese Yen (JPY)"
+  domain: "forex"
+
+cur_btc:
+  type: currency
+  label: "Bitcoin (BTC)"
+  domain: "crypto"
+
+cur_inr:
+  type: currency
+  label: "Indian Rupee (INR)"
+  domain: "forex"
+
+# ---------------------------------------------------------------------------
+# 6. Financial Markets & Indices
+# ---------------------------------------------------------------------------
+mkt_sp500:
+  type: financial_market
+  label: "S&P 500"
+  domain: "equities"
+
+mkt_nasdaq:
+  type: financial_market
+  label: "NASDAQ Composite"
+  domain: "equities"
+
+mkt_sse_composite:
+  type: financial_market
+  label: "Shanghai Composite"
+  domain: "equities"
+
+mkt_nikkei:
+  type: financial_market
+  label: "Nikkei 225"
+  domain: "equities"
+
+mkt_us_treasury:
+  type: financial_market
+  label: "US Treasury Bond Market"
+  domain: "bonds"
+
+mkt_vix:
+  type: financial_market
+  label: "VIX (Volatility Index)"
+  domain: "derivatives"
+
+# ---------------------------------------------------------------------------
+# 7. Corporations & Conglomerates
+# ---------------------------------------------------------------------------
+corp_tsmc:
+  type: corporation
+  label: "TSMC"
+  domain: "semiconductors"
+
+corp_aramco:
+  type: corporation
+  label: "Saudi Aramco"
+  domain: "energy"
+
+corp_apple:
+  type: corporation
+  label: "Apple"
+  domain: "technology"
+
+corp_gazprom:
+  type: corporation
+  label: "Gazprom"
+  domain: "energy"
+
+# ---------------------------------------------------------------------------
+# 8. Industries & Sectors
+# ---------------------------------------------------------------------------
+ind_energy:
+  type: industry
+  label: "Energy Sector"
+  domain: "energy"
+
+ind_defense:
+  type: industry
+  label: "Defense / Aerospace"
+  domain: "security"
+
+ind_tech:
+  type: industry
+  label: "Technology Sector"
+  domain: "technology"
+
+ind_agriculture:
+  type: industry
+  label: "Agriculture"
+  domain: "food"
+
+ind_finance:
+  type: industry
+  label: "Financial Services"
+  domain: "finance"
+
+ind_logistics:
+  type: industry
+  label: "Logistics / Shipping"
+  domain: "transport"
+
+# ---------------------------------------------------------------------------
+# 9. Central Banks & Monetary Authorities
+# ---------------------------------------------------------------------------
+cb_fed:
+  type: central_bank
+  label: "US Federal Reserve"
+  domain: "us_monetary"
+
+cb_ecb:
+  type: central_bank
+  label: "European Central Bank"
+  domain: "eu_monetary"
+
+cb_pboc:
+  type: central_bank
+  label: "People's Bank of China"
+  domain: "china_monetary"
+
+cb_boj:
+  type: central_bank
+  label: "Bank of Japan"
+  domain: "japan_monetary"
+
+cb_rbi:
+  type: central_bank
+  label: "Reserve Bank of India"
+  domain: "india_monetary"
+
+# ---------------------------------------------------------------------------
+# 10. Trade Routes & Supply Chains
+# ---------------------------------------------------------------------------
+route_hormuz:
+  type: trade_route
+  label: "Strait of Hormuz"
+  domain: "maritime_chokepoint"
+
+route_suez:
+  type: trade_route
+  label: "Suez Canal"
+  domain: "maritime_chokepoint"
+
+route_malacca:
+  type: trade_route
+  label: "Strait of Malacca"
+  domain: "maritime_chokepoint"
+
+route_bri:
+  type: trade_route
+  label: "Belt and Road Initiative"
+  domain: "land_corridor"
+
+route_nordstream:
+  type: trade_route
+  label: "Nord Stream Pipeline"
+  domain: "energy_pipeline"
+
+# ---------------------------------------------------------------------------
+# 11. Military & Defense
+# ---------------------------------------------------------------------------
+mil_us_forces:
+  type: military
+  label: "US Armed Forces"
+  domain: "us_military"
+
+mil_pla:
+  type: military
+  label: "PLA (China)"
+  domain: "china_military"
+
+mil_russia_forces:
+  type: military
+  label: "Russian Armed Forces"
+  domain: "russia_military"
+
+mil_nato_forces:
+  type: military
+  label: "NATO Combined Forces"
+  domain: "alliance_military"
+
+# ---------------------------------------------------------------------------
+# 12. Energy Infrastructure
+# ---------------------------------------------------------------------------
+eni_us_grid:
+  type: energy_infra
+  label: "US Power Grid"
+  domain: "electricity"
+
+eni_eu_grid:
+  type: energy_infra
+  label: "EU Power Grid"
+  domain: "electricity"
+
+eni_global_lng:
+  type: energy_infra
+  label: "Global LNG Terminals"
+  domain: "gas"
+
+eni_global_refining:
+  type: energy_infra
+  label: "Global Refining Capacity"
+  domain: "oil"
+
+# ---------------------------------------------------------------------------
+# 13. Technology & Digital Infrastructure
+# ---------------------------------------------------------------------------
+tech_undersea_cables:
+  type: tech_infra
+  label: "Undersea Cable Network"
+  domain: "connectivity"
+
+tech_global_cloud:
+  type: tech_infra
+  label: "Global Cloud Infrastructure"
+  domain: "compute"
+
+tech_semiconductor_fabs:
+  type: tech_infra
+  label: "Semiconductor Fabrication"
+  domain: "manufacturing"
+
+tech_starlink:
+  type: tech_infra
+  label: "Starlink / Satellite Internet"
+  domain: "connectivity"
+
+# ---------------------------------------------------------------------------
+# 14. Demographics & Labor
+# ---------------------------------------------------------------------------
+demo_china_labor:
+  type: demographics
+  label: "China Labor Force"
+  domain: "labor"
+
+demo_india_labor:
+  type: demographics
+  label: "India Labor Force"
+  domain: "labor"
+
+demo_eu_aging:
+  type: demographics
+  label: "EU Aging Population"
+  domain: "demographics"
+
+demo_global_migration:
+  type: demographics
+  label: "Global Migration Flows"
+  domain: "migration"
+
+# ---------------------------------------------------------------------------
+# 15. Media & Information Entities
+# ---------------------------------------------------------------------------
+media_reuters:
+  type: media
+  label: "Reuters"
+  domain: "wire_service"
+
+media_xinhua:
+  type: media
+  label: "Xinhua News Agency"
+  domain: "state_media"
+
+media_social_platforms:
+  type: media
+  label: "Social Media Platforms (X, Meta, TikTok)"
+  domain: "social_media"
+
+# ---------------------------------------------------------------------------
+# 16. Regulatory & Legal Frameworks
+# ---------------------------------------------------------------------------
+reg_us_sanctions:
+  type: regulatory
+  label: "US Sanctions Regime (OFAC)"
+  domain: "sanctions"
+
+reg_eu_sanctions:
+  type: regulatory
+  label: "EU Sanctions Regime"
+  domain: "sanctions"
+
+reg_paris_accord:
+  type: regulatory
+  label: "Paris Climate Agreement"
+  domain: "environment"
+
+reg_rcep:
+  type: regulatory
+  label: "RCEP Trade Agreement"
+  domain: "trade"
+
+reg_usmca:
+  type: regulatory
+  label: "USMCA Trade Agreement"
+  domain: "trade"
+
+# ---------------------------------------------------------------------------
+# 17. Geopolitical Events & Conflicts
+# ---------------------------------------------------------------------------
+evt_ukraine_war:
+  type: geopolitical_event
+  label: "Russia-Ukraine War"
+  domain: "conflict"
+
+evt_taiwan_tensions:
+  type: geopolitical_event
+  label: "Taiwan Strait Tensions"
+  domain: "conflict"
+
+evt_fed_rate_decision:
+  type: geopolitical_event
+  label: "Fed Rate Decision"
+  domain: "economic_policy"
+
+evt_opec_cut:
+  type: geopolitical_event
+  label: "OPEC Production Cut"
+  domain: "economic_policy"
+
+evt_us_china_trade_war:
+  type: geopolitical_event
+  label: "US-China Trade War"
+  domain: "trade_conflict"
+
+evt_brexit_aftermath:
+  type: geopolitical_event
+  label: "Brexit Aftermath"
+  domain: "political"
+
+# ---------------------------------------------------------------------------
+# 18. Climate & Environment
+# ---------------------------------------------------------------------------
+clim_el_nino:
+  type: climate
+  label: "El Nino / La Nina Cycle"
+  domain: "weather_pattern"
+
+clim_arctic_melt:
+  type: climate
+  label: "Arctic Ice Melt"
+  domain: "climate_change"
+
+clim_drought_horn_africa:
+  type: climate
+  label: "Horn of Africa Drought"
+  domain: "natural_disaster"
+
+clim_monsoon_south_asia:
+  type: climate
+  label: "South Asian Monsoon Disruption"
+  domain: "weather_pattern"
+
+# ---------------------------------------------------------------------------
+# 19. Public Health
+# ---------------------------------------------------------------------------
+health_pandemic_risk:
+  type: public_health
+  label: "Global Pandemic Risk"
+  domain: "pandemic"
+
+health_pharma_supply:
+  type: public_health
+  label: "Pharmaceutical Supply Chain"
+  domain: "supply_chain"
+
+health_vaccine_access:
+  type: public_health
+  label: "Global Vaccine Access"
+  domain: "healthcare"
+
+# ---------------------------------------------------------------------------
+# 20. Ideologies & Social Movements
+# ---------------------------------------------------------------------------
+mov_populism_wave:
+  type: social_movement
+  label: "Global Populism Wave"
+  domain: "political_movement"
+
+mov_climate_activism:
+  type: social_movement
+  label: "Climate Activism (Fridays for Future etc.)"
+  domain: "environmental_movement"
+
+mov_deglobalization:
+  type: social_movement
+  label: "Deglobalization / Economic Nationalism"
+  domain: "economic_movement"

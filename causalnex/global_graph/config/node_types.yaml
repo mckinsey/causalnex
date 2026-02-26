@@ -1,0 +1,244 @@
+# ============================================================================
+# Entity Group Definitions for the Global Relationship Graph
+# ============================================================================
+#
+# Each entry defines a *type* of node (entity group). Individual node
+# instances are stored separately in default_nodes.yaml.
+#
+# Schema per entry:
+#   label        : Human-readable name
+#   prefix       : Short prefix for node naming (e.g. sov_usa, fig_biden)
+#   category     : Broad grouping for colour-coding / filtering
+#   description  : What this entity group represents
+#   attributes   : Typical measurable attributes carried by instances
+#
+# To add a new entity group, append an entry here — no code changes needed.
+# ============================================================================
+
+sovereign_state:
+  label: "Sovereign State / Territory"
+  prefix: "sov"
+  category: "geopolitics"
+  description: "Countries, autonomous regions, disputed territories"
+  attributes:
+    - gdp
+    - debt_to_gdp
+    - credit_rating
+    - population
+    - political_system
+    - alliances
+
+political_figure:
+  label: "Political Figure / Leader"
+  prefix: "fig"
+  category: "geopolitics"
+  description: "Heads of state, ministers, central bank governors, diplomats, opposition leaders"
+  attributes:
+    - role
+    - tenure
+    - party_affiliation
+    - approval_rating
+    - influence_score
+
+intl_organization:
+  label: "International Organization / Alliance"
+  prefix: "org"
+  category: "geopolitics"
+  description: "UN, NATO, EU, ASEAN, OPEC, BRICS, WHO, WTO, IMF, World Bank, G7/G20"
+  attributes:
+    - member_states
+    - mandate
+    - policy_positions
+    - sanctions_authority
+
+commodity:
+  label: "Commodity / Natural Resource"
+  prefix: "res"
+  category: "economics"
+  description: "Energy, metals, agriculture, water — physical goods traded on global markets"
+  attributes:
+    - spot_price
+    - futures_price
+    - global_supply_volume
+    - reserve_locations
+    - demand_elasticity
+
+currency:
+  label: "Currency / Monetary Instrument"
+  prefix: "cur"
+  category: "economics"
+  description: "Fiat currencies, cryptocurrencies, SDRs, CBDCs"
+  attributes:
+    - exchange_rate
+    - inflation_rate
+    - interest_rate
+    - reserve_currency_status
+    - money_supply
+
+financial_market:
+  label: "Financial Market / Index"
+  prefix: "mkt"
+  category: "economics"
+  description: "Stock exchanges, bond markets, major indices, derivatives markets"
+  attributes:
+    - price_level
+    - volatility
+    - market_cap
+    - trading_volume
+    - pe_ratio
+
+corporation:
+  label: "Corporation / Conglomerate"
+  prefix: "corp"
+  category: "economics"
+  description: "Multinationals, SOEs, sovereign wealth funds, major private companies"
+  attributes:
+    - market_cap
+    - revenue
+    - sector
+    - hq_country
+    - supply_chain_deps
+    - lobbying_spend
+
+industry:
+  label: "Industry / Sector"
+  prefix: "ind"
+  category: "economics"
+  description: "Energy, defense, tech, pharma, agriculture, finance, manufacturing, logistics, real estate, tourism"
+  attributes:
+    - global_market_size
+    - growth_rate
+    - regulatory_exposure
+    - labor_dependency
+
+central_bank:
+  label: "Central Bank / Monetary Authority"
+  prefix: "cb"
+  category: "economics"
+  description: "Fed, ECB, PBoC, BoJ, BoE, RBI — institutions that set monetary policy"
+  attributes:
+    - interest_rate
+    - balance_sheet_size
+    - policy_stance
+    - forward_guidance
+
+trade_route:
+  label: "Trade Route / Supply Chain"
+  prefix: "route"
+  category: "infrastructure"
+  description: "Shipping lanes, pipelines, rail corridors, ports — physical trade arteries"
+  attributes:
+    - throughput_volume
+    - chokepoint_risk
+    - transit_time
+    - alternative_routes
+
+military:
+  label: "Military / Defense"
+  prefix: "mil"
+  category: "security"
+  description: "Armed forces, military bases, nuclear arsenals, defense pacts, PMCs"
+  attributes:
+    - military_spending
+    - troop_count
+    - force_projection
+    - nuclear_status
+
+energy_infra:
+  label: "Energy Infrastructure"
+  prefix: "eni"
+  category: "infrastructure"
+  description: "Power grids, refineries, LNG terminals, nuclear plants, renewable capacity"
+  attributes:
+    - capacity
+    - utilization_rate
+    - interconnections
+    - vulnerability
+
+tech_infra:
+  label: "Technology / Digital Infrastructure"
+  prefix: "tech"
+  category: "infrastructure"
+  description: "Undersea cables, satellite networks, cloud providers, semiconductor fabs, AI compute"
+  attributes:
+    - capacity
+    - control_entity
+    - geographic_footprint
+    - dependency_chains
+
+demographics:
+  label: "Demographics / Labor"
+  prefix: "demo"
+  category: "social"
+  description: "Population segments, migration flows, diaspora communities, labor unions"
+  attributes:
+    - size
+    - growth_rate
+    - skill_level
+    - migration_direction
+    - remittance_flows
+
+media:
+  label: "Media / Information Entity"
+  prefix: "media"
+  category: "social"
+  description: "News outlets, social media platforms, state media, think tanks, influencers"
+  attributes:
+    - reach
+    - bias_alignment
+    - ownership
+    - credibility_index
+
+regulatory:
+  label: "Regulatory / Legal Framework"
+  prefix: "reg"
+  category: "governance"
+  description: "Sanctions regimes, trade agreements, tax treaties, IP law, environmental accords"
+  attributes:
+    - participating_entities
+    - enforcement_mechanism
+    - compliance_status
+
+geopolitical_event:
+  label: "Geopolitical Event / Conflict"
+  prefix: "evt"
+  category: "events"
+  description: "Wars, territorial disputes, coups, elections, referendums, peace negotiations"
+  attributes:
+    - status
+    - involved_parties
+    - escalation_level
+    - geographic_scope
+
+climate:
+  label: "Climate / Environment"
+  prefix: "clim"
+  category: "environment"
+  description: "Weather patterns, natural disasters, carbon emissions, water scarcity, arable land"
+  attributes:
+    - severity
+    - frequency
+    - affected_regions
+    - economic_impact_estimate
+
+public_health:
+  label: "Public Health"
+  prefix: "health"
+  category: "social"
+  description: "Pandemics, disease outbreaks, healthcare systems, pharma supply chains, vaccination"
+  attributes:
+    - infection_rate
+    - mortality_rate
+    - healthcare_capacity
+    - drug_pipeline
+
+social_movement:
+  label: "Ideology / Social Movement"
+  prefix: "mov"
+  category: "social"
+  description: "Political movements, religious institutions, protest movements, NGOs, activist networks"
+  attributes:
+    - reach
+    - funding
+    - political_alignment
+    - mobilization_capacity
