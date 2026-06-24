@@ -1,13 +1,16 @@
-![CausalNex](https://raw.githubusercontent.com/quantumblacklabs/causalnex/master/docs/source/causalnex_banner.png)
-
 -----------------
+> [!IMPORTANT]
+>
+> CausalNex is no longer actively maintained. As of 24th June 2026, CausalNex has reached end of life and has been discontinued.
+>
+> McKinsey will continue to make this repository accessible strictly as a historical archive, but please be advised that the codebase has been discontinued and is no longer supported. Consequently, the project will not receive any future updates, bug-fixes, or security and vulnerability patches. Outstanding issues and pull requests will no longer be monitored or reviewed.
+>
+> Pursuant to the applicable open-source license, CausalNex is provided on an "AS IS" basis, without warranties or conditions of any kind, either express or implied. Any continued use, copying, modification, or distribution of this codebase is done entirely at the user's own risk, and McKinsey disclaims all liability arising from such use.
 
 | Theme | Status                                                                                                                                                                                                                 |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Latest Release | [![PyPI version](https://badge.fury.io/py/causalnex.svg)](https://pypi.org/project/causalnex/)                                                                                                                         |
 | Python Version | [![Python Version](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue.svg)](https://pypi.org/project/causalnex/)                                                            |
-| `master` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/master)   |
-| `develop` Branch Build | [![CircleCI](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop.svg?style=shield&circle-token=92ab70f03f3183655473dad16be641959cd31b83)](https://circleci.com/gh/quantumblacklabs/causalnex/tree/develop) |
 | Documentation Build | [![Documentation](https://readthedocs.org/projects/causalnex/badge/?version=latest)](https://causalnex.readthedocs.io/)                                                                                                |
 | License | [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)                                                                                                   |
 | Code Style | [![Code Style: Black](https://img.shields.io/badge/code%20style-black-black.svg)](https://github.com/ambv/black)                                                                                                       |
@@ -68,10 +71,6 @@ You can find the documentation for the latest stable release [here](https://caus
 
 > Note: You can find the notebook and markdown files used to build the docs in [`docs/source`](docs/source).
 
-## Can I contribute?
-
-Yes! We'd love you to join us and help us build CausalNex. Check out our [contributing](CONTRIBUTING.md) documentation.
-
 ## How do I upgrade CausalNex?
 
 We use [SemVer](http://semver.org/) for versioning. The best way to upgrade safely is to check our [release notes](RELEASE.md) for any notable breaking changes.
@@ -86,4 +85,4 @@ See our [LICENSE](LICENSE.md) for more detail.
 
 ## We're hiring!
 
-Do you want to be part of the team that builds CausalNex and [other great products](https://www.mckinsey.com/capabilities/quantumblack/labs) at QuantumBlack? If so, you're in luck! QuantumBlack is currently hiring Machine Learning Engineers who love using data to drive their decisions. Take a look at [our open positions](https://www.mckinsey.com/capabilities/quantumblack/careers-and-community) and see if you're a fit.
+Do you want to be part of the team that builds CausalNex and [other great products](https://www.mckinsey.com/capabilities/quantumblack/labs) at QuantumBlack? Take a look at [our open positions](https://www.mckinsey.com/capabilities/quantumblack/careers-and-community) and see if you're a fit.
