@@ -1,10 +1,9 @@
 -----------------
 > [!IMPORTANT]
-> **Deprecation Notice**
 >
-> CausalNex is no longer actively maintained. As of 30th June 2026, CausalNex has reached the end of its lifecycle and has been officially discontinued.
+> CausalNex is no longer actively maintained. As of 24th June 2026, CausalNex has reached end of life and has been discontinued.
 >
-> McKinsey will continue to make this repository accessible strictly as a historical archive, but please be advised that the codebase has been officially discontinued and is no longer supported. Consequently, the project will not receive any future updates, bug-fixes, or security and vulnerability patches. Outstanding issues and pull requests will no longer be monitored or reviewed.
+> McKinsey will continue to make this repository accessible strictly as a historical archive, but please be advised that the codebase has been discontinued and is no longer supported. Consequently, the project will not receive any future updates, bug-fixes, or security and vulnerability patches. Outstanding issues and pull requests will no longer be monitored or reviewed.
 >
 > Pursuant to the applicable open-source license, CausalNex is provided on an "AS IS" basis, without warranties or conditions of any kind, either express or implied. Any continued use, copying, modification, or distribution of this codebase is done entirely at the user's own risk, and McKinsey disclaims all liability arising from such use.
 
