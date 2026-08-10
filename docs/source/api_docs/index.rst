@@ -3,16 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: https://raw.githubusercontent.com/quantumblacklabs/causalnex/master/docs/source/causalnex_banner.png
-    :alt: CausalNex logo
-    :class: causalnex-logo
-
 Welcome to CausalNex's API docs and tutorials!
 ==============================================
 
-.. image:: https://circleci.com/gh/quantumblacklabs/causalnex/tree/master.svg?style=shield
-    :target: https://circleci.com/gh/quantumblacklabs/causalnex/tree/master
-    :alt: CircleCI build status
+CausalNex is no longer actively maintained. As of 24th June 2026, CausalNex has reached end of life and has been discontinued.
+
+McKinsey will continue to make this repository accessible strictly as a historical archive, but please be advised that the codebase has been discontinued and is no longer supported. Consequently, the project will not receive any future updates, bug-fixes, or security and vulnerability patches. Outstanding issues and pull requests will no longer be monitored or reviewed.
+
+Pursuant to the applicable open-source license, CausalNex is provided on an "AS IS" basis, without warranties or conditions of any kind, either express or implied. Any continued use, copying, modification, or distribution of this codebase is done entirely at the user's own risk, and McKinsey disclaims all liability arising from such use.
 
 .. image:: https://img.shields.io/badge/coverage-100%25-brightgreen.svg
     :target: https://github.com/quantumblacklabs/causalnex
