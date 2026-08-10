@@ -5,22 +5,22 @@
 # Required
 version: 2
 
+# Set the OS and Python version used to build the docs.
+# ubuntu-22.04 is the newest RTD build OS that still provides Python 3.8,
+# which the pinned doc/test requirements need.
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.8"
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   builder: html
   configuration: docs/conf.py
   fail_on_warning: false
 
-# Build documentation with MkDocs
-# mkdocs:
-# configuration: mkdocs.yml
-
-# Optionally build your docs in additional formats such as PDF and ePub
-#formats: all
-
-# Optionally set the version of Python and requirements required to build your docs
+# Optionally set the requirements required to build your docs
 python:
-  version: 3.8
   install:
     - method: pip
       path: .
