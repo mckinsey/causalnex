@@ -54,6 +54,10 @@ with open("test_requirements.txt", "r", encoding="utf-8") as f:
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     readme = f.read()
 
+# PyPI's renderer shows GitHub's alert syntax as literal text; degrade the
+# end-of-life notice to a plain bold blockquote so it renders cleanly there.
+readme = readme.replace("> [!IMPORTANT]", "> **⚠️ IMPORTANT**", 1)
+
 extras_require = {"discretiser": ["mdlp-discretization~=0.3.3"]}
 extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
 
@@ -64,7 +68,12 @@ setup(
     description="Toolkit for causal reasoning (Bayesian Networks / Inference)",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/quantumblacklabs/causalnex",
+    url="https://github.com/mckinsey/causalnex",
+    project_urls={
+        "Documentation": "https://causalnex.readthedocs.io/",
+        "Source": "https://github.com/mckinsey/causalnex",
+        "Release notes": "https://github.com/mckinsey/causalnex/blob/develop/RELEASE.md",
+    },
     python_requires=">=3.8, <3.11",
     author="QuantumBlack Labs",
     author_email="causalnex@quantumblack.com",
@@ -74,7 +83,7 @@ setup(
     install_requires=requires,
     keywords="Causal Reasoning, Bayesian Network, Inference, Structure Learning, Do-Calculus",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 7 - Inactive",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

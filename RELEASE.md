@@ -1,4 +1,12 @@
-# Upcoming release
+# Release 0.12.2
+
+**This is the final release of CausalNex.** The project reached end of life on 24th June 2026 and is no longer maintained; the repository remains available as a historical archive only.
+
+* Surface the end-of-life notice on the PyPI project page (via the updated README)
+* Update project metadata: point the repository URL to https://github.com/mckinsey/causalnex, change the development status classifier to `7 - Inactive`, and add documentation/source links
+* Add a GitHub Actions workflow for publishing to PyPI via trusted publishing
+* No functional changes to the library
+
 # Release 0.12.1
 * Unlocking cap on following requirements: networkx, pathos, torch and wrapt
 
