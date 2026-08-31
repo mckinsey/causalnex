@@ -1,5 +1,5 @@
 -----------------
-> **⚠️ IMPORTANT**
+> [!IMPORTANT]
 >
 > CausalNex is no longer actively maintained. As of 24th June 2026, CausalNex has reached end of life and has been discontinued.
 >

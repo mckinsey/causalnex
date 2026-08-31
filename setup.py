@@ -54,6 +54,10 @@ with open("test_requirements.txt", "r", encoding="utf-8") as f:
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     readme = f.read()
 
+# PyPI's renderer shows GitHub's alert syntax as literal text; degrade the
+# end-of-life notice to a plain bold blockquote so it renders cleanly there.
+readme = readme.replace("> [!IMPORTANT]", "> **⚠️ IMPORTANT**", 1)
+
 extras_require = {"discretiser": ["mdlp-discretization~=0.3.3"]}
 extras_require["all"] = sorted(chain.from_iterable(extras_require.values()))
 
