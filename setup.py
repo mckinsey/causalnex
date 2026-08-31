@@ -64,7 +64,12 @@ setup(
     description="Toolkit for causal reasoning (Bayesian Networks / Inference)",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/quantumblacklabs/causalnex",
+    url="https://github.com/mckinsey/causalnex",
+    project_urls={
+        "Documentation": "https://causalnex.readthedocs.io/",
+        "Source": "https://github.com/mckinsey/causalnex",
+        "Release notes": "https://github.com/mckinsey/causalnex/blob/develop/RELEASE.md",
+    },
     python_requires=">=3.8, <3.11",
     author="QuantumBlack Labs",
     author_email="causalnex@quantumblack.com",
@@ -74,7 +79,7 @@ setup(
     install_requires=requires,
     keywords="Causal Reasoning, Bayesian Network, Inference, Structure Learning, Do-Calculus",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 7 - Inactive",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

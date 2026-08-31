@@ -1,0 +1,29 @@
+name: Publish to PyPI
+
+# Manual trigger only: this repo is archived and this workflow exists solely to
+# publish the final release. Run it from the Actions tab after merging.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Required for PyPI trusted publishing (OIDC).
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      # Build with Python 3.10, the newest version supported by python_requires.
+      - name: Build sdist and wheel
+        run: uvx --python 3.10 --from build pyproject-build
+
+      - name: Check metadata
+        run: uvx twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
