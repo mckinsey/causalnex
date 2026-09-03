@@ -5,9 +5,9 @@ pandas>=1.0, <2.0
 pathos>=0.2.7
 pgmpy>=0.1.14, <0.1.20
 pyvis>=0.3.2
-scikit-learn>=0.22.0, !=0.22.2.post1, !=0.24.1; python_version < '3.9'
-scikit-learn>=0.24.0, !=0.24.1; python_version == '3.9'
-scikit-learn>=0.25.0; python_version == '3.10'
+scikit-learn>=1.5.0, !=0.22.2.post1, !=0.24.1; python_version < '3.9'
+scikit-learn>=1.5.0, !=0.24.1; python_version == '3.9'
+scikit-learn>=1.5.0; python_version == '3.10'
 scipy>=1.7
 setuptools>=65.5.1
 torch>=1.7
