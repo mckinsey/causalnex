@@ -187,7 +187,7 @@ def get_correct_cpds(
 class TestEMJobs:
     @pytest.mark.parametrize("n_jobs", [1, 3, -2])
     def test_em_no_missing_data(self, n_jobs):
-        """If all data for the latent variable is provided, the result is the same as runing bn.fit_cpds"""
+        """If all data for the latent variable is provided, the result is the same as running bn.fit_cpds"""
         df, sm, node_states, true_lv_values = naive_bayes_plus_parents(
             percentage_not_missing=1
         )

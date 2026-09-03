@@ -815,7 +815,7 @@ class TestSetCPD:
 
         with pytest.raises(
             ValueError,
-            match=r"Sum or integral of conditional probabilites for node b is not equal to 1.",
+            match=r"Sum or integral of conditional probabilities for node b is not equal to 1.",
         ):
             bn.set_cpd("b", bad_cpd)
 

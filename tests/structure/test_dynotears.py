@@ -266,7 +266,7 @@ class TestFromNumpyDynotears:
         )
 
     def test_certain_relationships_get_near_certain_weight(self):
-        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one"""
+        """If a == b always, there should be an edge a->b or b->a with coefficient close to one"""
 
         np.random.seed(17)
         data = pd.DataFrame(
@@ -281,7 +281,7 @@ class TestFromNumpyDynotears:
         assert 0.99 < edge <= 1.01
 
     def test_inverse_relationships_get_negative_weight(self):
-        """If a == -b always, ther should be an edge a->b or b->a with coefficient close to minus one"""
+        """If a == -b always, there should be an edge a->b or b->a with coefficient close to minus one"""
 
         np.random.seed(17)
         data = pd.DataFrame(
@@ -565,7 +565,7 @@ class TestFromPandasDynotears:
         )
 
     def test_certain_relationships_get_near_certain_weight(self):
-        """If a == b always, ther should be an edge a->b or b->a with coefficient close to one"""
+        """If a == b always, there should be an edge a->b or b->a with coefficient close to one"""
 
         np.random.seed(17)
         data = pd.DataFrame(

@@ -427,7 +427,7 @@ class TestGenerateBinaryData:
     @pytest.mark.parametrize("seed", (10, 20, 30))
     def test_independence(self, graph_gen, seed, num_nodes):
         """
-        test whether the relation is accurate, implicitely tests sequence of
+        test whether the relation is accurate, implicitly tests sequence of
         nodes.
         """
 
@@ -633,7 +633,7 @@ class TestGenerateCategoricalData:
     @pytest.mark.parametrize("distribution", ["probit", "logit"])
     def test_independence(self, graph_gen, seed, num_nodes, n_categories, distribution):
         """
-        test whether the relation is accurate, implicitely tests sequence of
+        test whether the relation is accurate, implicitly tests sequence of
         nodes.
         """
         sm = graph_gen(num_nodes=num_nodes, seed=seed, weight=None)

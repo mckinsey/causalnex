@@ -82,7 +82,7 @@ class DAGBase(
             alpha: l1 loss weighting. When using nonlinear layers this is only applied
             to the first layer.
 
-            beta: l2 loss weighting. Applied across all layers. Reccomended to use this
+            beta: l2 loss weighting. Applied across all layers. Recommended to use this
             when fitting nonlinearities.
 
             fit_intercept: Whether to fit an intercept in the structure model
@@ -111,7 +111,7 @@ class DAGBase(
 
             standardize: Whether to standardize the X and y variables before fitting.
             The L-BFGS algorithm used to fit the underlying NOTEARS works best on data
-            all of the same scale so this parameter is reccomended.
+            all of the same scale so this parameter is recommended.
 
             notears_mlp_kwargs: Additional arguments for the NOTEARS MLP model.
 
@@ -160,7 +160,7 @@ class DAGBase(
         self.target_dist_type = target_dist_type
         self.notears_mlp_kwargs = notears_mlp_kwargs
 
-        # sklearn wrapper paramters
+        # sklearn wrapper parameters
         self.dependent_target = dependent_target
         self.enforce_dag = enforce_dag
         self.standardize = standardize

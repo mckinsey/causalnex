@@ -402,7 +402,7 @@ class BayesianNetwork:
                                  regardless of variable cardinality;
                          - "BDeu": equivalent of using Dirichlet and using uniform 'pseudo_counts' of
                                    `equivalent_sample_size / (node_cardinality * np.prod(parents_cardinalities))`
-                                   for each node. Use equivelant_sample_size.
+                                   for each node. Use equivalent_sample_size.
             equivalent_sample_size: used by BDeu bayes_prior to compute pseudo_counts.
 
         Returns:
@@ -463,7 +463,7 @@ class BayesianNetwork:
                                  regardless of variable cardinality;
                          - "BDeu": equivalent of using dirichlet and using uniform 'pseudo_counts' of
                                    `equivalent_sample_size / (node_cardinality * np.prod(parents_cardinalities))`
-                                   for each node. Use equivelant_sample_size.
+                                   for each node. Use equivalent_sample_size.
             equivalent_sample_size: used by BDeu bayes_prior to compute pseudo_counts.
 
         Returns:
