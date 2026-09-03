@@ -533,10 +533,12 @@ def generate_dataframe_dynamic(  # pylint: disable=R0914
         ValueError: if sem_type isn't linear-gauss/linear_exp/linear-gumbel
     """
     s_types = ("linear-gauss", "linear-exp", "linear-gumbel")
+    
     if sem_type not in s_types:
         raise ValueError(f"unknown sem type {sem_type}. Available types are: {s_types}")
-    intra_nodes = sorted(el for el in g.nodes if "_lag0" in el)
-    inter_nodes = sorted(el for el in g.nodes if "_lag0" not in el)
+  
+    intra_nodes = sorted([el for el in g.nodes if "_lag0" in el], key=lambda t: t.split('_lag')[1])
+    inter_nodes = sorted([el for el in g.nodes if "_lag0" not in el], key=lambda t: t.split('_lag')[1])
     w_mat = nx.to_numpy_array(g, nodelist=intra_nodes)
     a_mat = nx.to_numpy_array(g, nodelist=intra_nodes + inter_nodes)[
         len(intra_nodes) :, : len(intra_nodes)
@@ -612,7 +614,7 @@ def gen_stationary_dyn_net_and_df(  # pylint: disable=R0913, R0914
             - full: constructs a fully-connected graph - degree has no effect
         graph_type_inter:
             - erdos-renyi: constructs a graph such that the probability of any given edge is degree / (num_nodes - 1)
-            - full: connect all past nodes to all present nodesw_min_intra:
+            - full: connect all past nodes to all present nodes
         w_min_intra: minimum weight on intra-slice adjacency matrix
         w_max_intra: maximum weight on intra-slice adjacency matrix
         w_min_inter: minimum weight on inter-slice adjacency matrix
