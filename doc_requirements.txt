@@ -17,4 +17,4 @@ sphinx-markdown-tables>=0.0.15, <1.0
 sphinx>=3.0.4, <4.0
 sphinx_copybutton>=0.2.5, <1.0
 sphinx_rtd_theme>=0.4.3, <1.0
-tornado>=6.3.2 # not directly required, pinned by Snyk to avoid a vulnerability
+tornado>=6.4.1 # not directly required, pinned by Snyk to avoid a vulnerability
