@@ -37,7 +37,9 @@ __all__ = [
     "data_generators",
     "DAGRegressor",
     "DAGClassifier",
+    "DynamicStructureModel",
+    "DynamicStructureNode",
 ]
 
 from .pytorch.sklearn import DAGClassifier, DAGRegressor
-from .structuremodel import StructureModel
+from .structuremodel import DynamicStructureModel, DynamicStructureNode, StructureModel
